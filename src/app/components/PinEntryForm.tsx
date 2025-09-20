@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 // Error handling imports
-import { useComponentErrorHandling, withComponentErrorHandling } from '@/lib/error-handling';
+import { handleError } from '@/lib/error-handling';
 
 interface PinEntryFormProps {
   tableId: string;
@@ -20,7 +20,8 @@ interface PinEntryFormProps {
 
 export default function PinEntryForm({ tableId, currentPin, existingSessionId }: PinEntryFormProps) {
   const [pin, setPin] = useState('');
-  const { error, isLoading, setError, setIsLoading, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +37,7 @@ export default function PinEntryForm({ tableId, currentPin, existingSessionId }:
     }
 
     // 2. PIN is correct. Now, either join or create a session.
-    await withComponentErrorHandling(async () => {
+    try {
       let targetSessionId = existingSessionId;
       let isNewSession = false;
 
@@ -48,17 +49,25 @@ export default function PinEntryForm({ tableId, currentPin, existingSessionId }:
           .select()
           .single();
 
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          throw sessionError;
+        }
         targetSessionId = newSession.id;
         isNewSession = true;
       }
 
       // 3. Redirect to name entry page instead of directly to menu
       router.push(`/scan/${tableId}?step=name&sessionId=${targetSessionId}&isNew=${isNewSession}`);
-    }, 'PIN Entry Session Creation', { setError, setIsLoading, clearError }, {
-      showAlert: false,
-      logError: true
-    });
+    } catch (error) {
+      const appError = handleError(error, {
+        operation: 'PIN Entry Session Creation',
+        tableId,
+        existingSessionId
+      });
+      setError(appError.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

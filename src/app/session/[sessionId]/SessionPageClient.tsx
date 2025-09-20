@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import MenuDisplay from '@/app/components/MenuDisplay';
@@ -37,7 +37,12 @@ interface SessionPageClientProps {
 
 function SessionContent({ session, categories, restaurantName }: SessionPageClientProps) {
   const { state } = useCart();
+  const [isClient, setIsClient] = useState(false);
   const itemCount = state.items?.length || 0;
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   return (
     <div className="w-full max-w-[480px] mx-auto px-4 py-4" style={{ minHeight: '100vh' }}>
@@ -90,21 +95,23 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
         sessionId={session.id} 
       />
 
-      {/* Cart Button - Fixed at bottom */}
-      <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
-        <Link
-          href={`/cart-review?sessionId=${session.id}`}
-          className="bg-[#00d9ff] text-white px-6 py-3 rounded-full shadow-lg hover:bg-[#00c4e6] transition-colors flex items-center space-x-2"
-        >
-          <ShoppingCart className="w-5 h-5" />
-          <span>Cart</span>
-          {itemCount > 0 && (
-            <span className="bg-white text-[#00d9ff] rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
-              {itemCount}
-            </span>
-          )}
-        </Link>
-      </div>
+      {/* Cart Button - Fixed at bottom - Only render on client */}
+      {isClient && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+          <Link
+            href={`/cart-review?sessionId=${session.id}`}
+            className="bg-[#00d9ff] text-white px-6 py-3 rounded-full shadow-lg hover:bg-[#00c4e6] transition-colors flex items-center space-x-2"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span>Cart</span>
+            {itemCount > 0 && (
+              <span className="bg-white text-[#00d9ff] rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+                {itemCount}
+              </span>
+            )}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,20 @@
 'use client'
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
-import { debugErrorLog, trackError, isDebugMode } from '@/lib/debug'
+// Simple debug logging
+const debugErrorLog = (...args: any[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error('[DEBUG ERROR]', ...args);
+  }
+};
+
+const trackError = (error: any, context?: any) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error('[TRACKED ERROR]', error, context);
+  }
+};
+
+const isDebugMode = process.env.NODE_ENV === 'development';
 
 interface ErrorBoundaryState {
   hasError: boolean

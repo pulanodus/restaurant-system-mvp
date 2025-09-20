@@ -81,10 +81,10 @@ export default function SessionPageClient({ session, categories, restaurantName 
           </div>
         </div>
         
-        <MenuDisplay 
-          categories={categories} 
-          sessionId={session.id} 
-        />
+            <MenuDisplay 
+              categories={categories} 
+              sessionId={session.id} 
+            />
       </div>
     </CartProvider>
   );

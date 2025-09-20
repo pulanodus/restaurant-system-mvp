@@ -23,15 +23,13 @@ import {
   startPerformanceMonitoring, 
   endPerformanceMonitoring, 
   trackError,
-  // withPerformanceMonitoring,
   debug as debugUtils,
   debugLog as simpleDebugLog,
   debugSessionLog,
   debugErrorLog,
   debugValidationLog,
   debugNavLog,
-  debugDbLog,
-  // isDebugMode
+  debugDbLog
 } from '@/lib/debug'
 
 // Session management state

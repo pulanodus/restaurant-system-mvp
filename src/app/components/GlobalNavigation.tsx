@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ShoppingCart, Menu, Receipt, Phone } from 'lucide-react';
+import { ShoppingCart, Menu, Receipt, Bell } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 
 interface GlobalNavigationProps {
@@ -14,6 +14,8 @@ interface GlobalNavigationProps {
 export default function GlobalNavigation({ sessionId, className = '' }: GlobalNavigationProps) {
   const { state } = useCart();
   const searchParams = useSearchParams();
+  const [showWaiterOptions, setShowWaiterOptions] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
   
   // Get sessionId from props, searchParams, or cart context
   const currentSessionId = sessionId || searchParams.get('sessionId') || state.sessionId;
@@ -23,6 +25,37 @@ export default function GlobalNavigation({ sessionId, className = '' }: GlobalNa
   if (!currentSessionId) {
     return null;
   }
+
+  const handleWaiterRequest = async (requestType: 'bill' | 'help') => {
+    setIsRequesting(true);
+    try {
+      const response = await fetch('/api/waiter/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: currentSessionId,
+          requestType,
+          timestamp: new Date().toISOString()
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        alert(`${requestType === 'bill' ? 'Bill request' : 'Help request'} sent to staff!`);
+      } else {
+        alert('Failed to send request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending waiter request:', error);
+      alert('Failed to send request. Please try again.');
+    } finally {
+      setIsRequesting(false);
+      setShowWaiterOptions(false);
+    }
+  };
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 ${className}`}>
@@ -61,16 +94,36 @@ export default function GlobalNavigation({ sessionId, className = '' }: GlobalNa
           </Link>
 
           {/* Call Waiter Button */}
-          <button
-            onClick={() => {
-              // TODO: Implement call waiter functionality
-              alert('Calling waiter...');
-            }}
-            className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-[#00d9ff] transition-colors"
-          >
-            <Phone className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Call Waiter</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setShowWaiterOptions(!showWaiterOptions)}
+              disabled={isRequesting}
+              className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-[#00d9ff] transition-colors disabled:opacity-50"
+            >
+              <Bell className="w-6 h-6 mb-1" />
+              <span className="text-xs font-medium">Call Waiter</span>
+            </button>
+
+            {/* Waiter Options Dropdown */}
+            {showWaiterOptions && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
+                <button
+                  onClick={() => handleWaiterRequest('bill')}
+                  disabled={isRequesting}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 first:rounded-t-lg disabled:opacity-50"
+                >
+                  📋 Request Bill
+                </button>
+                <button
+                  onClick={() => handleWaiterRequest('help')}
+                  disabled={isRequesting}
+                  className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 last:rounded-b-lg disabled:opacity-50"
+                >
+                  ❓ Need Help
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

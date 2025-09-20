@@ -32,7 +32,7 @@ interface StaffMember {
 
 interface Notification {
   id: string;
-  type: 'urgent' | 'payment' | 'assistance';
+  type: 'urgent' | 'payment' | 'assistance' | 'waiter_request';
   title: string;
   message: string;
   table_number?: string;
@@ -43,6 +43,8 @@ interface Notification {
   metadata?: {
     assigned_waitstaff?: string;
     is_my_table?: boolean;
+    request_type?: 'bill' | 'help';
+    customer_name?: string;
   };
 }
 
@@ -146,15 +148,18 @@ export default function StaffDashboard() {
         const notificationsResponse = await fetch('/api/notifications?status=pending');
         const notificationsData = await notificationsResponse.json();
         
+        let transformedNotifications: Notification[] = [];
+        
         if (notificationsData.success) {
           // Transform database notifications into our notification format
-          const transformedNotifications: Notification[] = notificationsData.notifications.map((n: any) => ({
+          transformedNotifications = notificationsData.notifications.map((n: any) => ({
             id: n.id,
             type: n.type === 'kitchen_ready' ? 'urgent' : 
-                  n.type === 'payment_request' ? 'payment' : 'assistance',
+                  n.type === 'payment_request' ? 'payment' : 
+                  n.type === 'waiter_request' ? 'waiter_request' : 'assistance',
             title: n.title,
             message: n.message,
-            table_number: n.sessions?.tables?.table_number || 'Unknown',
+            table_number: n.sessions?.tables?.table_number || n.metadata?.table_number || 'Unknown',
             timestamp: n.created_at,
             status: n.status === 'pending' ? 'pending' as const : 
                     n.status === 'acknowledged' ? 'acknowledged' as const : 'resolved' as const,
@@ -162,11 +167,14 @@ export default function StaffDashboard() {
                      n.priority === 'medium' ? 'medium' as const : 'low' as const,
             metadata: {
               assigned_waitstaff: n.metadata?.assigned_waitstaff,
-              is_my_table: staff ? n.sessions?.served_by === staff.id : false
+              is_my_table: staff ? n.sessions?.served_by === staff.id : false,
+              request_type: n.metadata?.request_type,
+              customer_name: n.metadata?.customer_name
             }
           }));
+        }
 
-          setNotifications(transformedNotifications);
+        setNotifications(transformedNotifications);
           
           // Play audio notification for new notifications
           const currentNotificationCount = transformedNotifications.filter(n => n.status === 'pending').length;
@@ -320,6 +328,13 @@ export default function StaffDashboard() {
           iconColor: 'text-blue-600',
           badgeColor: 'bg-blue-100 text-blue-800'
         };
+      case 'waiter_request':
+        return {
+          icon: <Bell className="w-5 h-5" />,
+          bgColor: 'bg-orange-50 border-orange-200',
+          iconColor: 'text-orange-600',
+          badgeColor: 'bg-orange-100 text-orange-800'
+        };
       default:
         return {
           icon: <Bell className="w-5 h-5" />,
@@ -331,8 +346,9 @@ export default function StaffDashboard() {
   };
 
   // Handle notification resolve
-  const handleNotificationAction = async (notificationId: string) => {
+  const handleNotificationAction = async (notificationId: string, notificationType?: string) => {
     try {
+      // All notifications (including waiter requests) are handled through the notifications API
       const response = await fetch(`/api/notifications/${notificationId}/acknowledge`, {
         method: 'POST',
         headers: {
@@ -340,7 +356,7 @@ export default function StaffDashboard() {
         },
         body: JSON.stringify({
           action: 'resolve',
-          staff_member: 'Staff Member' // You can get this from auth context
+          staff_member: staff?.name || 'Staff Member'
         }),
       });
 
@@ -911,10 +927,10 @@ export default function StaffDashboard() {
                         </div>
                         <div className="flex items-center">
                           <button
-                            onClick={() => handleNotificationAction(notification.id)}
+                            onClick={() => handleNotificationAction(notification.id, notification.type)}
                             className="px-4 py-2 bg-[#00d9ff] text-white text-sm rounded-lg hover:bg-[#00c4e6] transition-colors font-medium"
                           >
-                            Resolve
+                            {notification.type === 'waiter_request' ? 'Acknowledge' : 'Resolve'}
                           </button>
                         </div>
                       </div>

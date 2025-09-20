@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useCart, CartItem } from '@/contexts/CartContext';
+import { useCart, CartItem, CartProvider } from '@/contexts/CartContext';
 import { ShoppingCart, ArrowLeft, Trash2, Edit3, Users } from 'lucide-react';
 
-export default function CartReviewPage() {
+function CartReviewContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const { state, removeItem, updateQuantity, loadCartItems, clearCart } = useCart();
@@ -349,5 +349,29 @@ export default function CartReviewPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CartReviewPage() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('sessionId');
+
+  if (!sessionId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Session Not Found</h1>
+          <Link href="/" className="text-[#00d9ff] hover:underline">
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CartProvider sessionId={sessionId}>
+      <CartReviewContent />
+    </CartProvider>
   );
 }

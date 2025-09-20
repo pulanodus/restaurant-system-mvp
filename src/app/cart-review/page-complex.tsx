@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from '@/contexts/CartContextSimple';
+import { useCart, CartProvider } from '@/contexts/CartContextSimple';
 import { ArrowLeft, Edit3, Users } from 'lucide-react';
 import ClearCartButton from '@/app/components/ClearCartButton';
 
@@ -717,5 +717,9 @@ export default function CartReviewPage() {
     );
   }
 
-  return <CartReviewContent />;
+  return (
+    <CartProvider sessionId={sessionId}>
+      <CartReviewContent />
+    </CartProvider>
+  );
 }

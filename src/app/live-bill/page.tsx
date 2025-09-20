@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import LiveBill from '@/app/components/LiveBill';
+import { CartProvider } from '@/contexts/CartContext';
 
 function LiveBillContent() {
   const searchParams = useSearchParams();
@@ -14,8 +15,10 @@ function LiveBillContent() {
 
 export default function LiveBillPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LiveBillContent />
-    </Suspense>
+    <CartProvider>
+      <Suspense fallback={<div>Loading...</div>}>
+        <LiveBillContent />
+      </Suspense>
+    </CartProvider>
   );
 }

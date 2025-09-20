@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, ArrowLeft, Clock } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, CartProvider } from '@/contexts/CartContext';
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get('sessionId');
@@ -117,5 +117,29 @@ export default function OrderConfirmationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('sessionId');
+
+  if (!sessionId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Session Not Found</h1>
+          <Link href="/" className="text-[#00d9ff] hover:underline">
+            Return to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CartProvider sessionId={sessionId}>
+      <OrderConfirmationContent />
+    </CartProvider>
   );
 }

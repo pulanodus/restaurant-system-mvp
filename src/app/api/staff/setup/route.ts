@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { withApiErrorHandling } from '@/lib/error-handling'wrappers';
+import { handleError } from '@/lib/error-handling';
 
-export const POST = withApiErrorHandling(async (request: NextRequest) => {
+export const POST = async (request: NextRequest) => {
   try {
     console.log('🔧 Setting up staff system...');
 
@@ -47,4 +47,4 @@ export const POST = withApiErrorHandling(async (request: NextRequest) => {
       { status: 500 }
     );
   }
-}, 'STAFF_SETUP');
+};

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { withApiErrorHandling } from '@/lib/error-handling'wrappers';
+import { handleError } from '@/lib/error-handling';
 
 // GET /api/orders/confirm - Get confirmed orders for a session
-export const GET = withApiErrorHandling(async (request: NextRequest) => {
+export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get('sessionId');
 
@@ -106,7 +106,7 @@ export const GET = withApiErrorHandling(async (request: NextRequest) => {
     });
 });
 
-export const POST = withApiErrorHandling(async (request: NextRequest) => {
+export const POST = async (request: NextRequest) => {
   const body = await request.json();
     const { sessionId } = body;
     

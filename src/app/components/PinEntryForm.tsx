@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 // Error handling imports
-import { useComponentErrorHandling, withComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { useComponentErrorHandling, withComponentErrorHandling } from '@/lib/error-handling';
 
 interface PinEntryFormProps {
   tableId: string;
@@ -26,7 +26,7 @@ export default function PinEntryForm({ tableId, currentPin, existingSessionId }:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    clearError();
+    setError(null);
 
     // 1. Verify the PIN
     if (pin !== currentPin) {

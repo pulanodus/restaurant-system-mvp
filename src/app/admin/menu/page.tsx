@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 
 // Error handling imports
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 
 // Component imports
 import MenuItemEditor from '@/app/components/MenuItemEditor';
@@ -58,13 +58,13 @@ export default function AdminMenuPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch menu items
   const fetchMenuItems = async () => {
     try {
       setIsLoading(true);
-      clearError();
+      setError(null);
       
       const { data, error } = await supabase
         .from('menu_items')

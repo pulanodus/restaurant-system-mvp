@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { withApiErrorHandling } from '@/lib/error-handling'wrappers';
+import { handleError } from '@/lib/error-handling';
 
-export const GET = withApiErrorHandling(async (request: NextRequest) => {
+export const GET = async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const staffId = searchParams.get('staffId');
@@ -101,4 +101,4 @@ export const GET = withApiErrorHandling(async (request: NextRequest) => {
       { status: 500 }
     );
   }
-}, 'STAFF_NOTIFICATIONS');
+};

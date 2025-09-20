@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 import { 
   Save, 
   Shield, 
@@ -41,7 +41,7 @@ export default function AdminSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -50,7 +50,7 @@ export default function AdminSettingsPage() {
   const fetchSettings = async () => {
     try {
       setIsLoading(true);
-      clearError();
+      setError(null);
 
       // In a real app, this would fetch from a restaurant_settings table
       // For now, we'll use localStorage as a simple storage solution
@@ -69,7 +69,7 @@ export default function AdminSettingsPage() {
   const saveSettings = async () => {
     try {
       setIsSaving(true);
-      clearError();
+      setError(null);
       setSaveStatus('idle');
 
       // In a real app, this would save to a restaurant_settings table

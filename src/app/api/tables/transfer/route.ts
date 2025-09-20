@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { withApiErrorHandling } from '@/lib/error-handling'wrappers';
+import { handleError } from '@/lib/error-handling';
 import { logDetailedError } from '@/lib/error-handling';
 import { logTableTransfer } from '@/lib/audit-logging';
 
-export const POST = withApiErrorHandling(async (request: NextRequest) => {
+export const POST = async (request: NextRequest) => {
   try {
     const { sourceTableId, destinationTableId, sessionId } = await request.json();
     console.log('🔧 API: Transferring table:', { sourceTableId, destinationTableId, sessionId });

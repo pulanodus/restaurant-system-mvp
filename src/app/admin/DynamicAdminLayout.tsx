@@ -14,7 +14,7 @@ import {
   Bell
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 
 interface DynamicAdminLayoutProps {
   children: React.ReactNode;
@@ -28,7 +28,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
   const [currentDate, setCurrentDate] = useState<string>('');
   const router = useRouter();
   const pathname = usePathname();
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Set current date on client side only to avoid hydration mismatch
@@ -127,7 +127,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
       setIsAuthenticated(false);
       setUser(null);
       router.push('/admin/login');
-      clearError();
+      setError(null);
     } catch (error) {
       console.error('Logout error:', error);
       setError('Logout failed');

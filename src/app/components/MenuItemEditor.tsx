@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 // Error handling imports
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 
 interface MenuItem {
   id: string;
@@ -43,7 +43,7 @@ export default function MenuItemEditor({ item, isOpen, onClose, onSave }: MenuIt
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [descriptionLength, setDescriptionLength] = useState(0);
   
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   // Common categories
   const categories = [
@@ -110,7 +110,7 @@ export default function MenuItemEditor({ item, isOpen, onClose, onSave }: MenuIt
     }
 
     setIsSubmitting(true);
-    clearError();
+    setError(null);
 
     try {
       const menuItemData = {

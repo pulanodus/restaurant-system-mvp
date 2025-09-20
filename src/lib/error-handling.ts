@@ -171,3 +171,10 @@ export const getErrorSummary = (restaurantId?: string) => {
   
   return summary;
 };
+
+// Additional utility functions for compatibility
+export const logDetailedError = (error: any, context?: any) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error('[DETAILED_ERROR]', error, context);
+  }
+};

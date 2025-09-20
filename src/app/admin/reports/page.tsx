@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -63,7 +63,7 @@ export default function SalesReportsPage() {
     topCategory: '',
     peakHour: 0
   });
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSalesData();
@@ -72,7 +72,7 @@ export default function SalesReportsPage() {
   const fetchSalesData = async () => {
     try {
       setIsLoading(true);
-      clearError();
+      setError(null);
 
       const period = reportPeriods.find(p => p.value === selectedPeriod);
       if (!period) return;

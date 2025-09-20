@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 // Error handling imports
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 
 interface OrderItem {
   id: string;
@@ -41,13 +41,13 @@ export default function OrderReview({ sessionId, onOrderUpdate }: OrderReviewPro
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch order items
   const fetchOrderItems = async () => {
     try {
       setIsLoading(true);
-      clearError();
+      setError(null);
       
       const { data, error } = await supabase
         .from('orders')
@@ -131,7 +131,7 @@ export default function OrderReview({ sessionId, onOrderUpdate }: OrderReviewPro
     }
 
     setIsSubmitting(true);
-    clearError();
+    setError(null);
 
     try {
       // Update orders to waiting status

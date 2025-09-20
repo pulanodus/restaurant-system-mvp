@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 // Error handling imports
-import { useComponentErrorHandling, withComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { useComponentErrorHandling, withComponentErrorHandling } from '@/lib/error-handling';
 
 interface NameEntryFormProps {
   sessionId: string;
@@ -23,7 +23,7 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber }: 
     if (!name.trim()) return;
 
     setIsLoading(true);
-    clearError();
+    setError(null);
 
     await withComponentErrorHandling(async () => {
       if (isNewSession) {

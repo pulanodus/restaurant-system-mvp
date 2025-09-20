@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 import { 
   Search, 
   Filter, 
@@ -62,7 +62,7 @@ export default function AuditLogPage() {
   const [selectedAction, setSelectedAction] = useState('all');
   const [selectedUser, setSelectedUser] = useState('all');
   const [dateRange, setDateRange] = useState('today');
-  const { setError, clearError } = useComponentErrorHandling();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAuditLogs();
@@ -75,7 +75,7 @@ export default function AuditLogPage() {
   const fetchAuditLogs = async () => {
     try {
       setIsLoading(true);
-      clearError();
+      setError(null);
 
       // Fetch audit logs using service role
       const { data, error } = await supabase

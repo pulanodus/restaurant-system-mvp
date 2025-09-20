@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { withApiErrorHandling } from '@/lib/error-handling'wrappers';
+import { handleError } from '@/lib/error-handling';
 import { logDetailedError } from '@/lib/error-handling';
 
-export const GET = withApiErrorHandling(async (request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) => {
+export const GET = async (request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) => {
   try {
     const { sessionId } = await params;
     console.log('🔧 API: Fetching orders for session:', sessionId);

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { ComponentErrorBoundary } from '@/components/ErrorBoundary';
 
 // Error handling imports
-import { useComponentErrorHandling } from '@/lib/error-handling'component-utils';
+import { handleError } from '@/lib/error-handling';
 
 // Component imports
 import CenteredModal from './CenteredModal';

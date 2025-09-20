@@ -75,39 +75,44 @@ export default function DinerEntryPage() {
     setError(null);
 
     try {
-      // Verify PIN
-      if (pin !== tableData.current_pin) {
-        setError('Invalid PIN. Please check with your server.');
-        setIsLoading(false);
-        return;
-      }
+      // Verify PIN using API
+      const response = await fetch('/api/tables/verify-pin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tableId: tableData.id,
+          pin: pin.trim()
+        }),
+      });
 
-      // Check if there's an active session
-      const { data: activeSession } = await supabase
-        .from('sessions')
-        .select('id, started_by_name')
-        .eq('table_id', tableData.id)
-        .eq('status', 'active')
-        .maybeSingle();
+      const data = await response.json();
 
-      if (activeSession) {
-        // Join existing session
-        setSessionId(activeSession.id);
-        setStep('name');
-      } else {
-        // Create new session
-        const { data: newSession, error: sessionError } = await supabase
-          .from('sessions')
-          .insert([{ table_id: tableData.id }])
-          .select()
-          .single();
+      if (response.ok && data.success) {
+        console.log('✅ PIN verified successfully:', data.message);
+        
+        if (data.session) {
+          // Join existing session
+          setSessionId(data.session.id);
+          setStep('name');
+        } else {
+          // Create new session
+          const { data: newSession, error: sessionError } = await supabase
+            .from('sessions')
+            .insert([{ table_id: tableData.id }])
+            .select()
+            .single();
 
-        if (sessionError) {
-          throw sessionError;
+          if (sessionError) {
+            throw sessionError;
+          }
+
+          setSessionId(newSession.id);
+          setStep('name');
         }
-
-        setSessionId(newSession.id);
-        setStep('name');
+      } else {
+        setError(data.error || 'PIN verification failed');
       }
     } catch (error) {
       const appError = handleError(error, {

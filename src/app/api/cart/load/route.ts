@@ -73,7 +73,7 @@ async function loadCartItems(sessionId: string) {
       )
     `)
     .eq('session_id', sessionId)
-    .eq('status', 'placed')
+    .eq('status', 'preparing')
     .order('created_at', { ascending: false });
 
   if (error) {

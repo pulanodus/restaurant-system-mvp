@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('session_id', sessionId)
       .eq('menu_item_id', item.id)
-      .eq('status', 'placed');
+      .eq('status', 'preparing');
 
     if (fetchError) {
       console.error('❌ Error fetching existing orders:', fetchError);
@@ -104,11 +104,10 @@ export async function POST(request: NextRequest) {
           session_id: sessionId,
           menu_item_id: item.id,
           quantity: 1,
-          status: 'placed',
+          status: 'preparing',
           notes: options?.notes || null,
           is_shared: options?.isShared || false,
-          is_takeaway: options?.isTakeaway || false,
-          customizations: customizations // Store customizations
+          is_takeaway: options?.isTakeaway || false
         })
         .select()
         .single();

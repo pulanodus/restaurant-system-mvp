@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log('✅ Successfully updated split bill pricing');
       }
-    } else if (updatedOrder.split_bill_id && updatedOrder.status !== 'placed') {
+    } else if (updatedOrder.split_bill_id && updatedOrder.status !== 'pending') {
       console.log('🛡️ Skipping split bill update for confirmed order:', {
         orderId: updatedOrder.id,
         status: updatedOrder.status,

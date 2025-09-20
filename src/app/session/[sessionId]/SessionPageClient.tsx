@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React from 'react';
 import MenuDisplay from '@/app/components/MenuDisplay';
 import PinCopyButton from '@/app/components/PinCopyButton';
 import { heroBannerPlaceholder } from '@/lib/placeholder-images';

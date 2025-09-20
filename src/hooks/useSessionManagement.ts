@@ -18,19 +18,49 @@ import {
   withErrorHandling
 } from '@/lib/error-handling'
 
-// Debug and performance monitoring imports
-import { 
-  startPerformanceMonitoring, 
-  endPerformanceMonitoring, 
-  trackError,
-  debug as debugUtils,
-  debugLog as simpleDebugLog,
-  debugSessionLog,
-  debugErrorLog,
-  debugValidationLog,
-  debugNavLog,
-  debugDbLog
-} from '@/lib/debug'
+// Simple debug logging
+const debugLog = (...args: any[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[DEBUG]', ...args);
+  }
+};
+
+const debugErrorLog = (...args: any[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error('[DEBUG ERROR]', ...args);
+  }
+};
+
+const debugSessionLog = (...args: any[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[DEBUG SESSION]', ...args);
+  }
+};
+
+const trackError = (error: any, context?: any) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.error('[TRACKED ERROR]', error, context);
+  }
+};
+
+const startPerformanceMonitoring = (operation: string) => {
+  if (process.env.NODE_ENV === 'development' && typeof performance !== 'undefined') {
+    performance.mark(`${operation}-start`);
+    debugLog(`Performance monitoring started for: ${operation}`);
+  }
+};
+
+const endPerformanceMonitoring = (operation: string) => {
+  if (process.env.NODE_ENV === 'development' && typeof performance !== 'undefined') {
+    performance.mark(`${operation}-end`);
+    performance.measure(operation, `${operation}-start`, `${operation}-end`);
+    const measure = performance.getEntriesByName(operation).pop();
+    debugLog(`Performance monitoring ended for: ${operation}. Duration: ${measure?.duration.toFixed(2)}ms`);
+    performance.clearMarks(`${operation}-start`);
+    performance.clearMarks(`${operation}-end`);
+    performance.clearMeasures(operation);
+  }
+};
 
 // Session management state
 interface SessionState {

@@ -6,6 +6,7 @@ import { ShoppingCart, Menu, Receipt, Phone } from 'lucide-react';
 import MenuDisplay from '@/app/components/MenuDisplay';
 import PinCopyButton from '@/app/components/PinCopyButton';
 import { heroBannerPlaceholder } from '@/lib/placeholder-images';
+import { generateFoodImage } from '@/lib/ai-images';
 import { CartProvider, useCart } from '@/contexts/CartContext';
 
 interface SessionData {
@@ -79,7 +80,7 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
           {/* Background Image */}
           <div className="h-32 relative">
             <img 
-              src={heroBannerPlaceholder} 
+              src={generateFoodImage('restaurant banner', { width: 1200, height: 400 })} 
               alt="Restaurant Special" 
               className="w-full h-full object-cover"
             />

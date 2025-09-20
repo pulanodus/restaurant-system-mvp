@@ -64,6 +64,18 @@ export const generateFoodImageFromSearch = (itemName: string, options: FoodImage
   return `https://source.unsplash.com/${width}x${height}/?${searchQuery}&q=${quality}`;
 };
 
+// Fallback: Use Picsum for reliable placeholder images
+export const generateFoodImageFromPicsum = (itemName: string, options: FoodImageOptions = {}): string => {
+  const { width = 400, height = 300 } = options;
+  
+  // Generate a consistent seed based on the item name
+  const seed = itemName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const seedNumber = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  
+  // Use Picsum with a seed for consistent images
+  return `https://picsum.photos/seed/${seedNumber}/${width}/${height}`;
+};
+
 // Curated food image IDs for consistent, high-quality results
 const getFoodImageId = (itemName: string, seed: number): string => {
   const foodImageMap: Record<string, string[]> = {
@@ -142,8 +154,14 @@ export const getMenuItemImage = (itemName: string, existingImageUrl?: string, op
     return existingImageUrl;
   }
   
-  // 2. Generate AI food image using search API (more reliable)
-  return generateFoodImageFromSearch(itemName, options);
+  // 2. Try Unsplash search API first
+  try {
+    return generateFoodImageFromSearch(itemName, options);
+  } catch (error) {
+    console.warn(`Unsplash search failed for ${itemName}, using Picsum fallback`);
+    // 3. Fallback to Picsum for reliable images
+    return generateFoodImageFromPicsum(itemName, options);
+  }
 };
 
 // Batch generate images for multiple menu items

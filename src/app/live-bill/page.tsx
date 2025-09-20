@@ -3,6 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import LiveBill from '@/app/components/LiveBill';
+import GlobalNavigation from '@/app/components/GlobalNavigation';
 import { CartProvider } from '@/contexts/CartContext';
 
 function LiveBillContent() {
@@ -10,7 +11,12 @@ function LiveBillContent() {
   const sessionId = searchParams.get('sessionId');
   const tableId = searchParams.get('tableId');
 
-  return <LiveBill sessionId={sessionId} tableId={tableId} />;
+  return (
+    <>
+      <LiveBill sessionId={sessionId} tableId={tableId} />
+      <GlobalNavigation sessionId={sessionId} />
+    </>
+  );
 }
 
 export default function LiveBillPage() {

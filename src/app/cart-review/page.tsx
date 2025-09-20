@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart, CartItem, CartProvider } from '@/contexts/CartContext';
 import { ShoppingCart, ArrowLeft, Trash2, Edit3, Users } from 'lucide-react';
+import GlobalNavigation from '@/app/components/GlobalNavigation';
 
 function CartReviewContent() {
   const searchParams = useSearchParams();
@@ -345,12 +346,15 @@ function CartReviewContent() {
                 Confirm Order to Kitchen
               </button>
             </>
-          )}
+              )}
+            </div>
+
+            {/* Global Navigation Bar */}
+            <GlobalNavigation sessionId={sessionId} />
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    }
 
 export default function CartReviewPage() {
   const searchParams = useSearchParams();

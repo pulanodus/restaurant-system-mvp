@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, ArrowLeft, Clock } from 'lucide-react';
 import { useCart, CartProvider } from '@/contexts/CartContext';
+import GlobalNavigation from '@/app/components/GlobalNavigation';
 
 function OrderConfirmationContent() {
   const searchParams = useSearchParams();
@@ -113,12 +114,15 @@ function OrderConfirmationContent() {
             >
               Order More Items
             </Link>
+              </div>
+            </div>
+
+            {/* Global Navigation Bar */}
+            <GlobalNavigation sessionId={sessionId} />
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    }
 
 export default function OrderConfirmationPage() {
   const searchParams = useSearchParams();

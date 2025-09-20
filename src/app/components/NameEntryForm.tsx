@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 // Error handling imports
-import { useComponentErrorHandling, withComponentErrorHandling } from '@/lib/error-handling';
+import { handleError } from '@/lib/error-handling';
 
 interface NameEntryFormProps {
   sessionId: string;
@@ -15,7 +15,8 @@ interface NameEntryFormProps {
 
 export default function NameEntryForm({ sessionId, isNewSession, tableNumber }: NameEntryFormProps) {
   const [name, setName] = useState('');
-  const { isLoading, setError, setIsLoading, clearError } = useComponentErrorHandling();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +26,7 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber }: 
     setIsLoading(true);
     setError(null);
 
-    await withComponentErrorHandling(async () => {
+    try {
       if (isNewSession) {
         // Update the session with the starter's name
         const { error } = await supabase
@@ -64,10 +65,17 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber }: 
 
       // Navigate to the menu
       router.push(`/session/${sessionId}`);
-    }, 'Name Entry Session Update', { setError, setIsLoading, clearError }, {
-      showAlert: true,
-      logError: true
-    });
+    } catch (error) {
+      const appError = handleError(error, {
+        operation: 'Name Entry Session Update',
+        sessionId,
+        isNewSession,
+        tableNumber
+      });
+      setError(appError.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

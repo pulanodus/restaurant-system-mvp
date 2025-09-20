@@ -35,7 +35,7 @@ export default function MenuItem({ item, sessionId }: MenuItemProps): React.JSX.
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const { isLoading: isAdding } = useComponentErrorHandling();
+  const [isAdding, setIsAdding] = useState(false);
   
   const { state, getItemQuantity, addItem, removeItem, updateQuantity } = useCart();
 

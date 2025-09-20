@@ -132,7 +132,11 @@ export default function MenuItem({ item, sessionId }: MenuItemProps): React.JSX.
               onError={(e) => {
                 // Fallback to placeholder if AI image fails to load
                 const target = e.target as HTMLImageElement;
+                console.warn(`Failed to load image for ${item.name}, using placeholder`);
                 target.src = getMenuItemPlaceholder(item.name);
+              }}
+              onLoad={() => {
+                console.log(`Successfully loaded image for ${item.name}`);
               }}
             />
             {item.rating && (

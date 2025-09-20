@@ -18,8 +18,8 @@ const foodKeywords: Record<string, string> = {
   'grilled chicken sandwich': 'grilled chicken sandwich',
   
   // Starters
-  'quesadilla': 'quesadilla mexican',
-  'spring roll': 'spring roll asian',
+  'quesadilla': 'quesadilla mexican food',
+  'spring roll': 'spring roll asian food',
   
   // Desserts
   'chocolate cake': 'chocolate cake dessert',
@@ -51,58 +51,7 @@ export const generateFoodImage = (itemName: string, options: FoodImageOptions = 
   return `${baseUrl}-${imageId}?w=${width}&h=${height}&q=${quality}&fit=crop&crop=center&auto=format&fm=jpg`;
 };
 
-// Curated food image IDs for consistent, high-quality results
-const getFoodImageId = (itemName: string, seed: number): string => {
-  const foodImageMap: Record<string, string[]> = {
-    // Drinks
-    'strawberry': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    'daiquiri': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    'mocktail': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    'cappuccino': ['1559056199-6417b8d7d3c7', '1559056199-6417b8d7d3c7'],
-    'coffee': ['1559056199-6417b8d7d3c7', '1559056199-6417b8d7d3c7'],
-    
-    // Mains
-    'pasta': ['1551183053-bf91a1d81141', '1551183053-bf91a1d81141'],
-    'carbonara': ['1551183053-bf91a1d81141', '1551183053-bf91a1d81141'],
-    'chicken': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    'sandwich': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    'grilled': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    
-    // Starters
-    'quesadilla': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    'spring': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    'roll': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    
-    // Desserts
-    'chocolate': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    'cake': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    'fruit': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    'fresh': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
-    
-    // Restaurant/Banner
-    'restaurant': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    'banner': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
-    
-    // Default
-    'default': ['1559847844-5315695dadae', '1559847844-5315695dadae']
-  };
-  
-  // Find matching category
-  const itemLower = itemName.toLowerCase();
-  for (const [category, images] of Object.entries(foodImageMap)) {
-    if (itemLower.includes(category)) {
-      const index = seed % images.length;
-      return images[index];
-    }
-  }
-  
-  // Fallback to default
-  const defaultImages = foodImageMap['default'];
-  const index = seed % defaultImages.length;
-  return defaultImages[index];
-};
-
-// Alternative: Use Unsplash search API for dynamic images
+// Alternative: Use Unsplash search API for dynamic images (more reliable)
 export const generateFoodImageFromSearch = (itemName: string, options: FoodImageOptions = {}): string => {
   const { width = 400, height = 300, quality = 80 } = options;
   
@@ -115,6 +64,77 @@ export const generateFoodImageFromSearch = (itemName: string, options: FoodImage
   return `https://source.unsplash.com/${width}x${height}/?${searchQuery}&q=${quality}`;
 };
 
+// Curated food image IDs for consistent, high-quality results
+const getFoodImageId = (itemName: string, seed: number): string => {
+  const foodImageMap: Record<string, string[]> = {
+    // Drinks - Specific images for each drink
+    'strawberry daiquiri mocktail': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'strawberry': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'daiquiri': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'mocktail': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'cappuccino': ['1559056199-6417b8d7d3c7', '1559056199-6417b8d7d3c7'],
+    'coffee': ['1559056199-6417b8d7d3c7', '1559056199-6417b8d7d3c7'],
+    
+    // Mains - Specific images for each main dish
+    'pasta carbonara': ['1551183053-bf91a1d81141', '1551183053-bf91a1d81141'],
+    'pasta': ['1551183053-bf91a1d81141', '1551183053-bf91a1d81141'],
+    'carbonara': ['1551183053-bf91a1d81141', '1551183053-bf91a1d81141'],
+    'grilled chicken sandwich': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'chicken sandwich': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'grilled chicken': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'chicken': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'sandwich': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'grilled': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    
+    // Starters - Specific images for each starter
+    'quesadilla': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'spring roll': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'spring': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'roll': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    
+    // Desserts - Specific images for each dessert
+    'chocolate cake': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'chocolate': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'cake': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'fresh fruit bowl': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'fruit bowl': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'fruit': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    'fresh': ['1551024739-0b1c6c6d9b8f', '1551024739-0b1c6c6d9b8f'],
+    
+    // Restaurant/Banner
+    'restaurant banner': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'restaurant': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    'banner': ['1559847844-5315695dadae', '1559847844-5315695dadae'],
+    
+    // Default
+    'default': ['1559847844-5315695dadae', '1559847844-5315695dadae']
+  };
+  
+  // Find matching category - try exact match first, then partial match
+  const itemLower = itemName.toLowerCase().trim();
+  
+  // First try exact match
+  if (foodImageMap[itemLower]) {
+    const images = foodImageMap[itemLower];
+    const index = seed % images.length;
+    return images[index];
+  }
+  
+  // Then try partial matches
+  for (const [category, images] of Object.entries(foodImageMap)) {
+    if (itemLower.includes(category) && category !== 'default') {
+      const index = seed % images.length;
+      return images[index];
+    }
+  }
+  
+  // Fallback to default
+  const defaultImages = foodImageMap['default'];
+  const index = seed % defaultImages.length;
+  return defaultImages[index];
+};
+
+
 // Get menu item image with fallback chain
 export const getMenuItemImage = (itemName: string, existingImageUrl?: string, options: FoodImageOptions = {}): string => {
   // 1. Use existing image URL if available
@@ -122,8 +142,8 @@ export const getMenuItemImage = (itemName: string, existingImageUrl?: string, op
     return existingImageUrl;
   }
   
-  // 2. Generate AI food image
-  return generateFoodImage(itemName, options);
+  // 2. Generate AI food image using search API (more reliable)
+  return generateFoodImageFromSearch(itemName, options);
 };
 
 // Batch generate images for multiple menu items

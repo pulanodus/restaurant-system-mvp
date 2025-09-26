@@ -4,10 +4,10 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { action = 'acknowledge', staff_member = 'Staff' } = body;
     
@@ -65,6 +65,44 @@ export const POST = async (
     }
     
     console.log('✅ Notification updated:', data);
+    
+    // CRITICAL FEATURE: Auto-mark orders as served when resolving kitchen_ready notifications
+    if (action === 'resolve' && data.type === 'kitchen_ready') {
+      console.log('🍽️ AUTO-SERVE: Resolving kitchen_ready notification - marking related orders as served');
+      
+      try {
+        // Get the order ID from the notification metadata
+        const orderId = data.metadata?.order_id;
+        
+        if (orderId) {
+          console.log('🍽️ AUTO-SERVE: Found order ID in notification metadata:', orderId);
+          
+          // Mark the specific order as served
+          const { data: updatedOrder, error: orderError } = await supabaseServer
+            .from('orders')
+            .update({ status: 'served' })
+            .eq('id', orderId)
+            .select('id, menu_item_id, quantity, diner_name, session_id')
+            .single();
+          
+          if (orderError) {
+            console.error('❌ AUTO-SERVE: Failed to mark order as served:', orderError);
+          } else {
+            console.log('✅ AUTO-SERVE: Order marked as served:', {
+              orderId: updatedOrder.id,
+              menuItem: updatedOrder.menu_item_id,
+              quantity: updatedOrder.quantity,
+              diner: updatedOrder.diner_name
+            });
+          }
+        } else {
+          console.warn('⚠️ AUTO-SERVE: No order_id found in notification metadata:', data.metadata);
+        }
+      } catch (autoServeError) {
+        console.error('❌ AUTO-SERVE: Error during auto-serve process:', autoServeError);
+        // Don't fail the main notification update if auto-serve fails
+      }
+    }
     
     return NextResponse.json({
       success: true,

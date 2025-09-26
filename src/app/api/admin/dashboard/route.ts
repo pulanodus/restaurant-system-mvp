@@ -180,11 +180,13 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
     };
 
     // Log dashboard access
-    await createAuditLog({
-      action: 'dashboard_access',
-      details: { period, metrics: dashboardData },
-      performed_by: user.id
-    });
+    if (user) {
+      await createAuditLog({
+        action: 'dashboard_access',
+        details: { period, metrics: dashboardData },
+        performed_by: user.id
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -210,11 +212,13 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
     switch (action) {
       case 'refresh':
         // Trigger a dashboard data refresh
-        await createAuditLog({
-          action: 'dashboard_refresh',
-          details: { triggeredBy: user.id },
-          performed_by: user.id
-        });
+        if (user) {
+          await createAuditLog({
+            action: 'dashboard_refresh',
+            details: { triggeredBy: user.id },
+            performed_by: user.id
+          });
+        }
 
         return NextResponse.json({
           success: true,
@@ -224,11 +228,13 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
       case 'update_settings':
         // Update dashboard display settings
         // This would typically save to a user preferences table
-        await createAuditLog({
-          action: 'dashboard_settings_update',
-          details: { settings: data },
-          performed_by: user.id
-        });
+        if (user) {
+          await createAuditLog({
+            action: 'dashboard_settings_update',
+            details: { settings: data },
+            performed_by: user.id
+          });
+        }
 
         return NextResponse.json({
           success: true,

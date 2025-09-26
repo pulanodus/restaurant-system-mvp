@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest) {
   const startTime = Date.now()
   const healthCheckId = Math.random().toString(36).substring(2, 15)
   
-  if (isDebugMode) {
+  if (isDebugMode()) {
     console.group(`🏥 Detailed Health Check [${healthCheckId}]`)
     console.log('Starting detailed health check...')
   }
@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest) {
     // Check environment first
     const env = checkEnvironment()
     
-    if (!env.isConfigured) {
+    if (!env.hasSupabaseUrl || !env.hasSupabaseKey) {
       const response = {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -45,12 +45,12 @@ export async function GET(_request: NextRequest) {
         duration: Date.now() - startTime
       }
 
-      if (isDebugMode) {
+      if (isDebugMode()) {
         console.log('❌ Detailed health check failed - configuration error')
         console.groupEnd()
       }
 
-      debugErrorLog('DETAILED_HEALTH_CHECK', 'Detailed health check failed - configuration error', {
+      debugErrorLog('Detailed health check failed - configuration error', {
         healthCheckId,
         environment: env
       })
@@ -71,7 +71,7 @@ export async function GET(_request: NextRequest) {
     const allTestsPassed = 
       enhancedConnectionTest.success && 
       sessionTest.success && 
-      comprehensiveResult.summary.overallSuccess
+      comprehensiveResult.overallSuccess
     
     const response = {
       status: allTestsPassed ? 'healthy' : 'unhealthy',
@@ -83,15 +83,15 @@ export async function GET(_request: NextRequest) {
         sessionTest: sessionTest,
         comprehensive: comprehensiveResult,
         summary: {
-          totalTests: enhancedConnectionTest.summary.total + 1 + comprehensiveResult.summary.totalTests,
-          passedTests: enhancedConnectionTest.summary.passed + (sessionTest.success ? 1 : 0) + comprehensiveResult.summary.passedTests,
+          totalTests: 3 + comprehensiveResult.tests.length,
+          passedTests: (enhancedConnectionTest.success ? 1 : 0) + (sessionTest.success ? 1 : 0) + comprehensiveResult.tests.filter(t => t.success).length,
           overallSuccess: allTestsPassed
         }
       },
       duration: Date.now() - startTime
     }
 
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('Detailed health check completed:', {
         status: response.status,
         duration: `${response.duration}ms`,
@@ -118,12 +118,13 @@ export async function GET(_request: NextRequest) {
   } catch (error) {
     const duration = Date.now() - startTime
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.error('❌ Detailed health check failed with exception:', error)
       console.groupEnd()
     }
 
-    debugErrorLog('DETAILED_HEALTH_CHECK', 'Detailed health check failed with exception', error, {
+    debugErrorLog('Detailed health check failed with exception', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       healthCheckId,
       duration: `${duration}ms`
     })

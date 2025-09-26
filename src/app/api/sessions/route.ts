@@ -3,8 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { withApiDebugging, logDatabaseOperation, logAuthentication } from '@/lib/debug/api-logger'
-import { logDetailedError } from '@/lib/error-handling'
+// Debug functions removed - using console.log instead
 import { 
   getAllSessionsWithServiceRole,
   createSessionWithFullValidation,
@@ -12,7 +11,7 @@ import {
 } from '@/lib/server-session-management'
 
 // GET /api/sessions - Get all sessions (admin only)
-export const GET = withApiDebugging(async (_request: NextRequest) => {
+export const GET = async (_request: NextRequest) => {
   try {
     console.log('🔧 API: Getting all sessions with service role')
     
@@ -30,13 +29,13 @@ export const GET = withApiDebugging(async (_request: NextRequest) => {
     */
     
     // Log authentication attempt (service role)
-    logAuthentication('GET_SESSIONS', 'service_role', true)
+    console.log('GET_SESSIONS: service_role authentication')
     
     const result = await getAllSessionsWithServiceRole()
     
     if (result.error) {
-      logDatabaseOperation('SELECT_ALL_SESSIONS', 'sessions', undefined, result.error)
-      logDetailedError('API: Get sessions', result.error)
+      console.log('SELECT_ALL_SESSIONS: sessions error', result.error)
+      console.error('API: Get sessions', result.error)
       const errorMessage = result.error instanceof Error ? result.error.message : 'Failed to get sessions'
       return NextResponse.json(
         { error: errorMessage },
@@ -44,7 +43,7 @@ export const GET = withApiDebugging(async (_request: NextRequest) => {
       )
     }
     
-    logDatabaseOperation('SELECT_ALL_SESSIONS', 'sessions', { count: result.data.length })
+    console.log('SELECT_ALL_SESSIONS: sessions success', { count: result.data.length })
     console.log('✅ API: Retrieved sessions:', result.data.length)
     return NextResponse.json({ 
       success: true, 
@@ -53,13 +52,13 @@ export const GET = withApiDebugging(async (_request: NextRequest) => {
     })
     
   } catch (error) {
-    logDetailedError('API: GET sessions exception', error)
+    console.error('API: GET sessions exception', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     )
   }
-}, 'GET_SESSIONS')
+}
 
 // POST /api/sessions - Create a new session (admin only)
 export const POST = async (request: NextRequest) => {

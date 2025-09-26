@@ -3,11 +3,9 @@
 
 import { useState, useCallback } from 'react'
 import { 
-  handleProductionError, 
-  generateErrorId,
-  // ErrorSeverity,
-  // ErrorCategory
-} from '@/lib/production-error-handling'
+  handleError,
+  ErrorSeverity
+} from '@/lib/error-handling'
 
 /**
  * Production Error Handler Hook
@@ -69,7 +67,7 @@ export function useProductionErrorHandler(
     setErrorState(prev => ({
       ...prev,
       error,
-      errorId: error ? generateErrorId() : null,
+      errorId: error ? `error-${Date.now()}` : null,
       shouldRetry: false
     }))
   }, [])
@@ -100,16 +98,20 @@ export function useProductionErrorHandler(
         operation: context.operation,
         userId: context.userId || '',
         sessionId: context.sessionId || '',
-        requestId: generateErrorId(),
+        requestId: `error-${Date.now()}`,
         userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
         url: typeof window !== 'undefined' ? window.location.href : '',
         method: 'CLIENT_ERROR'
       }
 
-      const { userMessage, errorId, shouldRetry } = await handleProductionError(
+      const appError = await handleError(
         error,
         errorContext
       )
+
+      const userMessage = 'An error occurred'
+      const errorId = `error-${Date.now()}`
+      const shouldRetry = false
 
       setErrorState(prev => ({
         ...prev,
@@ -137,7 +139,7 @@ export function useProductionErrorHandler(
       setErrorState(prev => ({
         ...prev,
         error: 'An unexpected error occurred. Please try again.',
-        errorId: generateErrorId(),
+        errorId: `error-${Date.now()}`,
         shouldRetry: false,
         isLoading: false
       }))

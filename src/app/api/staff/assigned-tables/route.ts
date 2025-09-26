@@ -47,7 +47,7 @@ export const GET = async (request: NextRequest) => {
     }
 
     // Transform tables to match expected format
-    const transformedTables = (assignedTables || []).map(table => ({
+    const transformedTables = (assignedTables || []).map((table: any) => ({
       id: table.session_id,
       table_number: table.table_number,
       table_id: table.table_id,
@@ -80,7 +80,7 @@ export const GET = async (request: NextRequest) => {
       },
       summary: {
         total_assigned: transformedTables.length,
-        active_tables: transformedTables.filter(t => t.status === 'active').length
+        active_tables: transformedTables.filter((t: any) => t.status === 'active').length
       }
     });
 

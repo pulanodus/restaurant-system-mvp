@@ -2,6 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { handleError } from '@/lib/error-handling';
 
+// Retry wrapper for database operations
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  maxRetries: number = 3
+): Promise<T> {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      
+      // Check if it's a network/connection error
+      const isNetworkError = error && (
+        (error as any).message?.includes('fetch failed') ||
+        (error as any).message?.includes('ECONNRESET') ||
+        (error as any).message?.includes('ETIMEDOUT')
+      );
+      
+      if (isNetworkError && attempt < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        console.warn(`🔄 Retrying ${operationName} in ${delay}ms (attempt ${attempt}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+  
+  throw lastError;
+}
+
 export const GET = async (request: NextRequest) => {
   try {
     console.log('🔧 API: Fetching daily kitchen orders');
@@ -13,39 +48,44 @@ export const GET = async (request: NextRequest) => {
     console.log('📅 Fetching orders from last 24 hours:', last24Hours.toISOString(), 'to:', now.toISOString());
 
 
-    // Get all orders from the last 24 hours (including completed ones)
-    const { data: orders, error } = await supabaseServer
-      .from('orders')
-      .select(`
-        id,
-        session_id,
-        menu_item_id,
-        quantity,
-        status,
-        created_at,
-        notes,
-        is_shared,
-        is_takeaway,
-        menu_items (
+    // Get all orders from the last 24 hours (including completed ones) with retry logic
+    const result = await withRetry(
+      async () => await supabaseServer
+        .from('orders')
+        .select(`
           id,
-          name,
-          price
-        ),
-        sessions!orders_session_id_fkey (
-          id,
-          table_id,
-          started_by_name,
+          session_id,
+          menu_item_id,
+          quantity,
+          status,
           created_at,
-          tables!sessions_table_id_fkey (
+          notes,
+          is_shared,
+          is_takeaway,
+          menu_items (
             id,
-            table_number,
-            capacity
+            name,
+            price
+          ),
+          sessions!orders_session_id_fkey (
+            id,
+            table_id,
+            started_by_name,
+            created_at,
+            tables!sessions_table_id_fkey (
+              id,
+              table_number,
+              capacity
+            )
           )
-        )
-      `)
-      .gte('created_at', last24Hours.toISOString())
-      .in('status', ['waiting', 'preparing', 'ready', 'served'])
-      .order('created_at', { ascending: true });
+        `)
+        .gte('created_at', last24Hours.toISOString())
+        .in('status', ['waiting', 'preparing', 'ready', 'served'])
+        .order('created_at', { ascending: true }),
+      'fetch kitchen orders'
+    );
+    
+    const { data: orders, error } = result as any;
 
     if (error) {
       console.error('❌ Database error:', error);
@@ -60,7 +100,7 @@ export const GET = async (request: NextRequest) => {
     // Group orders by session and transform the data
     const sessionMap = new Map();
     
-    orders?.forEach(order => {
+    orders?.forEach((order: any) => {
       const sessionId = order.session_id;
       const tableNumber = (order.sessions as any)?.tables?.table_number || 'Unknown';
       
@@ -108,4 +148,4 @@ export const GET = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-});
+};

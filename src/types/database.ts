@@ -28,6 +28,7 @@ export interface Table {
 export interface Session {
   id: string // uuid
   table_id: string // uuid
+  restaurant_id: string // uuid (multi-tenant)
   started_by_name: string // text
   status: 'active' | 'inactive' | 'completed' | 'cancelled' // text
   started_at: string // timestamptz
@@ -35,6 +36,8 @@ export interface Session {
   created_by?: string | null // uuid
   created_at?: string // timestamptz
   updated_at?: string // timestamptz
+  archived_at?: string | null // timestamptz (data lifecycle)
+  archive_reason?: string | null // text (data lifecycle)
 }
 
 /**
@@ -42,6 +45,7 @@ export interface Session {
  */
 export interface MenuItem {
   id: string // uuid
+  restaurant_id: string // uuid (multi-tenant)
   name: string // text
   description?: string | null // text
   price: number // numeric
@@ -57,11 +61,70 @@ export interface MenuItem {
 export interface Order {
   id: string // uuid
   session_id: string // uuid
+  restaurant_id: string // uuid (multi-tenant)
   menu_item_id: string // uuid
   quantity: number // integer
   status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'cancelled' // text
   created_at?: string // timestamptz
   updated_at?: string // timestamptz
+  archived_at?: string | null // timestamptz (data lifecycle)
+  archive_reason?: string | null // text (data lifecycle)
+}
+
+// ============================================================================
+// MULTI-TENANT INTERFACES
+// ============================================================================
+
+/**
+ * Restaurant interface
+ */
+export interface Restaurant {
+  id: string // uuid
+  name: string // text
+  tier: 'basic' | 'professional' | 'enterprise' // text
+  is_active: boolean // boolean
+  created_at?: string // timestamptz
+  updated_at?: string // timestamptz
+}
+
+/**
+ * Storage usage interface
+ */
+export interface StorageUsage {
+  tableName: string
+  recordCount: number
+  estimatedSizeMB: number
+}
+
+/**
+ * Restaurant storage summary interface
+ */
+export interface RestaurantStorageSummary {
+  restaurantId: string
+  totalRecords: number
+  totalSizeMB: number
+  breakdown: StorageUsage[]
+  lastUpdated: string
+}
+
+/**
+ * Data lifecycle interfaces
+ */
+export interface RetentionPolicy {
+  restaurantId: string
+  sessionsRetentionDays: number
+  ordersRetentionDays: number
+  cartItemsRetentionDays: number
+  notificationsRetentionDays: number
+  splitBillsRetentionDays: number
+  dinersRetentionDays: number
+}
+
+export interface CleanupResult {
+  tableName: string
+  deletedCount: number
+  archivedCount: number
+  error?: string
 }
 
 // ============================================================================

@@ -55,7 +55,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
     const { onError, onSessionError } = this.props
 
     // Log error with our debug system
-    debugErrorLog('SESSION_ERROR_BOUNDARY', 'Session error boundary caught error', error, {
+    debugErrorLog('Session error boundary caught error', {
       errorId,
       sessionId,
       tableId,
@@ -93,7 +93,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
     }
 
     // Log to console in development
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.group(`🚨 Session Error Boundary [${errorId}]`)
       console.error('Error:', error)
       console.error('Error Info:', errorInfo)
@@ -132,7 +132,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
   resetErrorBoundary = (): void => {
     const { errorId } = this.state
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log(`🔄 Resetting session error boundary [${errorId}]`)
     }
 
@@ -158,7 +158,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
   handleSessionRestart = (): void => {
     const { sessionId, tableId } = this.state
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log(`🔄 Restarting session [${sessionId}] for table [${tableId}]`)
     }
 
@@ -172,7 +172,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
   }
 
   handleTableSelection = (): void => {
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('🔄 Navigating to table selection')
     }
 
@@ -345,7 +345,7 @@ function SessionErrorDisplay({
           )}
           <button
             onClick={onTableSelection}
-            className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white text-sm rounded-md hover:style={{ backgroundColor: '#00d9ff' }} focus:outline-none focus:ring-2 focus:ring-2 focus:ring-opacity-50"
           >
             Select Table
           </button>

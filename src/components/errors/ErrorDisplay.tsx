@@ -2,11 +2,10 @@
 'use client'
 
 // Type imports
-import { DetailedError } from '@/lib/error-handling'
 
 interface ErrorDisplayProps {
   error: string | null
-  errorDetails: DetailedError | null
+  errorDetails: any | null
   onDismiss: () => void
 }
 

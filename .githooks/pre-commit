@@ -1,0 +1,131 @@
+#!/bin/bash
+
+# File Organization Pre-commit Hook
+# This hook checks if files are placed in the correct directories according to our organization guidelines
+
+echo "🔍 Checking file organization..."
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track if any violations are found
+VIOLATIONS=0
+
+# Function to check file placement
+check_file_placement() {
+    local file="$1"
+    local filename=$(basename "$file")
+    local extension="${filename##*.}"
+    
+    # Skip if file is deleted
+    if ! git diff --cached --name-only --diff-filter=D | grep -q "^$file$"; then
+        # Check for documentation files in root (only flag files directly in root, not in subdirectories)
+        if [[ "$extension" == "md" && "$file" != "README.md" && "$file" != "docs/"* && "$file" != *"/"* ]]; then
+            echo -e "${RED}❌ VIOLATION: $file should be in docs/ directory${NC}"
+            echo -e "${YELLOW}   Suggested location: docs/$(get_suggested_location "$file")${NC}"
+            VIOLATIONS=$((VIOLATIONS + 1))
+        fi
+        
+        # Check for SQL files in root (only flag files directly in root, not in subdirectories)
+        if [[ "$extension" == "sql" && "$file" != "docs/"* && "$file" != "supabase/"* && "$file" != *"/"* ]]; then
+            echo -e "${RED}❌ VIOLATION: $file should be in docs/database/ directory${NC}"
+            echo -e "${YELLOW}   Suggested location: docs/database/$(get_sql_location "$file")${NC}"
+            VIOLATIONS=$((VIOLATIONS + 1))
+        fi
+        
+        # Check for utility JS files in root (only flag files directly in root, not in subdirectories)
+        if [[ "$extension" == "js" && "$file" != "scripts/"* && "$file" != "src/"* && "$file" != "docs/"* && "$file" != *"/"* ]]; then
+            echo -e "${RED}❌ VIOLATION: $file should be in scripts/ or docs/development/scripts/ directory${NC}"
+            echo -e "${YELLOW}   Suggested location: $(get_js_location "$file")${NC}"
+            VIOLATIONS=$((VIOLATIONS + 1))
+        fi
+    fi
+}
+
+# Function to suggest location for markdown files
+get_suggested_location() {
+    local file="$1"
+    local filename=$(basename "$file")
+    
+    case "$filename" in
+        *setup*|*install*|*config*)
+            echo "getting-started/"
+            ;;
+        *cleanup*|*admin*|*reset*)
+            echo "admin-setup/"
+            ;;
+        *api*|*endpoint*)
+            echo "api/"
+            ;;
+        *database*|*migration*|*sql*)
+            echo "database/"
+            ;;
+        *deploy*|*production*)
+            echo "deployment/"
+            ;;
+        *test*|*testing*)
+            echo "testing/"
+            ;;
+        *dev*|*debug*|*error*)
+            echo "development/"
+            ;;
+        *)
+            echo "development/"
+            ;;
+    esac
+}
+
+# Function to suggest location for SQL files
+get_sql_location() {
+    local file="$1"
+    local filename=$(basename "$file")
+    
+    case "$filename" in
+        *migration*|*migrate*|*fix*|*apply*)
+            echo "migrations/"
+            ;;
+        *cleanup*|*clean*)
+            echo "admin-setup/cleanup/"
+            ;;
+        *)
+            echo "scripts/"
+            ;;
+    esac
+}
+
+# Function to suggest location for JS files
+get_js_location() {
+    local file="$1"
+    local filename=$(basename "$file")
+    
+    case "$filename" in
+        *test*|*dev*|*debug*|*clear*)
+            echo "docs/development/scripts/"
+            ;;
+        *)
+            echo "scripts/"
+            ;;
+    esac
+}
+
+# Check all staged files
+for file in $(git diff --cached --name-only); do
+    check_file_placement "$file"
+done
+
+# Show results
+if [ $VIOLATIONS -gt 0 ]; then
+    echo ""
+    echo -e "${RED}🚫 Commit blocked: $VIOLATIONS file organization violation(s) found${NC}"
+    echo -e "${YELLOW}📖 Please review our File Organization Guidelines: docs/FILE_ORGANIZATION.md${NC}"
+    echo -e "${YELLOW}⚡ Quick reference: docs/QUICK_FILE_PLACEMENT_GUIDE.md${NC}"
+    echo ""
+    echo "To bypass this check (not recommended):"
+    echo "  git commit --no-verify"
+    exit 1
+else
+    echo -e "${GREEN}✅ All files are properly organized!${NC}"
+fi

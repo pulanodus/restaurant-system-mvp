@@ -4,14 +4,16 @@ import { getSupabaseUrl, getSupabaseServiceKey } from '@/lib/secure-env';
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId, item, options } = await request.json();
+    const { sessionId, item, options, dinerName } = await request.json();
     
-    console.log('🛠️ API /cart/add received request:', { sessionId, item, options });
+    console.log('🛠️ API /cart/add received request:', { sessionId, item, options, dinerName });
     
-    if (!sessionId || !item) {
-      return NextResponse.json({ error: 'Session ID and item are required' }, { status: 400 });
+    if (!sessionId || !item || !dinerName) {
+      return NextResponse.json({ error: 'Session ID, item, and diner name are required' }, { status: 400 });
     }
 
+    // CRITICAL FIX: Prevent waitstaff from adding items to cart
+    // First, get the session to check who the waitstaff is
     const supabaseUrl = getSupabaseUrl();
     const supabaseServiceKey = getSupabaseServiceKey();
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -24,11 +26,34 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Check if item already exists in cart with same options AND customizations
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('started_by_name')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError) {
+      console.error('❌ Error fetching session:', sessionError);
+      return NextResponse.json({ error: 'Failed to verify session' }, { status: 500 });
+    }
+
+    // Check if the diner name matches the waitstaff (session starter)
+    if (session.started_by_name && dinerName.toLowerCase() === session.started_by_name.toLowerCase()) {
+      console.log('🚫 CRITICAL: Preventing waitstaff from adding items to cart:', {
+        waitstaff: session.started_by_name,
+        attemptedDiner: dinerName
+      });
+      return NextResponse.json({ 
+        error: 'Waitstaff cannot add items to cart. Please use a different name.',
+        waitstaff: session.started_by_name 
+      }, { status: 400 });
+    }
+
+    // Check if item already exists in this diner's cart with same options AND customizations
     const customizations = item.customizations || [];
     const customizationsKey = JSON.stringify(customizations.sort());
     
-    console.log('🔍 Checking for existing item with full comparison:', {
+    console.log('🔍 Checking for existing cart item with full comparison:', {
       sessionId,
       menuItemId: item.id,
       notes: options?.notes || null,
@@ -38,83 +63,86 @@ export async function POST(request: NextRequest) {
       customizationsKey: customizationsKey
     });
 
-    // Get all orders for this session and menu item to check for exact matches
-    const { data: allOrders, error: fetchError } = await supabase
+    // Get all cart items for this session, menu item, and diner to check for exact matches
+    const { data: allCartItems, error: fetchError } = await supabase
       .from('orders')
       .select('*')
       .eq('session_id', sessionId)
       .eq('menu_item_id', item.id)
-      .eq('status', 'preparing');
+      .eq('diner_name', dinerName)
+      .eq('status', 'cart');  // Only check cart items, not confirmed orders
 
     if (fetchError) {
-      console.error('❌ Error fetching existing orders:', fetchError);
+      console.error('❌ Error fetching existing cart items:', fetchError);
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
-    console.log('🔍 Found orders for this menu item:', allOrders?.length || 0);
+    console.log('🔍 Found cart items for this menu item:', allCartItems?.length || 0);
 
     // Find exact match including customizations
-    const existingOrder = allOrders?.find(order => {
-      const orderCustomizations = order.customizations || [];
-      const orderCustomizationsKey = JSON.stringify(orderCustomizations.sort());
+    const existingCartItem = allCartItems?.find(cartItem => {
+      const cartItemCustomizations = cartItem.customizations || [];
+      const cartItemCustomizationsKey = JSON.stringify(cartItemCustomizations.sort());
       
       const isExactMatch = 
-        order.notes === (options?.notes || null) &&
-        order.is_shared === (options?.isShared || false) &&
-        order.is_takeaway === (options?.isTakeaway || false) &&
-        orderCustomizationsKey === customizationsKey;
+        cartItem.notes === (options?.notes || null) &&
+        cartItem.is_shared === (options?.isShared || false) &&
+        cartItem.is_takeaway === (options?.isTakeaway || false) &&
+        cartItemCustomizationsKey === customizationsKey;
       
-      console.log('🔍 Comparing order:', {
-        orderId: order.id,
-        orderNotes: order.notes,
-        orderIsShared: order.is_shared,
-        orderIsTakeaway: order.is_takeaway,
-        orderCustomizations: orderCustomizations,
-        orderCustomizationsKey: orderCustomizationsKey,
+      console.log('🔍 Comparing cart item:', {
+        cartItemId: cartItem.id,
+        cartItemNotes: cartItem.notes,
+        cartItemIsShared: cartItem.is_shared,
+        cartItemIsTakeaway: cartItem.is_takeaway,
+        cartItemCustomizations: cartItemCustomizations,
+        cartItemCustomizationsKey: cartItemCustomizationsKey,
         isExactMatch: isExactMatch
       });
       
       return isExactMatch;
     });
 
-    console.log('🔍 Existing order found:', existingOrder);
+    console.log('🔍 Existing cart item found:', existingCartItem);
 
-    let order;
+    let cartItem;
     let error;
 
-    if (existingOrder) {
+    if (existingCartItem) {
       // Update existing item quantity
-      console.log('✅ Updating existing order:', existingOrder.id, 'from quantity', existingOrder.quantity, 'to', existingOrder.quantity + 1);
-      const { data: updatedOrder, error: updateError } = await supabase
+      console.log('✅ Updating existing cart item:', existingCartItem.id, 'from quantity', existingCartItem.quantity, 'to', existingCartItem.quantity + 1);
+      const { data: updatedCartItem, error: updateError } = await supabase
         .from('orders')
-        .update({ quantity: existingOrder.quantity + 1 })
-        .eq('id', existingOrder.id)
+        .update({ quantity: existingCartItem.quantity + 1 })
+        .eq('id', existingCartItem.id)
         .select()
         .single();
       
-      order = updatedOrder;
+      cartItem = updatedCartItem;
       error = updateError;
-      console.log('✅ Updated order result:', updatedOrder);
+      console.log('✅ Updated cart item result:', updatedCartItem);
     } else {
-      // Create new item
-      console.log('➕ Creating new order for item:', item.id);
-      const { data: newOrder, error: insertError } = await supabase
+      // Create new cart item
+      console.log('➕ Creating new cart item for item:', item.id);
+      const { data: newCartItem, error: insertError } = await supabase
         .from('orders')
         .insert({
           session_id: sessionId,
           menu_item_id: item.id,
+          diner_name: dinerName,
           quantity: 1,
-          status: 'preparing',
+          status: 'cart',  // Set status to 'cart' for cart items
           notes: options?.notes || null,
           is_shared: options?.isShared || false,
-          is_takeaway: options?.isTakeaway || false
+          is_takeaway: options?.isTakeaway || false,
+          customizations: customizations
         })
         .select()
         .single();
       
-      order = newOrder;
+      cartItem = newCartItem;
       error = insertError;
-      console.log('➕ New order created:', newOrder);
+      console.log('➕ New cart item created:', newCartItem);
     }
 
     if (error) {
@@ -122,42 +150,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Handle split bill pricing logic
-    let userPrice = item.price;
-    let splitBill = false;
-    let splitWith: string[] = [];
-    let totalPeople = 1;
-    
-    // 🔍 SPLIT BILL DEBUG: Track API split operations
-    if (options?.isShared) {
-      console.log('🔄 API Split Operation:', {
-        action: 'API_ADD_SHARED_ITEM',
-        itemId: item.id,
-        itemName: item.name,
-        isShared: options.isShared,
-        sessionId: sessionId,
-        quantity: order.quantity
-      });
-    }
-    
-    // For now, we'll handle split bill pricing on the frontend
-    // The API will store the full price, and the frontend will calculate the user's portion
-
-    const cartItem = {
-      id: order.id,
+    // Return the cart item data
+    const responseCartItem = {
+      id: cartItem.id,
       menu_item_id: item.id,
       name: item.name,
       price: item.price, // Store full price, frontend will calculate user portion
-      quantity: order.quantity, // Use actual quantity from database
+      quantity: cartItem.quantity, // Use actual quantity from database
       notes: options?.notes || undefined,
       isShared: options?.isShared || false,
       isTakeaway: options?.isTakeaway || false,
-      customizations: order.customizations || [], // Include customizations from database
+      customizations: cartItem.customizations || [], // Include customizations from database
+      dinerName: cartItem.diner_name,
       addedAt: Date.now()
     };
 
-    console.log('🛠️ API returning cart item:', cartItem);
-    return NextResponse.json({ item: cartItem });
+    console.log('🛠️ API returning cart item:', responseCartItem);
+    return NextResponse.json({ item: responseCartItem });
 
   } catch (error) {
     console.error('Error adding item to cart:', error);

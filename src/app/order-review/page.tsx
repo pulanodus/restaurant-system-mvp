@@ -2,8 +2,9 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useCart, CartProvider } from '@/contexts/CartContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
+import GlobalNavigation from '@/app/components/GlobalNavigation';
 
 function OrderReviewContent() {
   const searchParams = useSearchParams();
@@ -113,7 +114,7 @@ function OrderReviewContent() {
                     )}
                     <div className="flex items-center mt-1 space-x-2">
                       {item.isShared && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        <span className="text-xs style={{ backgroundColor: '#e6f9ff' }} style={{ color: '#00d9ff' }} px-2 py-1 rounded-full">
                           Shared
                         </span>
                       )}
@@ -226,11 +227,14 @@ function OrderReviewContent() {
             </button>
           )}
         </div>
+
+        {/* Global Navigation Bar */}
+        <GlobalNavigation sessionId={sessionId || undefined} />
     </div>
   );
 }
 
-export default function OrderReviewPage() {
+function OrderReviewPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
 
@@ -251,5 +255,20 @@ export default function OrderReviewPage() {
     <CartProvider sessionId={sessionId}>
       <OrderReviewContent />
     </CartProvider>
+  );
+}
+
+export default function OrderReviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <p className="text-gray-600">Preparing order review...</p>
+        </div>
+      </div>
+    }>
+      <OrderReviewPageContent />
+    </Suspense>
   );
 }

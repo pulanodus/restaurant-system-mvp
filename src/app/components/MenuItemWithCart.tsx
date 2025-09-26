@@ -130,13 +130,13 @@ const MenuItemWithCart = ({ item, sessionId }: MenuItemWithCartProps) => {
       <div className="flex items-center space-x-3 flex-grow min-w-0 md:flex-col md:space-x-0 md:space-y-3 md:w-full">
         <div className="w-20 h-20 bg-gray-200 rounded-md flex items-center justify-center flex-shrink-0 md:w-full md:h-32 relative overflow-hidden">
           <img 
-            src={item.image_url || getMenuItemPlaceholder(item.name, item.id)} 
+            src={item.image_url || getMenuItemPlaceholder(item.name)} 
             alt={item.name} 
             className="w-full h-full object-cover rounded-md" 
             onError={(e) => {
               // Fallback to placeholder if image fails to load
               const target = e.target as HTMLImageElement;
-              target.src = getMenuItemPlaceholder(item.name, item.id);
+              target.src = getMenuItemPlaceholder(item.name);
             }}
           />
           {item.rating && (

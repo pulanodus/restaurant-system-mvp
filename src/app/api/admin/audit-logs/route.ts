@@ -198,15 +198,17 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
     ].join('\n');
 
     // Log export action
-    await supabaseServer.from('audit_logs').insert({
-      action: 'audit_log_export',
-      details: {
-        filters,
-        recordCount: auditLogs?.length || 0,
-        exportedBy: user.id
-      },
-      performed_by: user.id
-    });
+    if (user) {
+      await supabaseServer.from('audit_logs').insert({
+        action: 'audit_log_export',
+        details: {
+          filters,
+          recordCount: auditLogs?.length || 0,
+          exportedBy: user.id
+        },
+        performed_by: user.id
+      });
+    }
 
     return new NextResponse(csvContent, {
       status: 200,

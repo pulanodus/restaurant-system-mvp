@@ -37,6 +37,11 @@ export const POST = async (request: NextRequest) => {
       );
     }
     
+    // Extract table number safely
+    const tableNumber = Array.isArray(sessionData.tables) 
+      ? sessionData.tables[0]?.table_number 
+      : (sessionData.tables as any)?.table_number;
+
     // Create customer help notification
     const { data: notification, error: notificationError } = await supabaseServer
       .from('notifications')
@@ -44,7 +49,7 @@ export const POST = async (request: NextRequest) => {
         session_id: sessionId,
         type: 'customer_help',
         title: 'Customer Assistance',
-        message: `Table ${sessionData.tables.table_number} customer needs help: ${message}`,
+        message: `Table ${tableNumber} customer needs help: ${message}`,
         priority: helpType === 'urgent' ? 'high' : 'medium',
         status: 'pending',
         metadata: {
@@ -78,7 +83,7 @@ export const POST = async (request: NextRequest) => {
       success: true,
       notification: notification,
       message: 'Help request submitted successfully',
-      table_number: sessionData.tables.table_number
+      table_number: tableNumber
     });
     
   } catch (error) {

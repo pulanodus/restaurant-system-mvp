@@ -19,6 +19,8 @@ export default function GlobalNavigation({ sessionId, className = '' }: GlobalNa
   
   // Get sessionId from props, searchParams, or cart context
   const currentSessionId = sessionId || searchParams.get('sessionId') || state.sessionId;
+  // Get dinerName from cart context or URL parameters as fallback
+  const currentDinerName = state.dinerName || searchParams.get('dinerName');
   const itemCount = state.items?.length || 0;
 
   // Don't render if no sessionId is available
@@ -63,7 +65,7 @@ export default function GlobalNavigation({ sessionId, className = '' }: GlobalNa
         <div className="flex items-center justify-around py-2">
           {/* Menu Button */}
           <Link
-            href={`/session/${currentSessionId}`}
+            href={`/session/${currentSessionId}${currentDinerName ? `?dinerName=${encodeURIComponent(currentDinerName)}` : ''}`}
             className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-[#00d9ff] transition-colors"
           >
             <Menu className="w-6 h-6 mb-1" />
@@ -72,7 +74,7 @@ export default function GlobalNavigation({ sessionId, className = '' }: GlobalNa
 
           {/* Live Bill Button */}
           <Link
-            href={`/live-bill?sessionId=${currentSessionId}`}
+            href={`/live-bill?sessionId=${currentSessionId}${currentDinerName ? `&dinerName=${encodeURIComponent(currentDinerName)}` : ''}`}
             className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-[#00d9ff] transition-colors"
           >
             <Receipt className="w-6 h-6 mb-1" />
@@ -81,7 +83,7 @@ export default function GlobalNavigation({ sessionId, className = '' }: GlobalNa
 
           {/* Cart Button */}
           <Link
-            href={`/cart-review?sessionId=${currentSessionId}`}
+            href={`/cart-review?sessionId=${currentSessionId}${currentDinerName ? `&dinerName=${encodeURIComponent(currentDinerName)}` : ''}`}
             className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-[#00d9ff] transition-colors relative"
           >
             <ShoppingCart className="w-6 h-6 mb-1" />

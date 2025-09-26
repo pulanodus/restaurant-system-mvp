@@ -4,7 +4,7 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    const { tableId, staffId } = await request.json();
+    const { tableId, staffId, staffName } = await request.json();
     
     if (!tableId || !staffId) {
       return NextResponse.json(
@@ -20,10 +20,11 @@ export const POST = async (request: NextRequest) => {
     let staffError = null;
     
     try {
+      // First try to find by staff_id (the actual staff identifier)
       const { data: staffData, error: staffErr } = await supabaseServer
         .from('staff')
         .select('*')
-        .eq('id', staffId)
+        .eq('staff_id', staffId)
         .eq('is_active', true)
         .single();
       
@@ -35,7 +36,7 @@ export const POST = async (request: NextRequest) => {
     }
 
     // If staff table doesn't exist, use fallback authentication
-    if (staffError && (staffError.code === 'PGRST116' || staffError.message?.includes('Could not find the table'))) {
+    if (staffError && ((staffError as any).code === 'PGRST116' || (staffError as any).message?.includes('Could not find the table'))) {
       console.log('ℹ️ Using fallback staff authentication for PIN generation');
       
       // Create a mock staff object for valid staff IDs
@@ -46,17 +47,21 @@ export const POST = async (request: NextRequest) => {
         'MANAGER01', 'MANAGER02', 'MANAGER03'
       ];
       
-      if (validStaffIds.includes(staffId)) {
+      // Check if staffId is in valid list or if it's a mock ID (starts with 'mock-')
+      const actualStaffId = staffId.startsWith('mock-') ? staffId.substring(5) : staffId;
+      
+      if (validStaffIds.includes(actualStaffId)) {
         staff = {
-          id: `mock-${staffId}`,
-          staff_id: staffId,
-          name: `Staff ${staffId}`,
-          email: `${staffId.toLowerCase()}@restaurant.com`,
-          role: staffId.startsWith('MANAGER') ? 'manager' : 
-                staffId.startsWith('SERVER') ? 'server' : 'waiter',
+          id: staffId, // Keep the original ID (might be mock-STAFF001)
+          staff_id: actualStaffId, // The actual staff ID
+          name: staffName?.trim() || `Staff ${actualStaffId}`, // Use provided name or fallback
+          email: `${actualStaffId.toLowerCase()}@restaurant.com`,
+          role: actualStaffId.startsWith('MANAGER') ? 'manager' : 
+                actualStaffId.startsWith('SERVER') ? 'server' : 'waiter',
           is_active: true
         };
         staffError = null;
+        console.log('✅ Using staff name:', staffName?.trim() || `Staff ${actualStaffId}`);
       }
     }
 
@@ -207,4 +212,4 @@ export const POST = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-});
+};

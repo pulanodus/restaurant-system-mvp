@@ -28,7 +28,8 @@ interface CartItem {
 export default function CartReviewPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
-  const { items, removeItem, updateQuantity, loadCartItems } = useContext(CartContext);
+  const cartContext = useContext(CartContext);
+  const { items, removeItem, updateQuantity, loadCartItems } = (cartContext as any) || { items: [], removeItem: () => {}, updateQuantity: () => {}, loadCartItems: () => {} };
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -127,7 +128,7 @@ export default function CartReviewPage() {
             </div>
           ) : (
             <>
-              {items.map((item) => (
+              {items.map((item: any) => (
                 <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
@@ -141,19 +142,19 @@ export default function CartReviewPage() {
 
                   {/* Split Bill Info */}
                   {item.isSplit && (
-                    <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                    <div className="mb-3 p-3 style={{ backgroundColor: '#f0fdff' }} rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium text-blue-900">
+                          <p className="text-sm font-medium style={{ color: '#00d9ff' }}">
                             Full price ₱{((item.originalPrice || item.price) * item.quantity).toFixed(2)}
                           </p>
-                          <p className="text-xs text-blue-700 italic">
+                          <p className="text-xs style={{ color: '#00d9ff' }} italic">
                             Split {item.splitCount} ways with {item.participants?.join(', ') || 'others'}
                           </p>
                         </div>
                         <Link
                           href={`/split-bill?sessionId=${sessionId}&itemId=${item.menu_item_id}`}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1"
+                          className="style={{ color: '#00d9ff' }} hover:style={{ color: '#00d9ff' }} text-sm font-medium flex items-center space-x-1"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Edit Split</span>

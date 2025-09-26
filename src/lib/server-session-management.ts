@@ -32,7 +32,7 @@ export async function createSessionWithServiceRole(
       .single()
     
     if (error) {
-      logDetailedError('Service role session creation', error)
+      console.error('Service role session creation', error)
       return { data: null, error }
     }
     
@@ -40,14 +40,10 @@ export async function createSessionWithServiceRole(
     return { data, error: null }
     
   } catch (err) {
-    logDetailedError('Service role session creation exception', err)
+    console.error('Service role session creation exception', err)
     return { 
       data: null, 
-      error: new AppError({
-        message: 'Failed to create session with service role',
-        code: 'SERVICE_ROLE_SESSION_CREATE_ERROR',
-        originalError: err
-      })
+      error: new Error('Failed to create session with service role: ' + (err as Error).message)
     }
   }
 }
@@ -69,7 +65,7 @@ export async function getTableInfoWithServiceRole(
       .single()
     
     if (error) {
-      logDetailedError('Service role table info fetch', error)
+      console.error('Service role table info fetch', error)
       return { data: null, error }
     }
     
@@ -77,14 +73,10 @@ export async function getTableInfoWithServiceRole(
     return { data, error: null }
     
   } catch (err) {
-    logDetailedError('Service role table info fetch exception', err)
+    console.error('Service role table info fetch exception', err)
     return { 
       data: null, 
-      error: new AppError({
-        message: 'Failed to get table info with service role',
-        code: 'SERVICE_ROLE_TABLE_INFO_ERROR',
-        originalError: err
-      })
+      error: new Error('Failed to get table info with service role: ' + (err as Error).message)
     }
   }
 }
@@ -108,7 +100,7 @@ export async function updateTableStatusWithServiceRole(
       .single()
     
     if (error) {
-      logDetailedError('Service role table update', error)
+      console.error('Service role table update', error)
       return { data: null, error }
     }
     
@@ -116,14 +108,10 @@ export async function updateTableStatusWithServiceRole(
     return { data, error: null }
     
   } catch (err) {
-    logDetailedError('Service role table update exception', err)
+    console.error('Service role table update exception', err)
     return { 
       data: null, 
-      error: new AppError({
-        message: 'Failed to update table status with service role',
-        code: 'SERVICE_ROLE_TABLE_UPDATE_ERROR',
-        originalError: err
-      })
+      error: new Error('Failed to update table status with service role: ' + (err as Error).message)
     }
   }
 }
@@ -139,10 +127,10 @@ export async function getAllSessionsWithServiceRole(): Promise<{ data: unknown[]
     const { data, error } = await supabaseServer
       .from('sessions')
       .select('*')
-      .order('started_at', { ascending: false })
+      .order('created_at', { ascending: false })
     
     if (error) {
-      logDetailedError('Service role sessions fetch', error)
+      console.error('Service role sessions fetch', error)
       return { data: [], error }
     }
     
@@ -150,14 +138,10 @@ export async function getAllSessionsWithServiceRole(): Promise<{ data: unknown[]
     return { data: data || [], error: null }
     
   } catch (err) {
-    logDetailedError('Service role sessions fetch exception', err)
+    console.error('Service role sessions fetch exception', err)
     return { 
       data: [], 
-      error: new AppError({
-        message: 'Failed to get all sessions with service role',
-        code: 'SERVICE_ROLE_SESSIONS_FETCH_ERROR',
-        originalError: err
-      })
+      error: new Error('Failed to get all sessions with service role: ' + (err as Error).message)
     }
   }
 }
@@ -180,7 +164,7 @@ export async function deleteSessionWithServiceRole(
       .single()
     
     if (error) {
-      logDetailedError('Service role session deletion', error)
+      console.error('Service role session deletion', error)
       return { data: null, error }
     }
     
@@ -188,14 +172,10 @@ export async function deleteSessionWithServiceRole(
     return { data, error: null }
     
   } catch (err) {
-    logDetailedError('Service role session deletion exception', err)
+    console.error('Service role session deletion exception', err)
     return { 
       data: null, 
-      error: new AppError({
-        message: 'Failed to delete session with service role',
-        code: 'SERVICE_ROLE_SESSION_DELETE_ERROR',
-        originalError: err
-      })
+      error: new Error('Failed to delete session with service role: ' + (err as Error).message)
     }
   }
 }
@@ -215,11 +195,7 @@ export async function createSessionWithFullValidation(
     if (tableInfo.error || !tableInfo.data) {
       return { 
         data: null, 
-        error: new AppError({
-          message: `Table validation failed: ${tableInfo.error instanceof Error ? tableInfo.error.message : 'Table not found'}`,
-          code: 'TABLE_VALIDATION_ERROR',
-          originalError: tableInfo.error
-        })
+        error: new Error(`Table validation failed: ${tableInfo.error instanceof Error ? tableInfo.error.message : 'Table not found'}`)
       }
     }
     
@@ -227,10 +203,7 @@ export async function createSessionWithFullValidation(
     if (tableInfo.data.occupied) {
       return { 
         data: null, 
-        error: new AppError({
-          message: `Table ${tableInfo.data.table_number} is already occupied`,
-          code: 'TABLE_OCCUPIED_ERROR'
-        })
+        error: new Error(`Table ${tableInfo.data.table_number} is already occupied`)
       }
     }
     
@@ -263,11 +236,7 @@ export async function createSessionWithFullValidation(
       await deleteSessionWithServiceRole(sessionDataTyped.id)
       return { 
         data: null, 
-        error: new AppError({
-          message: 'Failed to update table status after session creation',
-          code: 'TABLE_UPDATE_AFTER_SESSION_ERROR',
-          originalError: tableUpdateResult.error
-        })
+        error: new Error('Failed to update table status after session creation: ' + (tableUpdateResult.error as Error).message)
       }
     }
     
@@ -275,14 +244,67 @@ export async function createSessionWithFullValidation(
     return { data: sessionResult.data, error: null }
     
   } catch (err) {
-    logDetailedError('Full validation session creation exception', err)
+    console.error('Full validation session creation exception', err)
     return { 
       data: null, 
-      error: new AppError({
-        message: 'Failed to create session with full validation',
-        code: 'FULL_VALIDATION_SESSION_CREATE_ERROR',
-        originalError: err
-      })
+      error: new Error('Failed to create session with full validation: ' + (err as Error).message)
+    }
+  }
+}
+
+/**
+ * Server-side function to end a session and update table status
+ * This bypasses RLS and should only be used for administrative operations
+ */
+export async function endSessionWithServiceRole(
+  sessionId: string
+): Promise<{ data: unknown; error: unknown }> {
+  try {
+    console.log('🔧 Ending session with service role:', sessionId)
+    
+    // 1. Get session info to find the table
+    const { data: session, error: sessionError } = await supabaseServer
+      .from('sessions')
+      .select('id, table_id, status')
+      .eq('id', sessionId)
+      .single()
+    
+    if (sessionError || !session) {
+      console.error('Service role session fetch for ending', sessionError)
+      return { data: null, error: sessionError }
+    }
+    
+    // 2. Update session status to completed
+    const { data: updatedSession, error: updateError } = await supabaseServer
+      .from('sessions')
+      .update({ status: 'completed' })
+      .eq('id', sessionId)
+      .select()
+      .single()
+    
+    if (updateError) {
+      console.error('Service role session end update', updateError)
+      return { data: null, error: updateError }
+    }
+    
+    // 3. Update table status to unoccupied
+    const tableUpdateResult = await updateTableStatusWithServiceRole(session.table_id, {
+      occupied: false
+    })
+    
+    if (tableUpdateResult.error) {
+      console.error('Service role table status update after session end', tableUpdateResult.error)
+      // Don't fail the operation, just log the error
+    }
+    
+    console.log('✅ Session ended with service role:', updatedSession)
+    return { data: updatedSession, error: null }
+    
+  } catch (err) {
+    console.error('Service role session end exception', err)
+    return { 
+      data: null, 
+      error: new Error('Failed to end session with service role: ' + (err as Error).message)
     }
   }
 }

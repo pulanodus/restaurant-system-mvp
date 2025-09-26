@@ -6,6 +6,7 @@ import { LogIn, User, Key, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function StaffPinEntryPage() {
   const [staffId, setStaffId] = useState('');
+  const [staffName, setStaffName] = useState('');
   const [deviceId, setDeviceId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,6 +39,11 @@ export default function StaffPinEntryPage() {
       setError('Please enter your Staff ID');
       return;
     }
+    
+    if (!staffName.trim()) {
+      setError('Please enter your name');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
@@ -51,6 +57,7 @@ export default function StaffPinEntryPage() {
         body: JSON.stringify({
           staffId: staffId.trim(),
           deviceId: deviceId.trim() || null,
+          staffName: staffName.trim(),
         }),
       });
 
@@ -84,7 +91,7 @@ export default function StaffPinEntryPage() {
             <User className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Staff Portal</h1>
-          <p className="text-gray-600">Enter your credentials to access the dashboard</p>
+          <p className="text-gray-600">Enter your credentials and name to access the dashboard</p>
         </div>
 
         {/* Login Form */}
@@ -111,6 +118,30 @@ export default function StaffPinEntryPage() {
                   disabled={isLoading}
                 />
               </div>
+            </div>
+
+            {/* Staff Name Input */}
+            <div>
+              <label htmlFor="staffName" className="block text-sm font-medium text-gray-700 mb-2">
+                Your Name
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  id="staffName"
+                  name="staffName"
+                  value={staffName}
+                  onChange={(e) => setStaffName(e.target.value)}
+                  placeholder="e.g., John Smith, Sarah, Thabo"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00d9ff] focus:border-transparent transition-colors text-gray-900"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">This is how customers will see you</p>
             </div>
 
             {/* Device ID Input (Optional) */}
@@ -151,7 +182,7 @@ export default function StaffPinEntryPage() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isLoading || !staffId.trim()}
+              disabled={isLoading || !staffId.trim() || !staffName.trim()}
               className="w-full bg-[#00d9ff] hover:bg-[#00c7e6] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
             >
               {isLoading ? (

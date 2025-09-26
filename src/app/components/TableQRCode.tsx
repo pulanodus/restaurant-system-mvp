@@ -22,7 +22,7 @@ export default function TableQRCode({ tableId, size = 128 }: TableQRCodeProps) {
           width: size,
           margin: 2,
           color: {
-            dark: '#000000',
+            dark: '#00d9ff', // Brand blue color
             light: '#FFFFFF'
           }
         });

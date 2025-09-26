@@ -1,0 +1,40 @@
+{
+  "files.associations": {
+    "*.md": "markdown",
+    "*.sql": "sql"
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/build": true
+  },
+  "emmet.includeLanguages": {
+    "markdown": "html"
+  },
+  "markdown.preview.breaks": true,
+  "markdown.preview.linkify": true,
+  "sql.format.enable": true,
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.next/**": true
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.md": "${capture}.md, ${capture}.txt, ${capture}.doc",
+    "*.sql": "${capture}.sql, ${capture}.md, ${capture}.txt",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb",
+    "tsconfig.json": "tsconfig.*.json",
+    "next.config.*": "next.config.*"
+  }
+}

@@ -23,6 +23,17 @@ export default function TableOptions({
   const [showNameInput, setShowNameInput] = useState(false)
   const [guestName, setGuestName] = useState('')
 
+  // Debug logging for props
+  console.log('🔍 TableOptions props:', {
+    tableId,
+    sessionId,
+    isNew,
+    tableNumber,
+    startedByName,
+    sessionIdType: typeof sessionId,
+    sessionIdExists: !!sessionId
+  })
+
   const handleStartNewSession = () => {
     // Show name input instead of directly creating session
     setShowNameInput(true)
@@ -42,12 +53,25 @@ export default function TableOptions({
   }
 
   const handleJoinSession = async () => {
+    console.log('🔍 TableOptions - handleJoinSession called:', {
+      sessionId,
+      sessionIdType: typeof sessionId,
+      sessionIdLength: sessionId?.length
+    })
+    
     if (sessionId) {
       try {
         await joinSession(sessionId)
       } catch (error) {
-        console.error('Failed to join session:', error)
+        console.error('❌ TableOptions - Failed to join session:', {
+          error,
+          sessionId,
+          errorType: typeof error,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        })
       }
+    } else {
+      console.error('❌ TableOptions - No sessionId provided for joining session')
     }
   }
 
@@ -158,15 +182,6 @@ export default function TableOptions({
         </div>
       )}
       
-      {/* Debug section for development */}
-      {process.env.NODE_ENV === 'development' && error && (
-        <details className="mt-4 p-2 bg-gray-100 rounded-md text-xs">
-          <summary className="cursor-pointer font-medium">Debug Info</summary>
-          <pre className="mt-2 whitespace-pre-wrap">
-            {JSON.stringify({ error, session, isNew, sessionId, startedByName }, null, 2)}
-          </pre>
-        </details>
-      )}
     </div>
   )
 }

@@ -1,11 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { FileText, ArrowLeft, CheckCircle } from 'lucide-react';
 
-export default function WaiterBillPage() {
+function WaiterBillPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -86,5 +86,20 @@ export default function WaiterBillPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function WaiterBillPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <p className="text-gray-600">Preparing bill request...</p>
+        </div>
+      </div>
+    }>
+      <WaiterBillPageContent />
+    </Suspense>
   );
 }

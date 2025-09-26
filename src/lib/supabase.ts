@@ -65,12 +65,12 @@ const createDebugFetch = () => {
       
       // Log error details
       console.group(`🔴 Supabase Network Error [${requestId}]`)
-      console.error('❌ Error:', error)
+      console.error('❌ Error:', _error)
       console.error('❌ Duration:', `${duration}ms`)
       console.error('❌ Timestamp:', new Date().toISOString())
       console.groupEnd()
       
-      throw error
+      throw _error
     }
   }
 }

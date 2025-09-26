@@ -30,6 +30,7 @@ export interface CartItem {
 interface CartState {
   items: CartItem[]
   sessionId: string | null
+  dinerName: string | null
   isLoading: boolean
   error: string | null
   isCleared: boolean
@@ -37,12 +38,14 @@ interface CartState {
 
 type CartAction =
   | { type: 'SET_SESSION'; payload: string }
+  | { type: 'SET_DINER_NAME'; payload: string }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'LOAD_ITEMS'; payload: CartItem[] }
   | { type: 'ADD_ITEM'; payload: CartItem }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
+  | { type: 'UPDATE_ITEM'; payload: { itemId: string; options: any } }
   | { type: 'UPDATE_SPLIT_DATA'; payload: { menuItemId: string; splitCount: number; sharedWith: string[]; discountedPrice: number } }
   | { type: 'CLEAR_CART' }
   | { type: 'SET_CLEARED'; payload: boolean }
@@ -51,6 +54,7 @@ type CartAction =
 const initialState: CartState = {
   items: [],
   sessionId: null,
+  dinerName: null,
   isLoading: false,
   error: null,
   isCleared: false
@@ -61,6 +65,10 @@ function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case 'SET_SESSION':
       return { ...state, sessionId: action.payload }
+    
+    case 'SET_DINER_NAME':
+      console.log('🔍 CartContext - SET_DINER_NAME reducer called with:', action.payload);
+      return { ...state, dinerName: action.payload }
     
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload }
@@ -114,6 +122,16 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ).filter(item => item.quantity > 0)
       }
     
+    case 'UPDATE_ITEM':
+      return {
+        ...state,
+        items: state.items.map(item =>
+          item.id === action.payload.itemId
+            ? { ...item, ...action.payload.options }
+            : item
+        )
+      }
+    
     case 'UPDATE_SPLIT_DATA':
       return {
         ...state,
@@ -147,21 +165,33 @@ const CartContext = createContext<{
   addItem: (item: any, options?: { notes?: string; isShared?: boolean; isTakeaway?: boolean; customizations?: any[] }) => Promise<void>
   removeItem: (itemId: string) => Promise<void>
   updateQuantity: (itemId: string, quantity: number, options?: { notes?: string; isShared?: boolean; isTakeaway?: boolean; customizations?: any[] }) => Promise<void>
+  updateItem: (updateData: { itemId: string; quantity: number; options: any }) => Promise<void>
   updateSplitData: (menuItemId: string, splitCount: number, sharedWith: string[], discountedPrice: number) => void
   getItemQuantity: (menuItemId: string) => number
   clearCart: () => Promise<void>
   loadCartItems: () => Promise<void>
+  setDinerName: (dinerName: string) => void
 } | null>(null)
 
 // Provider component
-export function CartProvider({ children, sessionId }: { children: React.ReactNode; sessionId: string }) {
+export function CartProvider({ children, sessionId, dinerName }: { children: React.ReactNode; sessionId: string; dinerName?: string | null }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
 
   // Use the sessionId passed from DynamicLayout
   const currentSessionId = sessionId
   
+  // Set diner name if provided
+  useEffect(() => {
+    if (dinerName && dinerName !== state.dinerName) {
+      console.log('🔍 CartProvider - Setting diner name from props:', dinerName);
+      dispatch({ type: 'SET_DINER_NAME', payload: dinerName });
+    }
+  }, [dinerName, state.dinerName]);
+  
   console.log('🚀 CartProvider initialized:', {
     sessionId: currentSessionId,
+    dinerName: dinerName,
+    stateDinerName: state.dinerName,
     sessionIdLength: currentSessionId?.length || 0,
     stateItems: state.items,
     stateItemsLength: state.items?.length || 0,
@@ -176,21 +206,27 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
       return
     }
 
-    console.log('CartContext - Loading cart items for sessionId:', currentSessionId)
+    if (!state.dinerName) {
+      console.log('CartContext - No dinerName, skipping loadCartItems')
+      // Clear cart if no diner name to prevent showing other users' items
+      dispatch({ type: 'LOAD_ITEMS', payload: [] })
+      return
+    }
+
+    console.log('CartContext - Loading cart items for sessionId:', currentSessionId, 'and dinerName:', state.dinerName)
 
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'SET_ERROR', payload: null })
 
-      // Note: Cleanup is now handled by the API route itself, not here
-
       console.log('🟡 CartContext - Making API request to:', window.location.origin + '/api/cart/load');
-      console.log('🟡 CartContext - Request body:', { sessionId: currentSessionId });
+      console.log('🟡 CartContext - Request body:', { sessionId: currentSessionId, dinerName: state.dinerName });
+      console.log('🟡 CartContext - Current dinerName state:', state.dinerName);
 
       const response = await fetch('/api/cart/load', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: currentSessionId })
+        body: JSON.stringify({ sessionId: currentSessionId, dinerName: state.dinerName })
       })
 
       console.log('🟡 CartContext - API response status:', response.status);
@@ -203,26 +239,50 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
       }
 
       const { items } = await response.json()
-      console.log('CartContext - Loaded cart items:', items)
+      console.log('CartContext - Loaded cart items for', state.dinerName, ':', items)
       dispatch({ type: 'LOAD_ITEMS', payload: items || [] })
     } catch (error) {
       console.error('Error loading cart items:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to load cart items'
       dispatch({ type: 'SET_ERROR', payload: errorMessage })
+      // Clear cart on error to prevent showing stale data
+      dispatch({ type: 'LOAD_ITEMS', payload: [] })
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [currentSessionId])
+  }, [currentSessionId, state.dinerName])
 
-  // Set session ID and load cart items
+  // Set session ID when it changes
   useEffect(() => {
-    console.log('CartContext - useEffect triggered, currentSessionId:', currentSessionId)
+    console.log('🔍 CartContext - useEffect triggered, currentSessionId:', currentSessionId)
     if (currentSessionId) {
       dispatch({ type: 'SET_SESSION', payload: currentSessionId })
-      // Load cart items when sessionId changes
-      loadCartItems()
     }
   }, [currentSessionId])
+
+  // CRITICAL FIX: Reload cart items when diner name changes
+  useEffect(() => {
+    if (currentSessionId && state.dinerName) {
+      console.log('🔍 CartContext - Diner name changed, reloading cart items for:', state.dinerName)
+      loadCartItems()
+    }
+  }, [state.dinerName, currentSessionId, loadCartItems])
+
+  // Load cart items when sessionId is available (diner name loading is handled separately)
+  useEffect(() => {
+    if (currentSessionId) {
+      console.log('🔍 CartContext - SessionId available, loading cart items:', {
+        sessionId: currentSessionId,
+        dinerName: state.dinerName
+      })
+      loadCartItems()
+    } else {
+      console.log('🔍 CartContext - Waiting for sessionId:', { 
+        sessionId: currentSessionId, 
+        dinerName: state.dinerName 
+      })
+    }
+  }, [currentSessionId, loadCartItems])
 
   // Add item to cart
   const addItem = async (item: any, options?: { notes?: string; isShared?: boolean; isTakeaway?: boolean; customizations?: any[] }) => {
@@ -249,7 +309,7 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
         dispatch({ type: 'SET_CLEARED', payload: false })
       }
 
-      const requestBody = { sessionId: currentSessionId, item, options };
+      const requestBody = { sessionId: currentSessionId, item, options, dinerName: state.dinerName };
       console.log('🟡 CartContext - Making API request to:', window.location.origin + '/api/cart/add');
       console.log('🟡 CartContext - Request body:', requestBody);
 
@@ -279,13 +339,22 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
 
   // Remove item from cart
   const removeItem = async (itemId: string) => {
-    if (!currentSessionId) return
+    if (!currentSessionId) {
+      console.error('❌ CartContext - No session ID available for removeItem');
+      return
+    }
+
+    if (!state.dinerName) {
+      console.error('❌ CartContext - No diner name available for removeItem');
+      dispatch({ type: 'SET_ERROR', payload: 'No diner name available' })
+      return
+    }
 
     try {
       const response = await fetch('/api/cart/remove', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId })
+        body: JSON.stringify({ itemId, dinerName: state.dinerName })
       })
 
       if (!response.ok) {
@@ -302,7 +371,16 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
 
   // Update item quantity
   const updateQuantity = async (itemId: string, quantity: number, options?: { notes?: string; isShared?: boolean; isTakeaway?: boolean; customizations?: any[] }) => {
-    if (!currentSessionId) return
+    if (!currentSessionId) {
+      console.error('❌ CartContext - No session ID available for updateQuantity');
+      return
+    }
+
+    if (!state.dinerName) {
+      console.error('❌ CartContext - No diner name available for updateQuantity');
+      dispatch({ type: 'SET_ERROR', payload: 'No diner name available' })
+      return
+    }
 
     try {
       if (quantity <= 0) {
@@ -313,7 +391,7 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
       const response = await fetch('/api/cart/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId, quantity, options })
+        body: JSON.stringify({ itemId, quantity, options, dinerName: state.dinerName })
       })
 
       if (!response.ok) {
@@ -325,6 +403,29 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
     } catch (error) {
       console.error('Error updating item quantity:', error)
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to update item quantity' })
+    }
+  }
+
+  // Update item with new options
+  const updateItem = async (updateData: { itemId: string; quantity: number; options: any }) => {
+    if (!currentSessionId) return
+
+    try {
+      const response = await fetch('/api/cart/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update item')
+      }
+
+      dispatch({ type: 'UPDATE_ITEM', payload: { itemId: updateData.itemId, options: updateData.options } })
+    } catch (error) {
+      console.error('Error updating item:', error)
+      dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to update item' })
     }
   }
 
@@ -362,16 +463,23 @@ export function CartProvider({ children, sessionId }: { children: React.ReactNod
     }
   }
 
+  const setDinerName = (dinerName: string) => {
+    console.log('🔍 CartContext - setDinerName called with:', dinerName);
+    dispatch({ type: 'SET_DINER_NAME', payload: dinerName })
+  }
+
   const value = {
     state,
     dispatch,
     addItem,
     removeItem,
     updateQuantity,
+    updateItem,
     updateSplitData,
     getItemQuantity,
     clearCart,
-    loadCartItems
+    loadCartItems,
+    setDinerName
   }
 
   return (

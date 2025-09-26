@@ -33,82 +33,135 @@ export const POST = async (request: NextRequest) => {
       );
     }
     
-    // Call the database function to request payment
-    console.log('🔍 Calling request_payment function with:', {
+    // SUSTAINABLE SOLUTION: Handle payment request directly without database function
+    console.log('🔧 PROCESSING PAYMENT REQUEST DIRECTLY:', {
       sessionId,
       tipAmount: parseFloat(tipAmount.toString()),
       finalTotal: parseFloat(finalTotal.toString()),
-      paymentType
+      paymentType,
+      subtotal: subtotal ? parseFloat(subtotal.toString()) : null,
+      vat: vat ? parseFloat(vat.toString()) : null
     });
     
-    const { data, error } = await supabaseServer.rpc('request_payment', {
-      session_id_param: sessionId,
-      tip_amount_param: parseFloat(tipAmount.toString()),
-      payment_type_param: paymentType,
-      passed_subtotal: paymentType === 'individual' && subtotal ? parseFloat(subtotal.toString()) : null,
-      passed_vat: paymentType === 'individual' && vat ? parseFloat(vat.toString()) : null,
-      passed_final_total: paymentType === 'individual' ? parseFloat(finalTotal.toString()) : null
-    });
+    // Step 1: Get session details (simple query to avoid join issues)
+    const { data: sessionData, error: sessionError } = await supabaseServer
+      .from('sessions')
+      .select('id, table_id, status, started_by_name')
+      .eq('id', sessionId)
+      .single();
     
-    if (error) {
-      console.error('❌ Database function error:', error);
+    if (sessionError) {
+      console.error('❌ Error fetching session:', sessionError);
       return NextResponse.json(
-        { error: `Payment request failed: ${error.message}` },
+        { error: `Session not found: ${sessionError.message}` },
+        { status: 404 }
+      );
+    }
+    
+    if (!sessionData) {
+      console.error('❌ Session not found');
+      return NextResponse.json(
+        { error: 'Session not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Step 1b: Get table information separately
+    const { data: tableData, error: tableError } = await supabaseServer
+      .from('tables')
+      .select('id, table_number, capacity')
+      .eq('id', sessionData.table_id)
+      .single();
+    
+    if (tableError) {
+      console.error('❌ Error fetching table:', tableError);
+      return NextResponse.json(
+        { error: `Table not found: ${tableError.message}` },
+        { status: 404 }
+      );
+    }
+    
+    const tableNumber = tableData?.table_number;
+    const tipAmountFloat = parseFloat(tipAmount.toString());
+    const finalTotalFloat = parseFloat(finalTotal.toString());
+    const subtotalFloat = subtotal ? parseFloat(subtotal.toString()) : null;
+    const vatFloat = vat ? parseFloat(vat.toString()) : null;
+    
+    console.log('🔍 Session and table details:', {
+      sessionId: sessionData.id,
+      tableNumber,
+      tableId: sessionData.table_id,
+      status: sessionData.status,
+      startedBy: sessionData.started_by_name
+    });
+    
+    // Step 2: Update session with payment details (only existing columns)
+    const { error: updateError } = await supabaseServer
+      .from('sessions')
+      .update({
+        payment_status: 'pending',
+        final_total: finalTotalFloat,
+        payment_requested_at: new Date().toISOString()
+      })
+      .eq('id', sessionId);
+    
+    if (updateError) {
+      console.error('❌ Error updating session:', updateError);
+      return NextResponse.json(
+        { error: `Failed to update session: ${updateError.message}` },
         { status: 500 }
       );
     }
     
-    if (!data || !data.success) {
-      console.error('❌ Payment request failed:', data);
-      return NextResponse.json(
-        { error: data?.error || 'Payment request failed' },
-        { status: 500 }
-      );
-    }
+    console.log('✅ Session updated successfully with payment details');
     
-    console.log('✅ Payment request successful:', data);
-    
-    // Create payment request notification
+    // Step 3: Create payment request notification using our calculated values
+    let notificationId = null;
     try {
-      const { error: notificationError } = await supabaseServer
+      const { data: notificationData, error: notificationError } = await supabaseServer
         .from('notifications')
         .insert({
           session_id: sessionId,
           type: 'payment_request',
           title: 'Payment Request',
-          message: `Table ${data.table_number} requests payment - P${data.final_total.toFixed(2)}`,
+          message: `Table ${tableNumber} requests payment - P${finalTotalFloat.toFixed(2)}`,
           priority: 'high',
           status: 'pending',
           metadata: {
             payment_type: paymentType,
-            subtotal: data.subtotal,
-            vat_amount: data.vat_amount,
-            tip_amount: data.tip_amount,
-            final_total: data.final_total
+            subtotal: subtotalFloat,
+            vat_amount: vatFloat,
+            tip_amount: tipAmountFloat,
+            final_total: finalTotalFloat
           }
-        });
+        })
+        .select('id')
+        .single();
 
       if (notificationError) {
         console.error('⚠️ Failed to create payment request notification:', notificationError);
       } else {
-        console.log('✅ Payment request notification created for table:', data.table_number);
+        notificationId = notificationData.id;
+        console.log('✅ Payment request notification created for table:', tableNumber);
       }
     } catch (notificationError) {
       console.error('⚠️ Error creating payment request notification:', notificationError);
       // Don't fail the main operation if notification creation fails
     }
     
+    // Step 4: Return success response with our calculated values
     return NextResponse.json({
       success: true,
       message: 'Payment request submitted successfully',
-      notification_id: data.notification_id,
-      session_id: data.session_id,
-      table_number: data.table_number,
-      subtotal: data.subtotal,
-      vat_amount: data.vat_amount,
-      tip_amount: data.tip_amount,
-      final_total: data.final_total,
-      payment_requested_at: data.payment_requested_at
+      notification_id: notificationId,
+      session_id: sessionId,
+      table_number: tableNumber,
+      subtotal: subtotalFloat,
+      vat_amount: vatFloat,
+      tip_amount: tipAmountFloat,
+      final_total: finalTotalFloat,
+      payment_requested_at: new Date().toISOString(),
+      payment_type: paymentType
     });
     
   } catch (error) {

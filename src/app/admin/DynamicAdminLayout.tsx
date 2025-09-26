@@ -11,7 +11,8 @@ import {
   Settings, 
   BarChart3, 
   Clock,
-  Bell
+  Bell,
+  QrCode
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { handleError } from '@/lib/error-handling';
@@ -162,6 +163,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
     { name: 'Dashboard', href: '/admin', icon: Home, current: pathname === '/admin' },
     { name: 'Menu Management', href: '/admin/menu', icon: Menu, current: pathname === '/admin/menu' },
     { name: 'Staff Management', href: '/admin/staff', icon: Users, current: pathname === '/admin/staff' },
+    { name: 'QR Codes', href: '/admin/qr-codes', icon: QrCode, current: pathname === '/admin/qr-codes' },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, current: pathname === '/admin/analytics' },
     { name: 'Settings', href: '/admin/settings', icon: Settings, current: pathname === '/admin/settings' },
   ];

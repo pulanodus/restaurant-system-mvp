@@ -60,7 +60,7 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
     // Get the authorization header
     const authHeader = request.headers.get('authorization')
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      logAuthentication('USER_AUTH', 'none', false, 'No authorization header')
+      logAuthentication('No authorization header', { type: 'USER_AUTH', status: 'none', success: false })
       return {
         error: {
           message: 'Authorization header required',
@@ -77,7 +77,7 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
     
     if (error) {
       logDetailedError('User authentication failed', error)
-      logAuthentication('USER_AUTH', 'invalid_token', false, error.message)
+      logAuthentication('Invalid token', { type: 'USER_AUTH', status: 'invalid_token', success: false, error: error.message })
       return {
         error: {
           message: 'Invalid or expired token',
@@ -87,7 +87,7 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
     }
 
     if (!user) {
-      logAuthentication('USER_AUTH', 'no_user', false, 'No user found')
+      logAuthentication('No user found', { type: 'USER_AUTH', status: 'no_user', success: false })
       return {
         error: {
           message: 'User not found',
@@ -96,7 +96,7 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
       }
     }
 
-    logAuthentication('USER_AUTH', 'success', true, user.id)
+    logAuthentication('User authentication successful', { type: 'USER_AUTH', status: 'success', success: true, userId: user.id })
     console.log('✅ User authenticated:', user.id)
     
     return {
@@ -109,7 +109,7 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
     
   } catch (error) {
     logDetailedError('User authentication exception', error)
-    logAuthentication('USER_AUTH', 'exception', false, 'Authentication exception')
+    logAuthentication('Authentication exception', { type: 'USER_AUTH', status: 'exception', success: false, error: (error as Error).message })
     return {
       error: {
         message: 'Authentication failed',
@@ -135,7 +135,7 @@ export async function authenticateAdmin(request: NextRequest): Promise<AdminAuth
 
     // Check if user has admin role
     if (userAuth.user.role !== 'admin') {
-      logAuthentication('ADMIN_AUTH', 'insufficient_privileges', false, userAuth.user.id)
+      logAuthentication('Insufficient privileges', { type: 'ADMIN_AUTH', status: 'insufficient_privileges', success: false, userId: userAuth.user.id })
       return {
         error: {
           message: 'Admin privileges required',
@@ -144,7 +144,7 @@ export async function authenticateAdmin(request: NextRequest): Promise<AdminAuth
       }
     }
 
-    logAuthentication('ADMIN_AUTH', 'success', true, userAuth.user.id)
+    logAuthentication('Admin authentication successful', { type: 'ADMIN_AUTH', status: 'success', success: true, userId: userAuth.user.id })
     console.log('✅ Admin authenticated:', userAuth.user.id)
     
     return {
@@ -154,7 +154,7 @@ export async function authenticateAdmin(request: NextRequest): Promise<AdminAuth
     
   } catch (error) {
     logDetailedError('Admin authentication exception', error)
-    logAuthentication('ADMIN_AUTH', 'exception', false, 'Authentication exception')
+    logAuthentication('Admin authentication exception', { type: 'ADMIN_AUTH', status: 'exception', success: false, error: (error as Error).message })
     return {
       error: {
         message: 'Admin authentication failed',
@@ -181,7 +181,7 @@ export async function authenticateServiceRole(): Promise<AdminAuthResponse> {
     
     if (error) {
       logDetailedError('Service role authentication failed', error)
-      logAuthentication('SERVICE_ROLE_AUTH', 'failed', false, error.message)
+      logAuthentication('Service role authentication failed', { type: 'SERVICE_ROLE_AUTH', status: 'failed', success: false, error: error.message })
       return {
         error: {
           message: 'Service role authentication failed',
@@ -190,7 +190,7 @@ export async function authenticateServiceRole(): Promise<AdminAuthResponse> {
       }
     }
 
-    logAuthentication('SERVICE_ROLE_AUTH', 'success', true, 'service_role')
+    logAuthentication('Service role authentication successful', { type: 'SERVICE_ROLE_AUTH', status: 'success', success: true, role: 'service_role' })
     console.log('✅ Service role authenticated')
     
     return {
@@ -199,7 +199,7 @@ export async function authenticateServiceRole(): Promise<AdminAuthResponse> {
     
   } catch (error) {
     logDetailedError('Service role authentication exception', error)
-    logAuthentication('SERVICE_ROLE_AUTH', 'exception', false, 'Authentication exception')
+    logAuthentication('Service role authentication exception', { type: 'SERVICE_ROLE_AUTH', status: 'exception', success: false, error: (error as Error).message })
     return {
       error: {
         message: 'Service role authentication failed',

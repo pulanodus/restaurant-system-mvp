@@ -36,11 +36,13 @@ export const GET = withAdminAuth(async (request: NextRequest, user) => {
     const settings = defaultSettings;
 
     // Log settings access
-    await createAuditLog({
-      action: 'settings_access',
-      details: { accessedBy: user.id },
-      performed_by: user.id
-    });
+    if (user) {
+      await createAuditLog({
+        action: 'settings_access',
+        details: { accessedBy: user.id },
+        performed_by: user.id
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -105,15 +107,17 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
     // For now, we'll just log the changes
     
     // Log settings update
-    await createAuditLog({
-      action: 'system_configuration_change',
-      details: {
-        changes,
-        newSettings: settings,
-        updatedBy: user.id
-      },
-      performed_by: user.id
-    });
+    if (user) {
+      await createAuditLog({
+        action: 'system_configuration_change',
+        details: {
+          changes,
+          newSettings: settings,
+          updatedBy: user.id
+        },
+        performed_by: user.id
+      });
+    }
 
     // Here you would typically:
     // 1. Save settings to database
@@ -165,15 +169,17 @@ export const PUT = withAdminAuth(async (request: NextRequest, user) => {
     }
 
     // Log complete settings replacement
-    await createAuditLog({
-      action: 'system_configuration_change',
-      details: {
-        action: 'complete_replacement',
-        newSettings: settings,
-        updatedBy: user.id
-      },
-      performed_by: user.id
-    });
+    if (user) {
+      await createAuditLog({
+        action: 'system_configuration_change',
+        details: {
+          action: 'complete_replacement',
+          newSettings: settings,
+          updatedBy: user.id
+        },
+        performed_by: user.id
+      });
+    }
 
     // In a real app, this would replace all settings in the database
 
@@ -208,15 +214,17 @@ export const DELETE = withAdminAuth(async (request: NextRequest, user) => {
     };
 
     // Log settings reset
-    await createAuditLog({
-      action: 'system_configuration_change',
-      details: {
-        action: 'reset_to_defaults',
-        defaultSettings,
-        resetBy: user.id
-      },
-      performed_by: user.id
-    });
+    if (user) {
+      await createAuditLog({
+        action: 'system_configuration_change',
+        details: {
+          action: 'reset_to_defaults',
+          defaultSettings,
+          resetBy: user.id
+        },
+        performed_by: user.id
+      });
+    }
 
     // In a real app, this would reset settings to defaults in the database
 

@@ -13,6 +13,7 @@ import {
   User,
   AlertTriangle,
   CheckCircle,
+  Settings,
   XCircle,
   Info
 } from 'lucide-react';
@@ -188,7 +189,7 @@ export default function AuditLogPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Audit Log</h1>
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#00d9ff]"></div>
         </div>
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 space-y-4">
@@ -219,7 +220,7 @@ export default function AuditLogPage() {
           </button>
           <button
             onClick={fetchAuditLogs}
-            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center px-4 py-2 text-sm font-medium text-white bg-[#00d9ff] rounded-lg hover:bg-[#00c4e6] transition-colors"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -244,7 +245,7 @@ export default function AuditLogPage() {
                 placeholder="Search logs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00d9ff]"
               />
             </div>
           </div>
@@ -254,7 +255,7 @@ export default function AuditLogPage() {
             <select
               value={selectedAction}
               onChange={(e) => setSelectedAction(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00d9ff]"
             >
               <option value="all">All Actions</option>
               {getUniqueActions().map(action => (
@@ -270,7 +271,7 @@ export default function AuditLogPage() {
             <select
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00d9ff]"
             >
               <option value="all">All Users</option>
               {getUniqueUsers().map(user => (
@@ -286,7 +287,7 @@ export default function AuditLogPage() {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00d9ff]"
             >
               <option value="today">Today</option>
               <option value="week">Last 7 Days</option>
@@ -298,15 +299,15 @@ export default function AuditLogPage() {
       </div>
 
       {/* Results Summary */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-[#f0fdff] border border-[#ccf2ff] rounded-lg p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Shield className="h-5 w-5 text-blue-600 mr-2" />
-            <span className="text-blue-800 font-medium">
+            <Shield className="h-5 w-5 text-[#00d9ff] mr-2" />
+            <span className="text-[#00d9ff] font-medium">
               Showing {filteredLogs.length} of {auditLogs.length} audit entries
             </span>
           </div>
-          <span className="text-blue-600 text-sm">
+          <span className="text-[#00d9ff] text-sm">
             Last updated: {new Date().toLocaleTimeString()}
           </span>
         </div>
@@ -362,7 +363,7 @@ export default function AuditLogPage() {
                       {log.details && Object.keys(log.details).length > 0 && (
                         <div className="mt-3">
                           <details className="group">
-                            <summary className="text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
+                            <summary className="text-sm text-[#00d9ff] hover:text-[#00c4e6] cursor-pointer">
                               View Details
                             </summary>
                             <div className="mt-2 p-3 bg-gray-50 rounded-lg">

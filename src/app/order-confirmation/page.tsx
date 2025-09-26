@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, ArrowLeft, Clock } from 'lucide-react';
@@ -124,7 +124,7 @@ function OrderConfirmationContent() {
       );
     }
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
 
@@ -145,5 +145,20 @@ export default function OrderConfirmationPage() {
     <CartProvider sessionId={sessionId}>
       <OrderConfirmationContent />
     </CartProvider>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <p className="text-gray-600">Preparing order confirmation...</p>
+        </div>
+      </div>
+    }>
+      <OrderConfirmationPageContent />
+    </Suspense>
   );
 }

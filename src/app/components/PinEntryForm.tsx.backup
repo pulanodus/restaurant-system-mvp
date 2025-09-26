@@ -1,0 +1,109 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { handleError } from '@/lib/error-handling';
+
+interface PinEntryFormProps {
+  tableId: string;
+  currentPin: string;
+  existingSessionId?: string;
+}
+
+export default function PinEntryForm({ tableId, currentPin, existingSessionId }: PinEntryFormProps) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handlePinChange = async (value: string) => {
+    setPin(value);
+    
+    // Auto-submit when 4 digits are entered
+    if (value.length === 4) {
+      setIsLoading(true);
+      setError(null);
+
+      // 1. Verify the PIN
+      if (value !== currentPin) {
+        setError('Invalid PIN. Please check with your server.');
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. PIN is correct. Now, either join or create a session.
+      try {
+        let targetSessionId = existingSessionId;
+        let isNewSession = false;
+
+        // If no existing session, create one
+        if (!targetSessionId) {
+          const { data: newSession, error: sessionError } = await supabase
+            .from('sessions')
+            .insert([{ 
+              table_id: tableId,
+              status: 'active'  // CRITICAL FIX: Set status to active
+            }])
+            .select()
+            .single();
+
+          if (sessionError) {
+            throw sessionError;
+          }
+          targetSessionId = newSession.id;
+          isNewSession = true;
+          
+          // Update table status to occupied
+          await supabase
+            .from('tables')
+            .update({ occupied: true })
+            .eq('id', tableId);
+        }
+
+        // 3. Redirect to name entry page instead of directly to menu
+        router.push(`/scan/${tableId}?step=name&sessionId=${targetSessionId}&isNew=${isNewSession}`);
+      } catch (error) {
+        const appError = handleError(error, {
+          operation: 'PIN Entry Session Creation',
+          tableId
+        });
+        setError(appError.message);
+        setIsLoading(false);
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="pin" className="block text-sm font-medium text-gray-700 mb-2">
+          Enter Table PIN
+        </label>
+        <input
+          type="text"
+          id="pin"
+          value={pin}
+          onChange={(e) => handlePinChange(e.target.value)}
+          placeholder="0000"
+          maxLength={4}
+          className="w-full px-4 py-3 text-center text-2xl font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00d9ff] focus:border-transparent bg-white text-gray-900"
+          disabled={isLoading}
+        />
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800 text-sm">{error}</p>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#00d9ff] mx-auto"></div>
+          <p className="text-sm text-gray-700 mt-2 font-medium">Processing...</p>
+        </div>
+      )}
+    </div>
+  );
+}

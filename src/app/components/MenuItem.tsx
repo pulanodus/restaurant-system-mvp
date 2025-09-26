@@ -12,8 +12,6 @@ import { handleError } from '@/lib/error-handling';
 // Component imports
 import CenteredModal from './CenteredModal';
 import { Clock } from 'lucide-react';
-import { getMenuItemPlaceholder } from '@/lib/placeholder-images';
-import { getMenuItemImage } from '@/lib/ai-images';
 import { useCart } from '@/contexts/CartContext';
 
 interface MenuItemData {
@@ -122,23 +120,12 @@ export default function MenuItem({ item, sessionId }: MenuItemProps): React.JSX.
         onClick={() => setIsModalOpen(true)} 
         className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-shadow mb-2 md:mb-0 md:flex-col md:items-start md:p-4 md:h-full"
       >
-        {/* Item image and details */}
+        {/* Item details without image */}
         <div className="flex items-center space-x-3 flex-grow min-w-0 md:flex-col md:space-x-0 md:space-y-3 md:w-full">
-          <div className="w-20 h-20 bg-gray-200 rounded-md flex items-center justify-center flex-shrink-0 md:w-full md:h-32 relative overflow-hidden">
-            <img 
-              src={getMenuItemImage(item.name, item.image_url)} 
-              alt={item.name} 
-              className="w-full h-full object-cover rounded-md" 
-              onError={(e) => {
-                // Fallback to placeholder if AI image fails to load
-                const target = e.target as HTMLImageElement;
-                console.warn(`Failed to load image for ${item.name}, using placeholder`);
-                target.src = getMenuItemPlaceholder(item.name);
-              }}
-              onLoad={() => {
-                console.log(`Successfully loaded image for ${item.name}`);
-              }}
-            />
+          <div className="w-20 h-20 bg-gray-100 rounded-md flex items-center justify-center flex-shrink-0 md:w-full md:h-32 relative overflow-hidden">
+            <div className="text-gray-400 text-2xl font-bold">
+              {item.name.charAt(0).toUpperCase()}
+            </div>
             {item.rating && (
               <div className="absolute top-1 right-1 bg-black bg-opacity-70 text-white px-1.5 py-0.5 rounded-full flex items-center space-x-1">
                 <span className="text-yellow-400 text-xs">★</span>

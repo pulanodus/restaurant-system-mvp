@@ -2,6 +2,12 @@
 
 Welcome to the PulaNodus documentation hub. This is the single source of truth for all project documentation.
 
+## 📁 File Organization
+
+**Important**: All documentation and utility files must follow our [File Organization Guidelines](./FILE_ORGANIZATION.md) to maintain a clean project structure.
+
+**Quick Reference**: [Quick File Placement Guide](./QUICK_FILE_PLACEMENT_GUIDE.md) for immediate file placement decisions.
+
 ## Getting Started
 - [Installation](./getting-started/installation.md)
 - [Configuration](./getting-started/configuration.md)

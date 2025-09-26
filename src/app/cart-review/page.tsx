@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useCart, CartItem, CartProvider } from '@/contexts/CartContext';
@@ -24,6 +24,19 @@ function CartReviewContent() {
     }
   }, [sessionId, loadCartItems]);
 
+  // Refresh cart data when user returns from edit split page
+  useEffect(() => {
+    const handleFocus = () => {
+      if (sessionId && !isLoading) {
+        console.log('🔄 Page focused - refreshing cart data to get latest split info');
+        loadCartItems();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [sessionId, loadCartItems, isLoading]);
+
   // Debug cart data
   useEffect(() => {
     console.log('🛒 Cart Review - Cart data updated:', {
@@ -39,8 +52,7 @@ function CartReviewContent() {
     // Debug split bill data specifically
     if (items && items.length > 0) {
       items.forEach((item, index) => {
-        if (item.isSplit) {
-          console.log(`🔍 Split Item ${index + 1} Debug:`, {
+        console.log(`🔍 Cart Item ${index + 1} Debug:`, {
             name: item.name,
             menuItemId: item.menu_item_id,
             isSplit: item.isSplit,
@@ -52,6 +64,7 @@ function CartReviewContent() {
             splitBillId: item.splitBillId,
             quantity: item.quantity,
             price: item.price,
+          isShared: item.isShared,
             calculation: {
               expectedOriginalPrice: item.price * item.quantity,
               actualOriginalPrice: item.originalPrice,
@@ -59,16 +72,36 @@ function CartReviewContent() {
               actualSplitPrice: item.splitPrice
             }
           });
-        }
       });
     }
   }, [items, isLoading, sessionId]);
 
   const calculateItemPrice = (item: CartItem) => {
-    if (item.isSplit && item.splitPrice) {
-      return item.splitPrice;
+    if (item.isSplit && item.splitPrice && item.splitCount) {
+      // CRITICAL FIX: Recalculate split price based on current quantity
+      // The splitPrice from database might be stale, so we recalculate it
+      const currentOriginalPrice = item.price * item.quantity;
+      const recalculatedSplitPrice = currentOriginalPrice / item.splitCount;
+      
+      console.log('💰 Cart Review Split Calculation (RECALCULATED):', {
+        itemName: item.name,
+        storedSplitPrice: item.splitPrice,
+        storedOriginalPrice: item.originalPrice,
+        currentQuantity: item.quantity,
+        currentOriginalPrice: currentOriginalPrice,
+        splitCount: item.splitCount,
+        recalculatedSplitPrice: recalculatedSplitPrice,
+        formula: `${currentOriginalPrice} ÷ ${item.splitCount} = ${recalculatedSplitPrice}`,
+        verification: {
+          isStoredPriceStale: item.originalPrice ? Math.abs(item.originalPrice - currentOriginalPrice) > 0.01 : true,
+          shouldRecalculate: item.originalPrice ? Math.abs(item.originalPrice - currentOriginalPrice) > 0.01 : true,
+          priceDifference: item.originalPrice ? Math.abs(item.originalPrice - currentOriginalPrice) : currentOriginalPrice
+        }
+      });
+      
+      return recalculatedSplitPrice;
     }
-    return item.price;
+    return item.price * item.quantity;
   };
 
   const calculateTotal = (items: CartItem[]) => {
@@ -78,16 +111,24 @@ function CartReviewContent() {
     
     let subtotal = 0;
     items.forEach(item => {
-      if (item.isSplit) {
-        // For split items, the split price is already per-person, so don't multiply by quantity
-        subtotal += calculateItemPrice(item);
-      } else {
-        // For regular items, multiply by quantity
-        subtotal += calculateItemPrice(item) * item.quantity;
-      }
+      const itemPrice = calculateItemPrice(item);
+      subtotal += itemPrice;
+      console.log(`💰 Total Calculation: ${item.name} = ${itemPrice}, Running total: ${subtotal}`);
     });
     const vat = subtotal * 0.14;
     const total = subtotal + vat;
+    
+    console.log('💰 Final Total Calculation:', {
+      subtotal,
+      vat,
+      total,
+      items: items.map(item => ({
+        name: item.name,
+        isSplit: item.isSplit,
+        itemPrice: calculateItemPrice(item)
+      }))
+    });
+    
     return { subtotal, vat, total };
   };
 
@@ -99,11 +140,17 @@ function CartReviewContent() {
     if (newQuantity <= 0) {
       handleRemoveItem(itemId);
     } else {
+      console.log('🔄 Updating quantity for item:', itemId, 'to:', newQuantity);
       await updateQuantity(itemId, newQuantity);
-      // CRITICAL: Reload cart data after quantity change to get updated split bill info
+      
+      // CRITICAL: Wait for split bill update to complete, then reload cart data
       if (sessionId) {
+        console.log('🔄 Waiting for split bill update to complete...');
+        // Wait a bit longer to ensure the API has time to update split bills
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
         console.log('🔄 Reloading cart data after quantity change...');
         await loadCartItems();
+        console.log('✅ Cart data reloaded after quantity change');
       }
     }
   };
@@ -157,16 +204,17 @@ function CartReviewContent() {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00d9ff] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading cart...</p>
-        </div>
-      </div>
-    );
-  }
+  // Remove loading spinner - let the page render while data loads silently in background
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00d9ff] mx-auto mb-4"></div>
+  //         <p className="text-gray-600">Loading cart...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const totals = calculateTotal(items);
 
@@ -187,55 +235,97 @@ function CartReviewContent() {
           </div>
         </div>
 
+
         {/* Cart Items */}
         <div className="p-4 space-y-4 pb-20">
           {!items || items.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-gray-600 mb-2">Your cart is empty</h2>
-              <p className="text-gray-500 mb-6">Add some delicious items to get started!</p>
+              <h2 className="text-xl font-semibold text-gray-600 mb-2">
+                {isLoading ? 'Loading cart items...' : 'Your cart is empty'}
+              </h2>
+              <p className="text-gray-500 mb-6">
+                {isLoading ? 'Please wait while we load your items' : 'Add some delicious items to get started!'}
+              </p>
+              {!isLoading && (
               <Link 
-                href="/"
+                href={`/session/${sessionId}`}
                 className="inline-flex items-center px-6 py-3 bg-[#00d9ff] text-white rounded-lg hover:bg-[#00c7e6] transition-colors"
               >
                 Browse Menu
               </Link>
+              )}
             </div>
           ) : (
             <>
               {items && items.map((item) => (
                 <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <div className="mb-2">
+                  {/* Item Header - Name and Final Cost */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="flex items-center space-x-2">
                     <h3 className="font-semibold text-gray-900">{item.name}</h3>
+                        {item.isSplit && item.splitPrice && (
+                          <span className="text-xs px-2 py-1 rounded-full font-medium text-white bg-purple-600">
+                            Shared
+                          </span>
+                        )}
+                      </div>
                     <p className="text-sm text-gray-600 mt-1">
                       P{item.price.toFixed(2)} each
                     </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900 text-lg">
+                        P{calculateItemPrice(item).toFixed(2)}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Split Bill Info */}
-                  {item.isSplit && (
-                    <div className="mb-3 p-3 bg-blue-50 rounded-lg">
+                  {item.isSplit && item.splitCount && (
+                    <div className="mb-3">
+                      <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-blue-900">
-                            Full price P{(item.originalPrice || (item.price * item.quantity)).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-blue-700 italic">
-                            Split {item.splitCount} ways with {item.participants && item.participants.length > 10 
-                              ? item.participants.map(p => p.length >= 2 ? p.substring(0, 2).toUpperCase() : p.charAt(0).toUpperCase()).join(', ')
-                              : item.participants?.join(', ') || 'others'}
-                          </p>
-                          <p className="text-xs text-blue-600 font-medium">
-                            Your share: P{(item.splitPrice || item.price).toFixed(2)}
-                          </p>
+                          <div className="text-xs text-purple-600">
+                            <p><span className="font-medium">Full price:</span> P{(item.price * item.quantity).toFixed(2)}</p>
+                            <p><span className="font-medium">Your share:</span> P{calculateItemPrice(item).toFixed(2)} (split {item.splitCount} ways)</p>
+                            {item.participants && item.participants.length > 0 && (
+                              <p><span className="font-medium">Shared with:</span> {item.participants.join(', ')}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                              className="w-8 h-8 flex items-center justify-center rounded-full transition-colors text-white hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                              style={{ backgroundColor: '#00d9ff' }}
+                              aria-label={`Remove one ${item.name}`}
+                            >
+                              -
+                            </button>
+                            <span className="w-6 text-center font-medium text-gray-900 text-xs">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                              className="w-8 h-8 flex items-center justify-center text-white rounded-full hover:opacity-80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                              style={{ backgroundColor: '#00d9ff' }}
+                              aria-label={`Add one ${item.name}`}
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
+                        
+                        <div className="flex justify-start">
                         <Link
                           href={`/split-bill?sessionId=${sessionId}&itemId=${item.menu_item_id}`}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1"
+                            className="text-sm font-medium flex items-center space-x-1 hover:opacity-80 text-purple-600"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Edit Split</span>
                         </Link>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -249,29 +339,30 @@ function CartReviewContent() {
                     </div>
                   )}
 
-                  {/* Quantity Controls */}
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center space-x-3">
+                  {/* Quantity Controls - Right aligned (only for non-split items) */}
+                  {!item.isSplit && (
+                    <div className="flex items-center justify-end mt-3">
+                      <div className="flex items-center space-x-1">
                       <button
                         onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full bg-[#00d9ff] text-white flex items-center justify-center hover:bg-[#00c7e6] transition-colors"
+                          className="w-8 h-8 flex items-center justify-center rounded-full transition-colors bg-[#00d9ff] text-white hover:bg-[#00c4e6] disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                          aria-label={`Remove one ${item.name}`}
                       >
-                        <span className="font-medium">-</span>
+                          -
                       </button>
-                      <span className="w-8 text-center font-medium text-gray-900">{item.quantity}</span>
+                        <span className="w-6 text-center font-medium text-gray-900 text-xs">
+                          {item.quantity}
+                        </span>
                       <button
                         onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full bg-[#00d9ff] text-white flex items-center justify-center hover:bg-[#00c7e6] transition-colors"
+                          className="w-8 h-8 flex items-center justify-center bg-[#00d9ff] text-white rounded-full hover:bg-[#00c4e6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                          aria-label={`Add one ${item.name}`}
                       >
-                        <span className="font-medium">+</span>
+                          +
                       </button>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900 text-lg">
-                        P{item.isSplit ? calculateItemPrice(item).toFixed(2) : (calculateItemPrice(item) * item.quantity).toFixed(2)}
-                      </p>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
 
@@ -295,6 +386,7 @@ function CartReviewContent() {
                   </div>
                 </div>
               </div>
+
 
               {/* Confirm Order Button */}
               <button
@@ -330,7 +422,8 @@ function CartReviewContent() {
                     
                     // Show success message and redirect to live bill
                     alert('Orders confirmed and sent to kitchen!');
-                    window.location.href = `/live-bill?sessionId=${sessionId}&from=confirmation`;
+                    const dinerNameParam = dinerName ? `&dinerName=${encodeURIComponent(dinerName)}` : '';
+                    window.location.href = `/live-bill?sessionId=${sessionId}&from=confirmation${dinerNameParam}`;
                   } catch (error) {
                     console.error('❌ Error confirming orders:', error);
                     alert(`Failed to confirm orders: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -356,9 +449,10 @@ function CartReviewContent() {
       );
     }
 
-export default function CartReviewPage() {
+function CartReviewPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
+  const dinerName = searchParams.get('dinerName');
 
   if (!sessionId) {
     return (
@@ -374,8 +468,23 @@ export default function CartReviewPage() {
   }
 
   return (
-    <CartProvider sessionId={sessionId}>
+    <CartProvider sessionId={sessionId} dinerName={dinerName}>
       <CartReviewContent />
     </CartProvider>
+  );
+}
+
+export default function CartReviewPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <p className="text-gray-600">Preparing cart review...</p>
+        </div>
+      </div>
+    }>
+      <CartReviewPageContent />
+    </Suspense>
   );
 }

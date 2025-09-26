@@ -21,7 +21,7 @@ const defaultConfig: QRCodeConfig = {
   size: 256,
   margin: 2,
   color: {
-    dark: '#000000',
+    dark: '#00d9ff', // Brand blue color
     light: '#FFFFFF'
   }
 };
@@ -118,4 +118,117 @@ export function validateQRCodeURL(url: string): boolean {
   } catch (error) {
     return false;
   }
+}
+
+/**
+ * Generate QR code for a specific table with enhanced options
+ */
+export async function generateTableQRCode(
+  tableId: string,
+  restaurantId: string,
+  tableNumber: string,
+  options: {
+    size?: number;
+    margin?: number;
+    format?: 'png' | 'svg';
+    includeLogo?: boolean;
+    logoUrl?: string;
+  } = {}
+): Promise<{ dataURL: string; svg?: string; scanURL: string }> {
+  const {
+    size = 256,
+    margin = 2,
+    format = 'png',
+    includeLogo = false,
+    logoUrl
+  } = options;
+
+  const scanURL = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/scan/${tableId}`;
+  
+  const qrConfig = {
+    width: size,
+    margin,
+    color: {
+      dark: '#00d9ff', // Brand blue color
+      light: '#FFFFFF'
+    }
+  };
+
+  try {
+    if (format === 'svg') {
+      const svg = await QRCode.toString(scanURL, {
+        type: 'svg',
+        ...qrConfig
+      });
+      
+      const dataURL = await QRCode.toDataURL(scanURL, qrConfig);
+      
+      return {
+        dataURL,
+        svg,
+        scanURL
+      };
+    } else {
+      const dataURL = await QRCode.toDataURL(scanURL, qrConfig);
+      
+      return {
+        dataURL,
+        scanURL
+      };
+    }
+  } catch (error) {
+    console.error('Error generating table QR code:', error);
+    throw new Error(`Failed to generate QR code for table ${tableNumber}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Batch generate QR codes for multiple tables
+ */
+export async function generateBatchQRCodes(
+  tables: Array<{ id: string; restaurant_id: string; table_number: string }>,
+  options: Partial<QRCodeConfig> = {}
+): Promise<Array<{ tableId: string; tableNumber: string; qrCodeDataURL: string; scanURL: string; error?: string }>> {
+  const results = await Promise.allSettled(
+    tables.map(async (table) => {
+      try {
+        const result = await generateQRCodeURL(
+          table.id,
+          table.restaurant_id,
+          table.table_number,
+          options
+        );
+        
+        return {
+          tableId: table.id,
+          tableNumber: table.table_number,
+          qrCodeDataURL: result,
+          scanURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/scan/${table.id}`
+        };
+      } catch (error) {
+        return {
+          tableId: table.id,
+          tableNumber: table.table_number,
+          qrCodeDataURL: '',
+          scanURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/scan/${table.id}`,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    })
+  );
+
+  return results.map((result, index) => {
+    if (result.status === 'fulfilled') {
+      return result.value;
+    } else {
+      const table = tables[index];
+      return {
+        tableId: table.id,
+        tableNumber: table.table_number,
+        qrCodeDataURL: '',
+        scanURL: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/scan/${table.id}`,
+        error: result.reason instanceof Error ? result.reason.message : 'Unknown error'
+      };
+    }
+  });
 }

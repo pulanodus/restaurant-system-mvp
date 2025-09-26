@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
           .select('id, split_bill_id')
           .eq('session_id', sessionId)
           .eq('menu_item_id', menuItemId)
-          .eq('status', 'placed');
+          .in('status', ['cart', 'placed']);
         
         if (checkError) {
           console.error('❌ Error checking existing orders:', checkError);
@@ -86,19 +86,20 @@ export async function POST(request: NextRequest) {
         
         console.log('📋 Found orders to check:', existingOrders);
         
-        // Check if any order needs to be linked
+        // Check if any shared order needs to be linked
         const needsLinking = existingOrders?.some(order => order.split_bill_id !== existingSplitBill.id);
         
         if (needsLinking) {
-          console.log('🔗 Order needs to be linked to split bill, updating...');
+          console.log('🔗 Shared order needs to be linked to split bill, updating...');
           
-          const { data: updatedOrders, error: orderError } = await supabase
-            .from('orders')
-            .update({ split_bill_id: existingSplitBill.id })
-            .eq('session_id', sessionId)
-            .eq('menu_item_id', menuItemId)
-            .eq('status', 'placed')
-            .select('id, split_bill_id');
+        const { data: updatedOrders, error: orderError } = await supabase
+          .from('orders')
+          .update({ split_bill_id: existingSplitBill.id })
+          .eq('session_id', sessionId)
+          .eq('menu_item_id', menuItemId)
+          .eq('is_shared', true)  // CRITICAL: Only link orders that are explicitly marked as shared
+          .in('status', ['cart', 'placed'])
+          .select('id, split_bill_id, is_shared');
           
           if (orderError) {
             console.error('❌ Error updating order with split bill:', orderError);
@@ -150,17 +151,18 @@ export async function POST(request: NextRequest) {
         
         console.log('✅ New split bill created successfully:', newSplitBill);
         
-        // CRITICAL: Link ONLY the current pending orders to the new split bill
-        // This ensures confirmed orders keep their original split bill data
-        console.log('🔗 Linking ONLY pending orders to new split bill:', newSplitBill.id);
+        // CRITICAL: Link ONLY orders that are explicitly marked as shared to the new split bill
+        // This prevents individual orders from being automatically converted to split items
+        console.log('🔗 Linking ONLY shared orders to new split bill:', newSplitBill.id);
         
         const { data: updatedOrders, error: orderError } = await supabase
           .from('orders')
           .update({ split_bill_id: newSplitBill.id })
           .eq('session_id', sessionId)
           .eq('menu_item_id', menuItemId)
-          .eq('status', 'placed')  // CRITICAL: Only update pending orders, not confirmed ones
-          .select('id, split_bill_id, status');
+          .eq('is_shared', true)  // CRITICAL: Only link orders that are explicitly marked as shared
+          .in('status', ['cart', 'placed'])  // CRITICAL: Only update pending orders, not confirmed ones
+          .select('id, split_bill_id, status, is_shared');
         
         if (orderError) {
           console.error('❌ Error linking pending orders to new split bill:', orderError);
@@ -277,7 +279,12 @@ export async function POST(request: NextRequest) {
         splitPriceCorrect: Math.abs(splitBill.split_price - splitPrice) < 0.01,
         totalPrice: splitBill.original_price,
         perPersonPrice: splitBill.split_price,
-        calculation: `${splitBill.original_price} ÷ ${splitBill.split_count} = ${splitBill.split_price}`
+        calculation: `${splitBill.original_price} ÷ ${splitBill.split_count} = ${splitBill.split_price}`,
+        inputValues: {
+          receivedOriginalPrice: originalPrice,
+          receivedSplitCount: splitCount,
+          calculatedSplitPrice: splitPrice
+        }
       }
     });
 
@@ -286,7 +293,7 @@ export async function POST(request: NextRequest) {
     console.log('🔍 Update criteria:', {
       sessionId,
       menuItemId,
-      status: 'placed'
+      status: ['cart', 'placed']
     });
     
     // First, let's check what orders exist for this criteria
@@ -295,7 +302,7 @@ export async function POST(request: NextRequest) {
       .select('id, split_bill_id')
       .eq('session_id', sessionId)
       .eq('menu_item_id', menuItemId)
-      .eq('status', 'placed');
+      .in('status', ['cart', 'placed']);
     
     if (checkError) {
       console.error('❌ Error checking existing orders:', checkError);
@@ -313,14 +320,15 @@ export async function POST(request: NextRequest) {
       });
     }
     
-    // Now update the orders
+    // Now update only the shared orders
     const { data: updatedOrders, error: orderError } = await supabase
       .from('orders')
       .update({ split_bill_id: splitBill.id })
       .eq('session_id', sessionId)
       .eq('menu_item_id', menuItemId)
-      .eq('status', 'placed')
-      .select('id, split_bill_id');
+      .eq('is_shared', true)  // CRITICAL: Only link orders that are explicitly marked as shared
+      .in('status', ['cart', 'placed'])
+      .select('id, split_bill_id, is_shared');
 
     if (orderError) {
       console.error('❌ Error updating order with split bill:', orderError);

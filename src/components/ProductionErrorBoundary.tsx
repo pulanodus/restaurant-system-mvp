@@ -3,13 +3,10 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react'
 import { 
-  createProductionError, 
-  logProductionError, 
-  handleProductionError,
-  generateErrorId,
-  // ErrorSeverity,
-  // ErrorCategory
-} from '@/lib/production-error-handling'
+  handleError,
+  ErrorSeverity,
+  ErrorContext
+} from '@/lib/error-handling'
 
 /**
  * Production Error Boundary Component
@@ -61,7 +58,7 @@ export class ProductionErrorBoundary extends Component<
     return {
       hasError: true,
       error,
-      errorId: generateErrorId()
+      errorId: `error-${Date.now()}`
     }
   }
 
@@ -78,7 +75,7 @@ export class ProductionErrorBoundary extends Component<
       operation: `React Error Boundary - ${level}`,
       userId: context.userId || '',
       sessionId: context.sessionId || '',
-      requestId: this.state.errorId || generateErrorId(),
+      requestId: this.state.errorId || `error-${Date.now()}`,
       userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
       url: typeof window !== 'undefined' ? window.location.href : '',
       method: 'CLIENT_ERROR'
@@ -86,10 +83,13 @@ export class ProductionErrorBoundary extends Component<
 
     try {
       // Handle the error with production error handling
-      const { userMessage, errorId, shouldRetry } = await handleProductionError(
+      const appError = await handleError(
         error,
         errorContext
       )
+      const userMessage = 'An error occurred'
+      const errorId = this.state.errorId || `error-${Date.now()}`
+      const shouldRetry = false
 
       // Update state with user-friendly message
       this.setState({
@@ -99,22 +99,20 @@ export class ProductionErrorBoundary extends Component<
       })
 
       // Create additional production error for React-specific context
-      const productionError = createProductionError(error, {
+      const productionError = {
         ...errorContext,
         operation: `React Error Boundary - ${level} - ${context.component || 'Unknown Component'}`
-      })
+      }
 
       // Add React-specific context
       const enhancedProductionError = {
         ...productionError,
         technical: {
-          ...productionError.technical,
           reactErrorInfo: {
             componentStack: errorInfo.componentStack
           }
         },
         context: {
-          ...productionError.context,
           reactContext: {
             level,
             component: context.component,
@@ -125,7 +123,8 @@ export class ProductionErrorBoundary extends Component<
       }
 
       // Log the error
-      await logProductionError(enhancedProductionError)
+      // Log the error using the available error handling
+      console.error('Production Error Boundary:', enhancedProductionError)
 
     } catch (loggingError) {
       // Fallback error handling
@@ -271,21 +270,28 @@ export function useProductionErrorHandler() {
       userId?: string
       sessionId?: string
     }
-  ) => {
+  ): Promise<{
+    userMessage: string
+    errorId: string
+    shouldRetry: boolean
+  }> => {
     const errorContext = {
       operation: context.operation,
       userId: context.userId || '',
       sessionId: context.sessionId || '',
-      requestId: generateErrorId(),
+      requestId: `error-${Date.now()}`,
       userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
       url: typeof window !== 'undefined' ? window.location.href : '',
       method: 'CLIENT_ERROR'
     }
 
-    const { userMessage, errorId, shouldRetry } = await handleProductionError(
+    const appError = await handleError(
       error,
       errorContext
     )
+    const userMessage = 'An error occurred'
+    const errorId = `error-${Date.now()}`
+    const shouldRetry = false
 
     return {
       userMessage,

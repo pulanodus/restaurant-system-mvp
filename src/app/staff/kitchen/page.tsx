@@ -265,7 +265,7 @@ export default function KitchenDisplay() {
         return (
           <button
             onClick={() => updateOrderItemStatus(item.id, 'served')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white rounded-lg hover:style={{ backgroundColor: '#00d9ff' }} transition-colors font-medium"
           >
             Mark Served
           </button>
@@ -613,7 +613,7 @@ export default function KitchenDisplay() {
                               {item.menu_item.name}
                             </h4>
                             {isServed && (
-                              <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                              <span className="px-2 py-1 text-xs font-medium style={{ backgroundColor: '#e6f9ff' }} text-blue-600 rounded-full">
                                 Served
                               </span>
                             )}

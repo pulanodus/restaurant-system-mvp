@@ -55,10 +55,12 @@ interface Session {
   created_at: string;
   payment_status?: string;
   final_total?: number;
+  diners?: Array<{ id: string; name: string }>;
   tables: {
     id: string;
     table_number: string;
     capacity: number;
+    current_pin?: string;
   };
 }
 
@@ -147,6 +149,13 @@ export default function ActiveSessionView() {
       }
 
       setSession(sessionData.session);
+      
+      // Debug: Log diner information
+      console.log('🔍 Staff Session - Session data loaded:', {
+        sessionId: sessionData.session.id,
+        diners: sessionData.session.diners,
+        dinerCount: sessionData.session.diners ? sessionData.session.diners.length : 0
+      });
 
       // Fetch orders for this session using the same logic as Live Bill
       const ordersResponse = await fetch(`/api/orders/confirm?sessionId=${sessionId}&isLiveBillRequest=true`);
@@ -160,8 +169,20 @@ export default function ActiveSessionView() {
 
       setOrders(orderItems);
       
-      // Process diners and their orders
-      processDiners(orderItems);
+      // Debug: Log order items to see diner names
+      console.log('🔍 Staff Session - Order items loaded:', orderItems.length);
+      orderItems.forEach((order: any, index: number) => {
+        console.log(`🔍 Order ${index + 1}:`, {
+          id: order.id,
+          diner_name: order.diner_name,
+          menu_item_name: Array.isArray(order.menu_items) ? order.menu_items[0]?.name : order.menu_items?.name,
+          quantity: order.quantity,
+          is_shared: order.split_bills && order.split_bills.participants && order.split_bills.participants.length > 0
+        });
+      });
+      
+      // Process diners and their orders using the fresh session data
+      processDiners(orderItems, sessionData.session);
 
       // Load individual payment status
       await loadIndividualPaymentStatus();
@@ -208,89 +229,96 @@ export default function ActiveSessionView() {
     );
   };
 
-  // Process diners and calculate their bills using real participant names
-  const processDiners = (orderItems: any[]) => {
+  // Process diners and calculate their bills using simplified logic
+  const processDiners = (orderItems: any[], sessionData?: any) => {
     const dinerMap = new Map<string, Diner>();
     
-    // First, collect all unique participant names from shared items
-    const allParticipants = new Set<string>();
-    
-    orderItems.forEach(orderItem => {
-        // Add the person who ordered it
-        if (orderItem.diner_name) {
-          allParticipants.add(orderItem.diner_name);
-        }
-        
-        // Add all participants from shared items
-      if (orderItem.split_bills && orderItem.split_bills.participants) {
-        orderItem.split_bills.participants.forEach((participant: string) => {
-            allParticipants.add(participant);
-          });
-        }
-        
-        // Also check shared_with array
-        if (orderItem.shared_with && Array.isArray(orderItem.shared_with)) {
-          orderItem.shared_with.forEach((participant: string) => {
-            allParticipants.add(participant);
-          });
-        }
+    // Get all session diners from the passed session data or state
+    const sessionDiners = (sessionData?.diners || session?.diners) || [];
+    console.log('🔍 processDiners - Session data:', {
+      sessionData: sessionData,
+      sessionState: session,
+      sessionDiners: sessionDiners,
+      orderItemsCount: orderItems.length,
+      hasSessionData: !!sessionData,
+      hasSessionState: !!session,
+      hasSessionDiners: !!(sessionData?.diners || session?.diners)
     });
     
-    // Create diner entries for all participants
-    for (const participantName of allParticipants) {
-      if (participantName && typeof participantName === 'string' && participantName.trim()) {
-        const name = participantName.trim();
-        if (!dinerMap.has(name)) {
-          const dinerName = name;
-          dinerMap.set(dinerName, {
-            id: dinerName.toLowerCase().replace(/\s+/g, '-'),
-            name: dinerName,
-            color: getDinerColor(dinerName as string),
-            avatar: dinerName.charAt(0).toUpperCase(),
-            orders: [],
-            personalTotal: 0,
-            sharedTotal: 0,
-            total: 0
-          } as Diner);
-        }
-      }
-    }
+    // Initialize diner map with all session diners
+    sessionDiners.forEach((diner: any) => {
+      dinerMap.set(diner.name, {
+        id: diner.name.toLowerCase().replace(/\s+/g, '-'),
+        name: diner.name,
+        color: getDinerColor(diner.name as string),
+        avatar: diner.name.charAt(0).toUpperCase(),
+        orders: [],
+        personalTotal: 0,
+        sharedTotal: 0,
+        total: 0
+      } as Diner);
+    });
     
-    // Now process orders and assign them to the correct diners
+    // Process each order
     orderItems.forEach(orderItem => {
       const menuItem = Array.isArray(orderItem.menu_items) ? orderItem.menu_items[0] : orderItem.menu_items;
       const splitBill = Array.isArray(orderItem.split_bills) ? orderItem.split_bills[0] : orderItem.split_bills;
-        const isShared = !!splitBill && splitBill.participants && splitBill.participants.length > 0;
+      const isShared = !!splitBill && splitBill.participants && splitBill.participants.length > 0;
+      
+      if (isShared && splitBill.participants) {
+        // Shared item: add to all participants
+        // FIXED: split_price is the per-person amount for the total quantity
+        const splitAmountPerPerson = splitBill.split_price || 0;
         
-        if (isShared && splitBill.participants) {
-          // For shared items, add to all participants
-          splitBill.participants.forEach((participantName: string) => {
-            const diner = dinerMap.get(participantName);
-            if (diner) {
-              const itemPrice = (splitBill.split_price || 0) * orderItem.quantity;
-              diner.orders.push({
-                ...orderItem,
-                itemPrice,
-                isShared: true,
-                sharedWith: splitBill.participants
-              });
-              diner.sharedTotal += itemPrice;
-            }
-          });
-        } else {
-        // For personal items, add to "You" since diner_name is null for personal orders
-        const dinerName = orderItem.diner_name || 'You';
-          const diner = dinerMap.get(dinerName);
+        console.log('🔍 Staff Portal - Processing shared item (FIXED CALCULATION):', {
+          orderId: orderItem.id,
+          itemName: menuItem?.name,
+          splitBillData: {
+            split_price: splitBill.split_price,
+            split_count: splitBill.split_count,
+            participants: splitBill.participants,
+            original_price: splitBill.original_price
+          },
+          orderQuantity: orderItem.quantity,
+          splitAmountPerPerson: splitAmountPerPerson,
+          originalTotal: (menuItem?.price || 0) * orderItem.quantity,
+          calculation: {
+            splitPricePerPerson: splitBill.split_price,
+            quantity: orderItem.quantity,
+            splitAmountPerPerson: splitAmountPerPerson,
+            formula: `${splitBill.split_price} (per-person for total quantity)`
+          }
+        });
+        
+        splitBill.participants.forEach((participantName: string) => {
+          const diner = dinerMap.get(participantName);
           if (diner) {
-            const itemPrice = (menuItem?.price || 0) * orderItem.quantity;
             diner.orders.push({
               ...orderItem,
-              itemPrice,
-              isShared: false
+              itemPrice: splitAmountPerPerson, // This is the split amount per person
+              isShared: true,
+              sharedWith: splitBill.participants,
+              splitCount: splitBill.split_count || 1,
+              originalPrice: (menuItem?.price || 0) * orderItem.quantity // Store original for reference
             });
-            diner.personalTotal += itemPrice;
+            diner.sharedTotal += splitAmountPerPerson;
+            console.log('🔍 Staff Portal - Added shared item to diner:', participantName, 'split amount:', splitAmountPerPerson);
           }
+        });
+      } else {
+        // Personal item: add to the diner who ordered it
+        const dinerName = orderItem.diner_name;
+        const diner = dinerMap.get(dinerName);
+        if (diner) {
+          const itemPrice = (menuItem?.price || 0) * orderItem.quantity;
+          diner.orders.push({
+            ...orderItem,
+            itemPrice,
+            isShared: false
+          });
+          diner.personalTotal += itemPrice;
         }
+      }
     });
     
     // Calculate totals for each diner (including VAT)
@@ -300,7 +328,17 @@ export default function ActiveSessionView() {
       diner.total = subtotal + vat;
     });
     
-    setDiners(Array.from(dinerMap.values()));
+    // Filter out diners with no orders
+    const finalDiners = Array.from(dinerMap.values()).filter(diner => diner.orders.length > 0);
+    console.log('🔍 processDiners - Final diners with orders:', finalDiners.map(d => ({
+      name: d.name,
+      orderCount: d.orders.length,
+      personalTotal: d.personalTotal,
+      sharedTotal: d.sharedTotal,
+      total: d.total
+    })));
+    
+    setDiners(finalDiners);
   };
 
   // Get diner color
@@ -498,7 +536,12 @@ export default function ActiveSessionView() {
 
       // Show success message
       const paymentTypeText = isIndividualPayment ? `${dinerName}'s individual payment` : 'table payment';
-      alert(`${paymentTypeText} completed successfully using ${paymentMethod}!`);
+      
+      if (data.already_completed) {
+        alert(`Payment was already completed. ${paymentTypeText} is marked as paid.`);
+      } else {
+        alert(`${paymentTypeText} completed successfully using ${paymentMethod}!`);
+      }
       
       // Reload session data to reflect changes
       await loadSessionData();
@@ -613,7 +656,7 @@ export default function ActiveSessionView() {
         return (
           <button
             onClick={() => updateOrderStatus(item.id, 'served')}
-            className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+            className="px-3 py-1 style={{ backgroundColor: '#00d9ff' }} text-white rounded-lg hover:style={{ backgroundColor: '#00d9ff' }} transition-colors text-sm"
           >
             Mark Served
           </button>
@@ -707,7 +750,7 @@ export default function ActiveSessionView() {
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
                   <span>Table {session.tables.table_number}</span>
                   {session.tables.current_pin ? (
-                    <span className="text-sm font-mono bg-blue-100 text-blue-800 px-3 py-1 rounded-lg border border-blue-200">
+                    <span className="text-sm font-mono style={{ backgroundColor: '#e6f9ff' }} style={{ color: '#00d9ff' }} px-3 py-1 rounded-lg border style={{ borderColor: '#ccf2ff' }}">
                       PIN: {session.tables.current_pin}
                     </span>
                   ) : (
@@ -751,9 +794,9 @@ export default function ActiveSessionView() {
                     {session.payment_status === 'pending' ? '💳 Payment Requested' : 'Active Session'}
                   </span>
                   <span className="text-sm text-gray-600">
-                    {diners.length} guest{diners.length !== 1 ? 's' : ''}
+                    {session.diners ? session.diners.length : 0} guest{(session.diners ? session.diners.length : 0) !== 1 ? 's' : ''}
                     {isRefreshing && (
-                      <span className="ml-2 text-xs text-blue-500">
+                      <span className="ml-2 text-xs style={{ color: '#00d9ff' }}">
                         <RefreshCw className="w-3 h-3 inline animate-spin mr-1" />
                         Updating...
                       </span>
@@ -819,23 +862,33 @@ export default function ActiveSessionView() {
             Diner List
           </h3>
           <div className="flex flex-wrap gap-3">
-            {diners.map((diner) => (
-              <div
-                key={diner.id}
-                className="flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg"
-              >
+            {session && session.diners && session.diners.length > 0 ? (
+              session.diners.map((diner, index) => (
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium"
-                  style={{ backgroundColor: diner.color }}
+                  key={diner.id || index}
+                  className="flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-lg"
                 >
-                  {diner.avatar}
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-medium"
+                    style={{ backgroundColor: getDinerColor(diner.name) }}
+                  >
+                    {diner.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-gray-900">{diner.name}</span>
+                  <span className="text-sm text-gray-600">
+                    {diner.name === session.started_by_name ? '(Host)' : ''}
+                  </span>
                 </div>
-                <span className="font-medium text-gray-900">{diner.name}</span>
-                <span className="text-sm text-gray-600">
-                  P{diner.total.toFixed(2)}
-                </span>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500 w-full">
+                <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p className="text-gray-500">No diners registered yet</p>
+                <p className="text-sm text-gray-400 mt-1">
+                  Diners will appear here once they join the session
+                </p>
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -891,7 +944,7 @@ export default function ActiveSessionView() {
                         return !splitBill || !splitBill.participants || splitBill.participants.length === 0;
                       }).length > 0 && (
                     <div>
-                      <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                      <h4 className="text-md font-semibold text-green-700 mb-3 flex items-center">
                         <User className="w-4 h-4 mr-2 text-green-600" />
                         Personal Items
                       </h4>
@@ -914,25 +967,30 @@ export default function ActiveSessionView() {
                             <h4 className="font-medium text-gray-900">
                               {menuItem?.name || 'Unknown Item'}
                             </h4>
-                            <span className="text-sm text-gray-600">
-                              P{(menuItem?.price || 0).toFixed(2)} × {order.quantity}
-                            </span>
+                            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${statusStyle.color}`}>
+                              {statusStyle.icon}
+                              <span>{statusStyle.text}</span>
+                            </div>
                           </div>
                           <div className="flex items-center space-x-4 mt-2">
                               <span className="text-sm text-gray-600">
                                 Ordered by: {orderedBy}
                               </span>
                                   {order.notes && (
-                                    <span className="text-sm text-blue-600">
+                                    <span className="text-sm style={{ color: '#00d9ff' }}">
                                       Note: {order.notes}
                                     </span>
                                   )}
                                 </div>
                               </div>
                               <div className="flex items-center space-x-3">
-                                <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${statusStyle.color}`}>
-                                  {statusStyle.icon}
-                                  <span>{statusStyle.text}</span>
+                                <div className="text-right">
+                                  <div className="text-lg font-semibold text-gray-900">
+                                    P{((menuItem?.price || 0) * order.quantity).toFixed(2)}
+                                  </div>
+                                  <div className="text-sm text-gray-600">
+                                    P{(menuItem?.price || 0).toFixed(2)} × {order.quantity}
+                                  </div>
                                 </div>
                                 {getActionButton(order)}
                               </div>
@@ -949,7 +1007,7 @@ export default function ActiveSessionView() {
                     return !!splitBill && splitBill.participants && splitBill.participants.length > 0;
                   }).length > 0 && (
                     <div>
-                      <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                      <h4 className="text-md font-semibold text-blue-700 mb-3 flex items-center">
                         <Users className="w-4 h-4 mr-2 text-blue-600" />
                         Shared Items
                       </h4>
@@ -973,25 +1031,30 @@ export default function ActiveSessionView() {
                                   <h4 className="font-medium text-gray-900">
                                     {menuItem?.name || 'Unknown Item'}
                                   </h4>
-                                  <span className="text-sm text-gray-600">
-                                    P{(menuItem?.price || 0).toFixed(2)} × {order.quantity}
-                                  </span>
+                                  <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${statusStyle.color}`}>
+                                    {statusStyle.icon}
+                                    <span>{statusStyle.text}</span>
+                                  </div>
                                 </div>
                                 <div className="flex items-center space-x-4 mt-2">
                                   <span className="text-sm text-gray-600">
                                     Shared by: {sharedBy}
                                   </span>
                             {order.notes && (
-                              <span className="text-sm text-blue-600">
+                              <span className="text-sm style={{ color: '#00d9ff' }}">
                                 Note: {order.notes}
                               </span>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center space-x-3">
-                          <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${statusStyle.color}`}>
-                            {statusStyle.icon}
-                            <span>{statusStyle.text}</span>
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-gray-900">
+                              P{((menuItem?.price || 0) * order.quantity).toFixed(2)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              P{(menuItem?.price || 0).toFixed(2)} × {order.quantity}
+                            </div>
                           </div>
                           {getActionButton(order)}
                         </div>
@@ -1045,10 +1108,20 @@ export default function ActiveSessionView() {
             ) : activeTab === 'individual' ? (
               /* Individual Splits Tab */
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Individual Splits
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <User className="w-5 h-5 mr-2" />
+                    Individual Splits
+                  </h3>
+                  <button
+                    onClick={() => loadSessionData()}
+                    disabled={isLoading || isRefreshing}
+                    className="px-3 py-1 text-sm bg-[#00d9ff] text-white rounded hover:bg-[#00c7e6] disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+                </div>
                 
                 <div className="space-y-6">
                   {diners.length === 0 ? (
@@ -1081,7 +1154,7 @@ export default function ActiveSessionView() {
                         {/* Personal Items First */}
                         {diner.orders.filter(item => !item.isShared).length > 0 && (
                           <div>
-                            <h5 className="font-medium text-gray-800 mb-2 flex items-center">
+                            <h5 className="font-medium text-green-700 mb-2 flex items-center">
                               <User className="w-4 h-4 mr-1 text-green-600" />
                               Personal Items:
                             </h5>
@@ -1100,7 +1173,7 @@ export default function ActiveSessionView() {
                         {/* Shared Items Second */}
                         {diner.orders.filter(item => item.isShared).length > 0 && (
                           <div>
-                            <h5 className="font-medium text-gray-800 mb-2 flex items-center">
+                            <h5 className="font-medium text-blue-700 mb-2 flex items-center">
                               <Users className="w-4 h-4 mr-1 text-blue-600" />
                               Shared Items:
                             </h5>
@@ -1202,11 +1275,11 @@ export default function ActiveSessionView() {
               </div>
               
               {/* Current Status */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="text-sm text-blue-800">
+              <div className="style={{ backgroundColor: '#f0fdff' }} border style={{ borderColor: '#ccf2ff' }} rounded-lg p-4 mb-6">
+                <div className="text-sm style={{ color: '#00d9ff' }}">
                   <div className="font-medium mb-1">Current Status:</div>
                   <div>Moving from: <span className="font-semibold">Table {session.tables.table_number}</span></div>
-                  <div className="text-xs text-blue-600 mt-1">
+                  <div className="text-xs style={{ color: '#00d9ff' }} mt-1">
                     Current bill: P{session.final_total?.toFixed(2) || '0.00'}
                   </div>
                 </div>

@@ -14,7 +14,7 @@ export async function GET(_request: NextRequest) {
   const startTime = Date.now()
   const healthCheckId = Math.random().toString(36).substring(2, 15)
   
-  if (isDebugMode) {
+  if (isDebugMode()) {
     console.group(`🏥 Health Check [${healthCheckId}]`)
     console.log('Starting health check...')
   }
@@ -50,12 +50,12 @@ export async function GET(_request: NextRequest) {
         duration: Date.now() - startTime
       }
 
-      if (isDebugMode) {
+      if (isDebugMode()) {
         console.log('❌ Health check failed - configuration error')
         console.groupEnd()
       }
 
-      debugErrorLog('HEALTH_CHECK', 'Health check failed - configuration error', {
+      debugErrorLog('Health check failed - configuration error', {
         healthCheckId,
         missingVariables: [
             ...(process.env.NEXT_PUBLIC_SUPABASE_URL ? [] : ['NEXT_PUBLIC_SUPABASE_URL']),
@@ -84,7 +84,7 @@ export async function GET(_request: NextRequest) {
       duration: Date.now() - startTime
     }
 
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('Health check completed:', {
         status: response.status,
         duration: `${response.duration}ms`,
@@ -107,12 +107,13 @@ export async function GET(_request: NextRequest) {
   } catch (error) {
     const duration = Date.now() - startTime
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.error('❌ Health check failed with exception:', error)
       console.groupEnd()
     }
 
-    debugErrorLog('HEALTH_CHECK', 'Health check failed with exception', error, {
+    debugErrorLog('Health check failed with exception', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       healthCheckId,
       duration: `${duration}ms`
     })
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
   const healthCheckId = Math.random().toString(36).substring(2, 15)
   
-  if (isDebugMode) {
+  if (isDebugMode()) {
     console.group(`🏥 Detailed Health Check [${healthCheckId}]`)
     console.log('Starting detailed health check...')
   }
@@ -174,12 +175,12 @@ export async function POST(request: NextRequest) {
         duration: Date.now() - startTime
       }
 
-      if (isDebugMode) {
+      if (isDebugMode()) {
         console.log('❌ Detailed health check failed - configuration error')
         console.groupEnd()
       }
 
-      debugErrorLog('DETAILED_HEALTH_CHECK', 'Detailed health check failed - configuration error', {
+      debugErrorLog('Detailed health check failed - configuration error', {
         healthCheckId,
         missingVariables: [
             ...(process.env.NEXT_PUBLIC_SUPABASE_URL ? [] : ['NEXT_PUBLIC_SUPABASE_URL']),
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
     const comprehensiveResult = await runComprehensiveValidation()
     
     const response = {
-      status: comprehensiveResult.summary.overallSuccess ? 'healthy' : 'unhealthy',
+      status: comprehensiveResult.overallSuccess ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
       healthCheckId,
       details: {
@@ -208,13 +209,13 @@ export async function POST(request: NextRequest) {
       duration: Date.now() - startTime
     }
 
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('Detailed health check completed:', {
         status: response.status,
         duration: `${response.duration}ms`,
-        overallSuccess: comprehensiveResult.summary.overallSuccess,
-        totalTests: comprehensiveResult.summary.totalTests,
-        passedTests: comprehensiveResult.summary.passedTests
+        overallSuccess: comprehensiveResult.overallSuccess,
+        totalTests: comprehensiveResult.summary.total,
+        passedTests: comprehensiveResult.summary.passed
       })
       console.groupEnd()
     }
@@ -223,24 +224,25 @@ export async function POST(request: NextRequest) {
       healthCheckId,
       status: response.status,
       duration: `${response.duration}ms`,
-      overallSuccess: comprehensiveResult.summary.overallSuccess,
-      totalTests: comprehensiveResult.summary.totalTests,
-      passedTests: comprehensiveResult.summary.passedTests
+      overallSuccess: comprehensiveResult.overallSuccess,
+      totalTests: comprehensiveResult.summary.total,
+      passedTests: comprehensiveResult.summary.passed
     })
 
     return NextResponse.json(response, { 
-      status: comprehensiveResult.summary.overallSuccess ? 200 : 503 
+      status: comprehensiveResult.overallSuccess ? 200 : 503 
     })
 
   } catch (error) {
     const duration = Date.now() - startTime
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.error('❌ Detailed health check failed with exception:', error)
       console.groupEnd()
     }
 
-    debugErrorLog('DETAILED_HEALTH_CHECK', 'Detailed health check failed with exception', error, {
+    debugErrorLog('Detailed health check failed with exception', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       healthCheckId,
       duration: `${duration}ms`
     })

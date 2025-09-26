@@ -323,7 +323,7 @@ export default function MenuItemEditor({ item, isOpen, onClose, onSave }: MenuIt
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-gray-400"
+              className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white rounded-md text-sm font-medium hover:opacity-80 disabled:bg-gray-400"
             >
               {isSubmitting ? 'Saving...' : (item ? 'Update Item' : 'Create Item')}
             </button>

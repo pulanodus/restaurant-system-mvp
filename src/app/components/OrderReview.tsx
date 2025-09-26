@@ -139,7 +139,7 @@ export default function OrderReview({ sessionId, onOrderUpdate }: OrderReviewPro
         .from('orders')
         .update({ status: 'waiting' })
         .eq('session_id', sessionId)
-        .eq('status', 'placed');
+        .eq('status', 'cart');
 
       if (updateError) throw updateError;
       

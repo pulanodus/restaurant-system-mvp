@@ -28,9 +28,9 @@ export default function WaiterPage({ searchParams }: WaiterPageProps) {
             <p className="text-gray-500 mb-6">
               We&apos;re developing a smart waiter calling system that will notify restaurant staff when you need assistance.
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-800 mb-2">Planned Features:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
+            <div className="style={{ backgroundColor: '#f0fdff' }} border style={{ borderColor: '#ccf2ff' }} rounded-lg p-4">
+              <h4 className="font-medium style={{ color: '#00d9ff' }} mb-2">Planned Features:</h4>
+              <ul className="text-sm style={{ color: '#00d9ff' }} space-y-1">
                 <li>• Quick waiter call button</li>
                 <li>• Custom assistance requests</li>
                 <li>• Table status updates</li>

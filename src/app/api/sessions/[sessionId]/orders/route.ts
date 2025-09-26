@@ -55,4 +55,4 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
       { status: 500 }
     );
   }
-});
+};

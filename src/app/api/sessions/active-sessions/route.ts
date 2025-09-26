@@ -84,6 +84,17 @@ export const GET = async (request: NextRequest) => {
     
     console.log('✅ Active sessions with totals fetched:', sessionsWithTotals?.length || 0);
     
+    // Debug: Log diner information for each session
+    sessionsWithTotals?.forEach((session, index) => {
+      const tableInfo = Array.isArray(session.tables) ? session.tables[0] : session.tables;
+      console.log(`🔍 Session ${index + 1} Diner Info:`, {
+        sessionId: session.id,
+        tableNumber: tableInfo?.table_number,
+        diners: session.diners,
+        dinerCount: Array.isArray(session.diners) ? session.diners.length : 0
+      });
+    });
+    
     return NextResponse.json({
       success: true,
       sessions: sessionsWithTotals || [],
@@ -97,4 +108,4 @@ export const GET = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-});
+};

@@ -26,6 +26,7 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
         created_at,
         payment_status,
         final_total,
+        diners,
         tables!sessions_table_id_fkey (
           id,
           table_number,
@@ -65,4 +66,4 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
       { status: 500 }
     );
   }
-});
+};

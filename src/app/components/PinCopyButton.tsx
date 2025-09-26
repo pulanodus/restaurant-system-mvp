@@ -23,7 +23,8 @@ export default function PinCopyButton({ pin }: PinCopyButtonProps) {
   return (
     <button
       onClick={handleCopy}
-      className="text-blue-600 hover:text-blue-800 text-xs transition-colors"
+      className="text-xs transition-colors hover:opacity-80"
+      style={{ color: '#00d9ff' }}
       title={copied ? "Copied!" : "Copy PIN"}
     >
       {copied ? "✅" : "📋"}

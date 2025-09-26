@@ -75,7 +75,7 @@ export const POST = async (request: NextRequest) => {
               session_id: data.session_id,
               type: 'kitchen_ready',
               title: 'Order Ready',
-              message: `Table ${sessionData.tables.table_number} - ${data.menu_items?.name || 'Unknown Item'} (Qty: ${data.quantity}) is ready for pickup - Assigned to: ${sessionData.started_by_name}`,
+              message: `Table ${Array.isArray(sessionData.tables) ? sessionData.tables[0]?.table_number : (sessionData.tables as any)?.table_number} - ${data.menu_items?.name || 'Unknown Item'} (Qty: ${data.quantity}) is ready for pickup - Assigned to: ${sessionData.started_by_name}`,
               priority: 'high',
               status: 'pending',
               metadata: {
@@ -89,7 +89,7 @@ export const POST = async (request: NextRequest) => {
           if (notificationError) {
             console.error('⚠️ Failed to create kitchen ready notification:', notificationError);
           } else {
-            console.log('✅ Kitchen ready notification created for table:', sessionData.tables.table_number);
+            console.log('✅ Kitchen ready notification created for table:', Array.isArray(sessionData.tables) ? sessionData.tables[0]?.table_number : (sessionData.tables as any)?.table_number);
           }
         }
       } catch (notificationError) {

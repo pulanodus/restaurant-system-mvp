@@ -1,0 +1,61 @@
+{
+  "Create Documentation File": {
+    "prefix": "doc",
+    "body": [
+      "# ${1:Document Title}",
+      "",
+      "## Overview",
+      "${2:Document description}",
+      "",
+      "## Usage",
+      "${3:Usage instructions}",
+      "",
+      "## Related Documentation",
+      "- [File Organization Guidelines](../FILE_ORGANIZATION.md)",
+      "- [Quick File Placement Guide](../QUICK_FILE_PLACEMENT_GUIDE.md)"
+    ],
+    "description": "Create a new documentation file with proper structure"
+  },
+  "Create SQL Migration": {
+    "prefix": "sql-migration",
+    "body": [
+      "-- Migration: ${1:migration_name}",
+      "-- Description: ${2:migration_description}",
+      "-- Date: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+      "",
+      "-- TODO: Add your migration SQL here",
+      "${3:-- Your SQL statements here}"
+    ],
+    "description": "Create a new SQL migration file"
+  },
+  "Create SQL Cleanup Script": {
+    "prefix": "sql-cleanup",
+    "body": [
+      "-- Cleanup Script: ${1:cleanup_name}",
+      "-- Description: ${2:cleanup_description}",
+      "-- Date: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+      "",
+      "-- WARNING: This script modifies data. Always backup before running!",
+      "",
+      "-- TODO: Add your cleanup SQL here",
+      "${3:-- Your cleanup SQL statements here}"
+    ],
+    "description": "Create a new SQL cleanup script"
+  },
+  "Create Development Script": {
+    "prefix": "dev-script",
+    "body": [
+      "#!/usr/bin/env node",
+      "",
+      "/**",
+      " * Development Script: ${1:script_name}",
+      " * Description: ${2:script_description}",
+      " * Date: ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
+      " */",
+      "",
+      "// TODO: Add your script logic here",
+      "${3:console.log('Script executed successfully');}"
+    ],
+    "description": "Create a new development script"
+  }
+}

@@ -41,8 +41,7 @@ export const GET = async (request: NextRequest) => {
           confirmedOrders: []
         });
       }
-      
-      }
+    }
 
     // Get all confirmed orders (preparing, ready, served) for this session
     // EXCLUDE orders that have already been paid for (status = 'paid')
@@ -58,6 +57,7 @@ export const GET = async (request: NextRequest) => {
         is_takeaway,
         status,
         created_at,
+        diner_name,
         split_bill_id,
         menu_items (
           id,
@@ -73,7 +73,7 @@ export const GET = async (request: NextRequest) => {
         )
       `)
       .eq('session_id', sessionId)
-      .in('status', ['waiting', 'preparing', 'ready', 'served'])  // Include waiting orders and active kitchen orders
+      .in('status', ['waiting', 'preparing', 'ready', 'served'])  // Only include confirmed kitchen orders
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -98,21 +98,21 @@ export const GET = async (request: NextRequest) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      }
+      console.log('📊 Order status breakdown:', statusCounts);
+    }
 
     return NextResponse.json({
       success: true,
       confirmedOrders: confirmedOrders || []
     });
-});
+  };
 
 export const POST = async (request: NextRequest) => {
   const body = await request.json();
-    const { sessionId } = body;
+    const { sessionId, dinerName } = body;
     
-    console.log('  - sessionId:', sessionId);
-    console.log('  - sessionId type:', typeof sessionId);
-    console.log('  - sessionId length:', sessionId?.length);
+    console.log('🔧 API: Confirming orders for session:', sessionId);
+    console.log('🔧 API: Diner name:', dinerName);
 
     // Validate input
     if (!sessionId) {
@@ -120,6 +120,39 @@ export const POST = async (request: NextRequest) => {
         success: false, 
         error: 'SessionId is required',
         debug: { sessionId }
+      }, { status: 400 });
+    }
+
+    if (!dinerName) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'DinerName is required to confirm specific diner\'s orders',
+        debug: { sessionId, dinerName }
+      }, { status: 400 });
+    }
+
+    // CRITICAL FIX: Prevent waitstaff from confirming orders
+    const { data: session, error: sessionError } = await supabaseServer
+      .from('sessions')
+      .select('started_by_name')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError) {
+      console.error('❌ Error fetching session:', sessionError);
+      return NextResponse.json({ error: 'Failed to verify session' }, { status: 500 });
+    }
+
+    // Check if the diner name matches the waitstaff (session starter)
+    if (session.started_by_name && dinerName.toLowerCase() === session.started_by_name.toLowerCase()) {
+      console.log('🚫 CRITICAL: Preventing waitstaff from confirming orders:', {
+        waitstaff: session.started_by_name,
+        attemptedDiner: dinerName
+      });
+      return NextResponse.json({ 
+        success: false,
+        error: 'Waitstaff cannot confirm orders. Please use a different name.',
+        waitstaff: session.started_by_name 
       }, { status: 400 });
     }
 
@@ -134,37 +167,39 @@ export const POST = async (request: NextRequest) => {
       return NextResponse.json({ error: checkError.message }, { status: 500 });
     }
 
-    const { data: placedOrders, error: placedError } = await supabaseServer
+    const { data: cartOrders, error: cartError } = await supabaseServer
       .from('orders')
       .select('*')
       .eq('session_id', sessionId)
-      .eq('status', 'placed');
+      .eq('status', 'cart')
+      .eq('diner_name', dinerName); // CRITICAL FIX: Only get cart items for the specific diner
       
-    if (placedError) {
-      return NextResponse.json({ error: placedError.message }, { status: 500 });
+    if (cartError) {
+      return NextResponse.json({ error: cartError.message }, { status: 500 });
     }
 
-    if (!placedOrders || placedOrders.length === 0) {
+    if (!cartOrders || cartOrders.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No orders to confirm',
+        message: 'No cart items to confirm',
         confirmedOrders: [],
         debug: {
           sessionId,
           totalOrders: existingOrders?.length || 0,
-          placedOrders: 0
+          cartOrders: 0
         }
       });
     }
 
-    // Update all cart items to 'waiting' status (confirmed orders waiting for kitchen)
+    // Update only the specific diner's cart items to 'waiting' status (confirmed orders waiting to be prepared by kitchen)
     const { data: updatedOrders, error: updateError } = await supabaseServer
       .from('orders')
       .update({ 
         status: 'waiting'
       })
       .eq('session_id', sessionId)
-      .eq('status', 'placed')
+      .eq('status', 'cart')
+      .eq('diner_name', dinerName) // CRITICAL FIX: Only update the specific diner's cart items
       .select(`
         id,
         menu_item_id,
@@ -190,7 +225,7 @@ export const POST = async (request: NextRequest) => {
       `);
 
     if (updateError) {
-      console.error('❌ Error updating orders to preparing:', updateError);
+      console.error('❌ Error updating cart items to preparing:', updateError);
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
@@ -213,9 +248,9 @@ export const POST = async (request: NextRequest) => {
       confirmedOrders: updatedOrders || [],
       debug: {
         sessionId,
-        placedOrdersFound: placedOrders?.length || 0,
+        cartOrdersFound: cartOrders?.length || 0,
         ordersUpdated: updatedOrders?.length || 0,
         finalOrdersInDB: finalOrders?.length || 0
       }
     });
-});
+  };

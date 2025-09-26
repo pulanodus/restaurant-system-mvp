@@ -50,11 +50,11 @@ export const GET = async (request: NextRequest) => {
 
     // Filter by status and limit
     const filteredNotifications = notifications
-      ?.filter(n => n.status === status)
+      ?.filter((n: any) => n.status === status)
       ?.slice(0, limit) || [];
 
     // Transform notifications to match expected format
-    const transformedNotifications = filteredNotifications.map(notification => ({
+    const transformedNotifications = filteredNotifications.map((notification: any) => ({
       id: notification.notification_id,
       session_id: notification.session_id,
       type: notification.type,
@@ -75,7 +75,7 @@ export const GET = async (request: NextRequest) => {
     console.log('✅ Staff notifications fetched:', { 
       staffName: staff.name,
       totalNotifications: transformedNotifications.length,
-      assignedNotifications: transformedNotifications.filter(n => n.is_assigned).length
+      assignedNotifications: transformedNotifications.filter((n: any) => n.is_assigned).length
     });
 
     return NextResponse.json({
@@ -89,8 +89,8 @@ export const GET = async (request: NextRequest) => {
       },
       summary: {
         total: transformedNotifications.length,
-        assigned: transformedNotifications.filter(n => n.is_assigned).length,
-        unassigned: transformedNotifications.filter(n => !n.is_assigned).length
+        assigned: transformedNotifications.filter((n: any) => n.is_assigned).length,
+        unassigned: transformedNotifications.filter((n: any) => !n.is_assigned).length
       }
     });
 

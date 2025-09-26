@@ -131,7 +131,7 @@ export const POST = async (request: NextRequest) => {
       .update({ 
         occupied: true,
         current_session_id: sessionId,
-        current_pin: sourceTable.current_pin // Transfer the PIN
+        current_pin: (sourceTable as any).current_pin // Transfer the PIN
       })
       .eq('id', destinationTableId);
 
@@ -146,7 +146,7 @@ export const POST = async (request: NextRequest) => {
         .from('tables')
         .update({ 
           occupied: true, 
-          current_pin: sourceTable.current_pin,
+          current_pin: (sourceTable as any).current_pin,
           current_session_id: sessionId 
         })
         .eq('id', sourceTableId);
@@ -227,4 +227,4 @@ export const POST = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-});
+};

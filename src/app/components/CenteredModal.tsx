@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 
 import { useCart } from '@/contexts/CartContext';
 import BottomSheetModal from './BottomSheetModal';
-import { getMenuItemPlaceholder } from '@/lib/placeholder-images';
 
 interface CenteredModalProps {
   isOpen: boolean;
@@ -138,7 +137,10 @@ const CenteredModal = ({
       
       // Navigate to split-bill page
       onClose();
-      window.location.href = `/split-bill?sessionId=${_sessionId}&itemId=${item.id}`;
+      // CRITICAL FIX: Preserve diner name when navigating to split-bill page
+      const currentDinerName = state.dinerName;
+      const dinerNameParam = currentDinerName ? `&dinerName=${encodeURIComponent(currentDinerName)}` : '';
+      window.location.href = `/split-bill?sessionId=${_sessionId}&itemId=${item.id}${dinerNameParam}`;
     } catch (error) {
       console.error('Error making item shared:', error);
     } finally {
@@ -201,9 +203,16 @@ const CenteredModal = ({
         await loadCartItems();
       }
       
-      // Navigate to cart review page
+      // Navigate to cart review page with diner name
       onClose();
-      window.location.href = `/cart-review?sessionId=${_sessionId}`;
+      const currentDinerName = state.dinerName;
+      if (currentDinerName) {
+        window.location.href = `/cart-review?sessionId=${_sessionId}&dinerName=${encodeURIComponent(currentDinerName)}`;
+      } else {
+        // CRITICAL FIX: If no diner name, redirect to table scan to prevent session corruption
+        console.warn('⚠️ No diner name available, redirecting to table scan');
+        window.location.href = `/scan/${_sessionId}`;
+      }
     } catch (error) {
       console.error('Error updating item:', error);
     } finally {
@@ -218,13 +227,11 @@ const CenteredModal = ({
       title="Customize Item"
       maxHeight="90vh"
     >
-      {/* Item Image Banner */}
-      <div className="w-full h-48 bg-gray-200 flex items-center justify-center overflow-hidden">
-        <img 
-          src={item.image_url || getMenuItemPlaceholder(itemName)} 
-          alt={itemName} 
-          className="w-full h-full object-cover" 
-        />
+      {/* Item Banner without Image */}
+      <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
+        <div className="text-gray-400 text-4xl font-bold">
+          {itemName.charAt(0).toUpperCase()}
+        </div>
       </div>
 
       {/* Item Details */}

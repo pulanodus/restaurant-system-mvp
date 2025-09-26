@@ -89,7 +89,7 @@ export const POST = async (request: NextRequest) => {
     console.log('✅ Staff assigned to table successfully:', { 
       staffName: staff.name,
       staffId: staff.staff_id,
-      tableNumber: session.tables?.table_number,
+      tableNumber: Array.isArray(session.tables) ? session.tables[0]?.table_number : (session.tables as any)?.table_number,
       sessionId
     });
 
@@ -97,7 +97,7 @@ export const POST = async (request: NextRequest) => {
       success: true,
       assignment: {
         sessionId,
-        tableNumber: session.tables?.table_number,
+        tableNumber: Array.isArray(session.tables) ? session.tables[0]?.table_number : (session.tables as any)?.table_number,
         staff: {
           id: staff.id,
           staffId: staff.staff_id,
@@ -105,7 +105,7 @@ export const POST = async (request: NextRequest) => {
           role: staff.role
         }
       },
-      message: `${staff.name} has been assigned to Table ${session.tables?.table_number}`
+      message: `${staff.name} has been assigned to Table ${Array.isArray(session.tables) ? session.tables[0]?.table_number : (session.tables as any)?.table_number}`
     });
 
   } catch (error) {

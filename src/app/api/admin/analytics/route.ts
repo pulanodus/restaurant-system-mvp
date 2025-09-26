@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAdminAuth } from '@/lib/api-auth';
 import { getErrorAnalytics, getErrorSummary } from '@/lib/error-handling';
 
-export async function GET(request: NextRequest) {
+export const GET = withAdminAuth(async (request: NextRequest, user) => {
   try {
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get('restaurantId');
@@ -40,4 +41,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

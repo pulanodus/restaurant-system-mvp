@@ -274,7 +274,7 @@ export default function StaffPaymentsPage() {
                       <>
                         <button
                           onClick={() => acknowledgeNotification(notification.id)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white rounded-lg hover:style={{ backgroundColor: '#00d9ff' }} transition-colors text-sm font-medium"
                         >
                           Acknowledge
                         </button>
@@ -331,7 +331,7 @@ export default function StaffPaymentsPage() {
               </button>
               <button
                 onClick={() => completePayment(selectedNotification.session_id, 'card')}
-                className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                className="w-full py-3 px-4 style={{ backgroundColor: '#00d9ff' }} text-white rounded-lg hover:style={{ backgroundColor: '#00d9ff' }} transition-colors font-medium"
               >
                 Card Payment
               </button>

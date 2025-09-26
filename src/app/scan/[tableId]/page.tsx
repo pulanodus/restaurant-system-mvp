@@ -40,7 +40,14 @@ export default async function ScanTablePage({ params }: PageProps) {
     table = tableByNumber;
   }
 
-  // 2. Check if this table already has an active session
+  // 2. Fetch restaurant information
+  const { data: restaurant } = await supabase
+    .from('restaurants')
+    .select('name')
+    .eq('id', table.restaurant_id)
+    .single();
+
+  // 3. Check if this table already has an active session
   const { data: activeSession } = await supabase
     .from('sessions')
     .select('id, started_by_name')
@@ -48,10 +55,12 @@ export default async function ScanTablePage({ params }: PageProps) {
     .eq('status', 'active')
     .maybeSingle();
 
+  // Return the ScanPageClient which will handle the flow based on table state
   return (
     <ScanPageClient
       tableId={tableId}
       table={table}
+      restaurant={restaurant}
       activeSession={activeSession}
     />
   );

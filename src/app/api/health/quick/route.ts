@@ -9,7 +9,7 @@ export async function GET(_request: NextRequest) {
   const startTime = Date.now()
   const healthCheckId = Math.random().toString(36).substring(2, 15)
   
-  if (isDebugMode) {
+  if (isDebugMode()) {
     console.log(`🏥 Quick Health Check [${healthCheckId}]`)
   }
 
@@ -22,7 +22,7 @@ export async function GET(_request: NextRequest) {
     // Check environment first
     const env = checkEnvironment()
     
-    if (!env.isConfigured) {
+    if (!env.hasSupabaseUrl || !env.hasSupabaseKey) {
       const response = {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
@@ -30,16 +30,16 @@ export async function GET(_request: NextRequest) {
         error: 'Configuration Error',
         details: {
           message: 'Environment variables not configured',
-          hasUrl: env.hasUrl,
-          hasAnonKey: env.hasAnonKey
+          hasUrl: env.hasSupabaseUrl,
+          hasAnonKey: env.hasSupabaseKey
         },
         duration: Date.now() - startTime
       }
 
-      debugErrorLog('QUICK_HEALTH_CHECK', 'Quick health check failed - configuration error', {
+      debugErrorLog('Quick health check failed - configuration error', {
         healthCheckId,
-        hasUrl: env.hasUrl,
-        hasAnonKey: env.hasAnonKey
+        hasUrl: env.hasSupabaseUrl,
+        hasAnonKey: env.hasSupabaseKey
       })
 
       return NextResponse.json(response, { status: 503 })
@@ -49,7 +49,7 @@ export async function GET(_request: NextRequest) {
     const healthResult = await quickHealthCheck()
     
     const response = {
-      status: healthResult.healthy ? 'healthy' : 'unhealthy',
+      status: healthResult.status,
       timestamp: new Date().toISOString(),
       healthCheckId,
       details: {
@@ -59,11 +59,11 @@ export async function GET(_request: NextRequest) {
       duration: Date.now() - startTime
     }
 
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('Quick health check completed:', {
         status: response.status,
         duration: `${response.duration}ms`,
-        healthy: healthResult.healthy
+        healthy: healthResult.status === 'healthy'
       })
     }
 
@@ -71,21 +71,22 @@ export async function GET(_request: NextRequest) {
       healthCheckId,
       status: response.status,
       duration: `${response.duration}ms`,
-      healthy: healthResult.healthy
+      healthy: healthResult.status === 'healthy'
     })
 
     return NextResponse.json(response, { 
-      status: healthResult.healthy ? 200 : 503 
+      status: healthResult.status === 'healthy' ? 200 : 503 
     })
 
   } catch (error) {
     const duration = Date.now() - startTime
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.error('❌ Quick health check failed with exception:', error)
     }
 
-    debugErrorLog('QUICK_HEALTH_CHECK', 'Quick health check failed with exception', error, {
+    debugErrorLog('Quick health check failed with exception', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       healthCheckId,
       duration: `${duration}ms`
     })

@@ -1,11 +1,11 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { HelpCircle, ArrowLeft, CheckCircle } from 'lucide-react';
 
-export default function WaiterHelpPage() {
+function WaiterHelpPageContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -87,5 +87,20 @@ export default function WaiterHelpPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function WaiterHelpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <p className="text-gray-600">Preparing help request...</p>
+        </div>
+      </div>
+    }>
+      <WaiterHelpPageContent />
+    </Suspense>
   );
 }

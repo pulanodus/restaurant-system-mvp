@@ -190,41 +190,64 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
   }, 0);
   const vat = tableSubtotal * 0.14;
   const tableTotal = tableSubtotal + vat;
+  
+  // DEBUG: Log table total calculation
+  console.log('🔍 TABLE TOTAL CALCULATION:', {
+    orderCount: confirmedOrders.length,
+    tableSubtotal,
+    vat,
+    tableTotal,
+    orders: confirmedOrders.map(order => ({
+      name: Array.isArray(order.menu_items) ? order.menu_items[0]?.name : order.menu_items?.name,
+      price: Array.isArray(order.menu_items) ? order.menu_items[0]?.price : order.menu_items?.price,
+      quantity: order.quantity,
+      total: (Array.isArray(order.menu_items) ? order.menu_items[0]?.price : order.menu_items?.price) * order.quantity
+    }))
+  });
 
   // Calculate individual shares from confirmed orders using the same logic as Table Bill
   const calculateUserShare = (userId: string) => {
-    // The current user is represented as "You" in the participants array
-    const currentUserName = 'You';
-    
     let personalTotal = 0;
     let sharedTotal = 0;
+    
+    console.log('🔍 calculateUserShare - Processing confirmed orders:', confirmedOrders.length);
     
     confirmedOrders.forEach(order => {
       const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
       const splitBill = Array.isArray(order.split_bills) ? order.split_bills[0] : order.split_bills;
       const isShared = !!splitBill && splitBill.participants && splitBill.participants.length > 0;
       
-      if (isShared && splitBill.participants && splitBill.participants.includes(currentUserName)) {
-        // This is a shared item that includes the current user
-        const itemPrice = (splitBill.split_price || 0) * order.quantity;
+      console.log('🔍 Order details:', {
+        itemName: menuItem?.name,
+        isShared,
+        splitBillParticipants: splitBill?.participants,
+        dinerName: order.diner_name,
+        hasSplitBill: !!splitBill
+      });
+      
+      if (isShared && splitBill.participants) {
+        // For shared items, we need to check if the current user is in the participants
+        // Since we don't know the current user's name, we'll calculate the total shared amount
+        // and let the UI handle the display logic
+        const itemPrice = splitBill.split_price || 0;
         sharedTotal += itemPrice;
-        } else if (!isShared && order.diner_name === currentUserName) {
-        // This is a personal item for the current user (only if diner_name matches)
+        console.log('🔍 Added to shared total:', itemPrice, 'for item:', menuItem?.name);
+      } else {
+        // For personal items, add to personal total
         const itemPrice = (menuItem?.price || 0) * order.quantity;
         personalTotal += itemPrice;
-        } else if (!isShared && !order.diner_name) {
-        // For non-shared items without diner_name, we'll assume they belong to the current user
-        // This is a fallback for items that haven't been assigned to specific people yet
-        const itemPrice = (menuItem?.price || 0) * order.quantity;
-        personalTotal += itemPrice;
-        }
+        console.log('🔍 Added to personal total:', itemPrice, 'for item:', menuItem?.name);
+      }
     });
 
-    return {
+    const result = {
       individualTotal: personalTotal,
       sharedTotal: sharedTotal,
       subtotal: personalTotal + sharedTotal
     };
+    
+    console.log('🔍 calculateUserShare result:', result);
+    return result;
   };
 
   // Calculate cart totals - handle split bills correctly
@@ -367,7 +390,9 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
     };
   }, [sessionId]);
 
-  const handleRequestPayment = async () => {
+  const handleRequestPayment = async (isTablePayment: boolean = false) => {
+    console.log('🔍 handleRequestPayment called with:', { isTablePayment });
+    
     if (!sessionId) {
       console.error('No session ID available for payment request');
       alert('No active session found. Please refresh the page.');
@@ -392,22 +417,42 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
     }
 
     try {
-      // Calculate totals
-      const subtotal = currentDinerShare.subtotal + cartSubtotal;
-      const vat = subtotal * 0.14;
-      const finalTotal = subtotal + vat;
+      let subtotal: number;
+      let vat: number;
+      let finalTotal: number;
 
-      // Calculate table total for comparison - use original prices
-      const tableSubtotal = confirmedOrders.reduce((sum, order) => {
-        const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
-        const price = menuItem?.price || 0;
-        return sum + (price * order.quantity);
-      }, 0);
-      const tableVat = tableSubtotal * 0.14;
-      const tableTotal = tableSubtotal + tableVat;
-
-      // Determine payment type: if individual share equals table total, it's a table payment
-      const isTablePayment = Math.abs(finalTotal - tableTotal) < 0.01; // Account for floating point precision
+      if (isTablePayment) {
+        // Calculate table total - use original prices for all confirmed orders
+        subtotal = confirmedOrders.reduce((sum, order) => {
+          const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
+          const price = menuItem?.price || 0;
+          return sum + (price * order.quantity);
+        }, 0);
+        vat = subtotal * 0.14;
+        finalTotal = subtotal + vat;
+        
+        console.log('🍽️ TABLE PAYMENT REQUEST:', {
+          subtotal,
+          vat,
+          finalTotal,
+          orderCount: confirmedOrders.length,
+          isTablePayment,
+          paymentType: 'table'
+        });
+      } else {
+        // Calculate individual diner's share
+        subtotal = currentDinerShare.subtotal + cartSubtotal;
+        vat = subtotal * 0.14;
+        finalTotal = subtotal + vat;
+        
+        console.log('👤 INDIVIDUAL PAYMENT REQUEST:', {
+          dinerShare: currentDinerShare.subtotal,
+          cartSubtotal,
+          subtotal,
+          vat,
+          finalTotal
+        });
+      }
 
       // Navigate to payment confirmation page with initial values
       const params = new URLSearchParams({
@@ -416,7 +461,7 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
         vat: vat.toString(),
         tipAmount: '0',
         finalTotal: finalTotal.toString(),
-        paymentType: isTablePayment ? 'table' : 'individual' // Smart payment type detection
+        paymentType: isTablePayment ? 'table' : 'individual'
       });
 
       window.location.href = `/payment-confirmation?${params.toString()}`;
@@ -661,12 +706,21 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                         
                         setIsConfirming(true);
                         try {
+                          // Get the current diner name from cart context or session data
+                          const currentDinerName = state.dinerName || sessionData?.diners?.find((d: any) => d.isActive)?.name;
+                          
+                          if (!currentDinerName) {
+                            alert('Error: Could not identify current diner. Please refresh the page.');
+                            return;
+                          }
+
                           // Call the orders confirmation API
                           const response = await fetch('/api/orders/confirm', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                              sessionId: sessionId
+                              sessionId: sessionId,
+                              dinerName: currentDinerName // CRITICAL FIX: Pass diner name to confirm only their items
                             })
                           });
 
@@ -713,7 +767,9 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                     
                     <button 
                       onClick={() => {
-                        window.location.href = `/cart-review?sessionId=${sessionId}`;
+                        const dinerName = sessionData?.diners?.find((d: any) => d.isActive)?.name;
+                        const dinerNameParam = dinerName ? `&dinerName=${encodeURIComponent(dinerName)}` : '';
+                        window.location.href = `/cart-review?sessionId=${sessionId}${dinerNameParam}`;
                       }}
                       className="w-full border-2 border-orange-500 text-orange-600 py-2 px-4 rounded-lg font-medium hover:bg-orange-50 transition-colors"
                     >
@@ -772,9 +828,12 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                 </div>
               </div>
 
-              {/* Payment Button */}
+              {/* Individual Payment Button */}
               <button
-                onClick={handleRequestPayment}
+                onClick={() => {
+                  console.log('🔍 INDIVIDUAL PAYMENT BUTTON CLICKED');
+                  handleRequestPayment(false);
+                }}
                 disabled={!allOrdersServed || !hasOrders}
                 className={`w-full py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 shadow-sm ${
                   allOrdersServed && hasOrders
@@ -887,11 +946,14 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                   
                   {/* Request Full Payment Button */}
                   <button
-                    onClick={handleRequestPayment}
+                    onClick={() => {
+                      console.log('🔍 TABLE PAYMENT BUTTON CLICKED');
+                      handleRequestPayment(true);
+                    }}
                     disabled={!allOrdersServed || !hasOrders}
                     className={`w-full mt-4 py-3 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 shadow-sm ${
                       allOrdersServed && hasOrders
-                        ? 'bg-[#00d9ff] text-white hover:bg-[#00c4e6] cursor-pointer'
+                        ? 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     }`}
                     title={
@@ -925,70 +987,87 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                     </div>
                   );
                 }
-                // Process diners using the same logic as staff dashboard
+                // SIMPLIFIED LOGIC: Get all diners from session, then check their orders
                 const dinerMap = new Map();
                 
-                // First, collect all unique participant names from shared items
-                const allParticipants = new Set<string>();
+                // Get all session diners
+                const sessionDiners = sessionData?.diners || [];
+                console.log('🔍 Session diners:', sessionDiners);
                 
-                confirmedOrders.forEach(order => {
-                  // Add all participants from shared items
-                  if (order.split_bills && order.split_bills.participants) {
-                    order.split_bills.participants.forEach((participant: string) => {
-                      allParticipants.add(participant);
-                    });
-                  }
-                  
-                  // Also check shared_with array
-                  if (order.shared_with && Array.isArray(order.shared_with)) {
-                    order.shared_with.forEach((participant: string) => {
-                      allParticipants.add(participant);
-                    });
-                  }
+                // Initialize diner map with all session diners
+                sessionDiners.forEach((diner: any) => {
+                  dinerMap.set(diner.name, {
+                    name: diner.name,
+                    orders: [],
+                    personalTotal: 0,
+                    sharedTotal: 0,
+                    total: 0
+                  });
                 });
                 
-                // Create diner entries for all participants
-                for (const participantName of allParticipants) {
-                  if (participantName && typeof participantName === 'string' && participantName.trim()) {
-                    const name = participantName.trim();
-                    if (!dinerMap.has(name)) {
-                      dinerMap.set(name, {
-                        name: name,
-                        orders: [],
-                        personalTotal: 0,
-                        sharedTotal: 0,
-                        total: 0
-                      });
-                    }
-                  }
-                }
-                
-                // Now process orders and assign them to the correct diners
+                // Process each confirmed order
+                console.log('🔍 Processing confirmed orders:', confirmedOrders.length);
                 confirmedOrders.forEach(order => {
                   const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
                   const splitBill = Array.isArray(order.split_bills) ? order.split_bills[0] : order.split_bills;
                   const isShared = !!splitBill && splitBill.participants && splitBill.participants.length > 0;
                   
+                  console.log('🔍 Order details:', {
+                    orderId: order.id,
+                    itemName: menuItem?.name,
+                    dinerName: order.diner_name,
+                    hasSplitBill: !!splitBill,
+                    isShared,
+                    splitBillData: splitBill
+                  });
+                  
                   if (isShared && splitBill.participants) {
-                    // For shared items, add to all participants
+                    // Shared item: add to all participants
+                    // FIXED: split_price is the per-person amount for the total quantity
+                    const splitAmountPerPerson = splitBill.split_price || 0;
+                    
+                    console.log('🔍 Processing shared item (FIXED CALCULATION):', {
+                      orderId: order.id,
+                      itemName: menuItem?.name,
+                      splitBillData: {
+                        split_price: splitBill.split_price,
+                        split_count: splitBill.split_count,
+                        participants: splitBill.participants,
+                        original_price: splitBill.original_price
+                      },
+                      orderQuantity: order.quantity,
+                      splitAmountPerPerson: splitAmountPerPerson,
+                      originalTotal: (menuItem?.price || 0) * order.quantity,
+                      calculation: {
+                        splitPricePerPerson: splitBill.split_price,
+                        quantity: order.quantity,
+                        splitAmountPerPerson: splitAmountPerPerson,
+                        originalPricePerUnit: menuItem?.price,
+                        totalOriginalAmount: (menuItem?.price || 0) * order.quantity,
+                        formula: `${splitBill.split_price} (per-person for total quantity)`
+                      }
+                    });
+                    
                     splitBill.participants.forEach((participantName: string) => {
                       const diner = dinerMap.get(participantName);
                       if (diner) {
-                        const itemPrice = (splitBill.split_price || 0) * order.quantity;
                         diner.orders.push({
                           ...order,
                           itemName: menuItem?.name || 'Unknown Item',
-                          itemPrice,
+                          itemPrice: splitAmountPerPerson, // This is the split amount per person
                           isShared: true,
                           sharedWith: splitBill.participants,
-                          splitCount: splitBill.split_count || 1
+                          splitCount: splitBill.split_count || 1,
+                          originalPrice: (menuItem?.price || 0) * order.quantity // Store original for reference
                         });
-                        diner.sharedTotal += itemPrice;
+                        diner.sharedTotal += splitAmountPerPerson;
+                        console.log('🔍 Added shared item to diner:', participantName, 'split amount:', splitAmountPerPerson);
                       }
                     });
                   } else {
-                    // For personal items, assign them to "You" since we don't have diner_name
-                    const diner = dinerMap.get('You');
+                    // Personal item: add to the diner who ordered it
+                    const dinerName = order.diner_name;
+                    const diner = dinerMap.get(dinerName);
                     if (diner) {
                       const itemPrice = (menuItem?.price || 0) * order.quantity;
                       diner.orders.push({
@@ -998,6 +1077,7 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                         isShared: false
                       });
                       diner.personalTotal += itemPrice;
+                      console.log('🔍 Added personal item to diner:', dinerName, 'amount:', itemPrice);
                     }
                   }
                 });
@@ -1009,16 +1089,27 @@ const LiveBill = ({ sessionId: propSessionId, tableId: propTableId }: LiveBillPr
                   diner.total = subtotal + vat;
                 });
                 
-                if (dinerMap.size === 0) {
+                // Filter out diners with no orders
+                const dinersWithOrders = Array.from(dinerMap.values()).filter(diner => diner.orders.length > 0);
+                
+                console.log('🔍 Final diners with orders:', dinersWithOrders.map(diner => ({
+                  name: diner.name,
+                  personalTotal: diner.personalTotal,
+                  sharedTotal: diner.sharedTotal,
+                  total: diner.total,
+                  orderCount: diner.orders.length
+                })));
+                
+                if (dinersWithOrders.length === 0) {
                   return (
                     <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                      <p className="text-gray-600 mb-2">No diners found</p>
+                      <p className="text-gray-600 mb-2">No diners with orders found</p>
                       <p className="text-sm text-gray-500">Orders will appear here once confirmed to the kitchen</p>
                     </div>
                   );
                 }
 
-                return Array.from(dinerMap.values()).map((diner, index) => (
+                return dinersWithOrders.map((diner, index) => (
                   <div key={index} className="bg-white border border-purple-200 rounded-lg p-4 shadow-sm">
                     {/* Diner Header - Purple styling */}
                     <div className="flex items-center justify-between mb-4 pb-3 border-b border-purple-200">

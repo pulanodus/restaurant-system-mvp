@@ -5,14 +5,11 @@ import React, { useState } from 'react'
 import { 
   debugLog, 
   debugSessionLog, 
-  debugApiLog, 
   debugDbLog, 
-  debugAuthLog, 
   debugErrorLog,
   debugValidationLog,
   debugNavLog,
-  isDebugMode,
-  debugMode
+  isDebugMode
 } from '@/lib/debug'
 
 export default function DebugExample() {
@@ -28,7 +25,7 @@ export default function DebugExample() {
   }
 
   const handleSessionDebug = () => {
-    debugSessionLog('CREATE_SESSION', 'Session creation started', {
+    debugSessionLog('Session creation started', {
       tableId: tableId || 'table-123',
       userId: userId || 'user-456',
       timestamp: new Date().toISOString()
@@ -36,14 +33,14 @@ export default function DebugExample() {
   }
 
   const handleApiDebug = () => {
-    debugApiLog('/api/sessions', 'POST', 'API request initiated', {
+    debugLog('API request initiated', {
       body: { tableId, userId },
       headers: { 'Content-Type': 'application/json' }
     })
   }
 
   const handleDbDebug = () => {
-    debugDbLog('INSERT', 'sessions', 'Database operation started', {
+    debugDbLog('Database operation started', {
       tableId: tableId || 'table-123',
       userId: userId || 'user-456',
       data: { status: 'active', started_at: new Date().toISOString() }
@@ -51,7 +48,7 @@ export default function DebugExample() {
   }
 
   const handleAuthDebug = () => {
-    debugAuthLog('LOGIN', 'Authentication attempt', {
+    debugLog('Authentication attempt', {
       userId: userId || 'user-456',
       method: 'email',
       timestamp: new Date().toISOString()
@@ -60,14 +57,14 @@ export default function DebugExample() {
 
   const handleErrorDebug = () => {
     const testError = new Error('Test error for debugging')
-    debugErrorLog('TEST_OPERATION', 'Test error occurred', testError, {
+    debugErrorLog('Test error occurred', {
       context: 'debug-example',
       timestamp: new Date().toISOString()
     })
   }
 
   const handleValidationDebug = () => {
-    debugValidationLog('SESSION_VALIDATION', 'Validation started', {
+    debugValidationLog('Validation started', {
       tableId: tableId || 'table-123',
       userId: userId || 'user-456',
       checks: ['table_exists', 'user_authenticated', 'permissions']
@@ -75,14 +72,14 @@ export default function DebugExample() {
   }
 
   const handleNavDebug = () => {
-    debugNavLog('debug-example', 'menu', 'Navigation initiated', {
+    debugNavLog('Navigation initiated', {
       sessionId: sessionId || 'session-789',
       timestamp: new Date().toISOString()
     })
   }
 
   const handleDebugModeStatus = () => {
-    const status = debugMode.status()
+    const status = isDebugMode()
     debugLog('Debug mode status', status)
   }
 
@@ -93,13 +90,13 @@ export default function DebugExample() {
       <div className="mb-6 p-4 bg-gray-100 rounded-lg">
         <h3 className="text-lg font-semibold mb-2">Debug Mode Status</h3>
         <p className="text-sm text-gray-600 mb-2">
-          Debug mode is: <span className={`font-bold ${isDebugMode ? 'text-green-600' : 'text-red-600'}`}>
-            {isDebugMode ? 'ENABLED' : 'DISABLED'}
+          Debug mode is: <span className={`font-bold ${isDebugMode() ? 'text-green-600' : 'text-red-600'}`}>
+            {isDebugMode() ? 'ENABLED' : 'DISABLED'}
           </span>
         </p>
         <button 
           onClick={handleDebugModeStatus}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white rounded hover:style={{ backgroundColor: '#00d9ff' }}"
         >
           Check Debug Status
         </button>
@@ -117,7 +114,7 @@ export default function DebugExample() {
               value={tableId}
               onChange={(e) => setTableId(e.target.value)}
               placeholder="table-123"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-2 focus:ring-opacity-50"
             />
           </div>
           
@@ -128,7 +125,7 @@ export default function DebugExample() {
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               placeholder="user-456"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-2 focus:ring-opacity-50"
             />
           </div>
           
@@ -139,7 +136,7 @@ export default function DebugExample() {
               value={sessionId}
               onChange={(e) => setSessionId(e.target.value)}
               placeholder="session-789"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-2 focus:ring-opacity-50"
             />
           </div>
         </div>
@@ -165,7 +162,7 @@ export default function DebugExample() {
             
             <button 
               onClick={handleApiDebug}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-left"
+              className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white rounded hover:style={{ backgroundColor: '#00d9ff' }} text-left"
             >
               API Debug Log
             </button>
@@ -219,7 +216,7 @@ export default function DebugExample() {
         </ol>
       </div>
 
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-6 p-4 style={{ backgroundColor: '#f0fdff' }} border style={{ borderColor: '#ccf2ff' }} rounded-lg">
         <h3 className="text-lg font-semibold mb-2">Debug Mode Features</h3>
         <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
           <li><strong>Automatic Environment Detection:</strong> Enabled in development, configurable in production</li>

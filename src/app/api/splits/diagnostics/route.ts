@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
         details: orders?.map(o => ({
           id: o.id,
           menuItemId: o.menu_item_id,
-          menuItemName: o.menu_items?.name || 'Unknown',
+          menuItemName: Array.isArray(o.menu_items) ? o.menu_items[0]?.name : (o.menu_items as any)?.name || 'Unknown',
           quantity: o.quantity,
           isShared: o.is_shared,
           splitBillId: o.split_bill_id,
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         ordersWithoutSplitBills: orders?.filter(o => 
           o.is_shared && o.status === 'placed' && !o.split_bill_id
         ).length || 0,
-        potentialIssues: []
+        potentialIssues: [] as string[]
       }
     };
 

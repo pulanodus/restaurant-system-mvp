@@ -167,14 +167,13 @@ export default function StaffDashboard() {
                      n.priority === 'medium' ? 'medium' as const : 'low' as const,
             metadata: {
               assigned_waitstaff: n.metadata?.assigned_waitstaff,
-              is_my_table: staff ? n.sessions?.served_by === staff.id : false,
+              is_my_table: staff ? (n.sessions?.served_by === staff.staffId || n.sessions?.served_by === staff.id) : false,
               request_type: n.metadata?.request_type,
               customer_name: n.metadata?.customer_name
             }
           }));
-        }
 
-        setNotifications(transformedNotifications);
+          setNotifications(transformedNotifications);
           
           // Play audio notification for new notifications
           const currentNotificationCount = transformedNotifications.filter(n => n.status === 'pending').length;
@@ -222,6 +221,17 @@ export default function StaffDashboard() {
                   const sessionsResponse = await fetch('/api/sessions/active-sessions');
                   const sessionsData = await sessionsResponse.json();
                   setSessions(sessionsData.sessions || []);
+                  
+                  // Debug: Log diner information
+                  console.log('🔍 Staff Portal - Sessions loaded:', sessionsData.sessions?.length || 0);
+                  sessionsData.sessions?.forEach((session: any, index: number) => {
+                    console.log(`🔍 Session ${index + 1}:`, {
+                      sessionId: session.id,
+                      tableNumber: session.tables?.table_number,
+                      diners: session.diners,
+                      dinerCount: Array.isArray(session.diners) ? session.diners.length : 0
+                    });
+                  });
                 } catch (tableError) {
                   console.warn('Failed to load table data:', tableError);
                   setTables([]);
@@ -324,9 +334,9 @@ export default function StaffDashboard() {
       case 'assistance':
         return {
           icon: <HelpCircle className="w-5 h-5" />,
-          bgColor: 'bg-blue-50 border-blue-200',
-          iconColor: 'text-blue-600',
-          badgeColor: 'bg-blue-100 text-blue-800'
+          bgColor: 'border',
+          iconColor: '',
+          badgeColor: ''
         };
       case 'waiter_request':
         return {
@@ -375,7 +385,7 @@ export default function StaffDashboard() {
   };
 
   // Staff authentication functions
-  const handleStaffLogin = async (staffId: string, deviceId?: string) => {
+  const handleStaffLogin = async (staffId: string, deviceId?: string, staffName?: string) => {
     try {
       const response = await fetch('/api/staff/login', {
         method: 'POST',
@@ -384,7 +394,8 @@ export default function StaffDashboard() {
         },
         body: JSON.stringify({
           staffId: staffId.trim(),
-          deviceId: deviceId?.trim() || null
+          deviceId: deviceId?.trim() || null,
+          staffName: staffName?.trim() || null
         }),
       });
 
@@ -464,7 +475,8 @@ export default function StaffDashboard() {
         },
         body: JSON.stringify({
           tableId,
-          staffId: staff.id
+          staffId: staff.id,
+          staffName: staff.name
         }),
       });
 
@@ -704,7 +716,7 @@ export default function StaffDashboard() {
     
     // Show only sessions for tables assigned to this staff member
     return sessions.filter(session => 
-      session.served_by === staff.id
+      session.served_by === staff.staffId || session.served_by === staff.id
     );
   };
 
@@ -722,7 +734,7 @@ export default function StaffDashboard() {
     }
     
     // Available tables can be set up by staff
-    return { status: 'available', color: 'bg-blue-100 text-blue-800', icon: <CheckCircle className="w-4 h-4" /> };
+     return { status: 'available', color: 'bg-gray-100 text-gray-800', icon: <CheckCircle className="w-4 h-4" /> };
   };
 
   const getSessionInfo = (table: Table) => {
@@ -792,8 +804,8 @@ export default function StaffDashboard() {
               {staff ? (
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-4 h-4 text-blue-600" />
+                     <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                       <User className="w-4 h-4 text-gray-600" />
                     </div>
                     <div className="text-sm">
                       <p className="font-medium text-gray-900">{staff.name}</p>
@@ -810,10 +822,11 @@ export default function StaffDashboard() {
                   </button>
                 </div>
               ) : (
-                <button
-                  onClick={() => setIsStaffLoginOpen(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
+                  <button
+                    onClick={() => setIsStaffLoginOpen(true)}
+                    className="flex items-center space-x-2 px-4 py-2 text-white rounded-lg hover:opacity-80 transition-colors"
+                    style={{ backgroundColor: '#00d9ff' }}
+                  >
                   <LogIn className="w-4 h-4" />
                   <span>Staff Login</span>
                 </button>
@@ -905,9 +918,9 @@ export default function StaffDashboard() {
                                 </span>
                               )}
                               {notification.metadata?.assigned_waitstaff && (
-                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  {notification.metadata.assigned_waitstaff}
-                                </span>
+                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {notification.metadata.assigned_waitstaff}
+                                  </span>
                               )}
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${style.badgeColor}`}>
                                 {notification.priority}
@@ -930,7 +943,8 @@ export default function StaffDashboard() {
                             onClick={() => handleNotificationAction(notification.id, notification.type)}
                             className="px-4 py-2 bg-[#00d9ff] text-white text-sm rounded-lg hover:bg-[#00c4e6] transition-colors font-medium"
                           >
-                            {notification.type === 'waiter_request' ? 'Acknowledge' : 'Resolve'}
+                            {notification.type === 'waiter_request' ? 'Acknowledge' : 
+                             notification.type === 'urgent' ? 'Served' : 'Resolve'}
                           </button>
                         </div>
                       </div>
@@ -974,11 +988,11 @@ export default function StaffDashboard() {
                   <div className="flex items-center space-x-1">
                     <button
                       onClick={() => switchStaffView('all')}
-                      className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                        !selectedStaffView 
-                          ? 'bg-blue-100 text-blue-700 border border-blue-300' 
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
-                      }`}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                          !selectedStaffView 
+                           ? 'bg-gray-100 text-gray-700 border border-gray-300' 
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                        }`}
                     >
                       All
                     </button>
@@ -1064,10 +1078,10 @@ export default function StaffDashboard() {
 
                 {/* Filter Status */}
                 {(showMyTablesOnly || (isTabletMode && selectedStaffView && selectedStaffView !== 'all')) && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-blue-700 font-medium">
+                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                       <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                       <span className="text-sm text-gray-700 font-medium">
                         {showMyTablesOnly && staff ? `Showing only your tables (${staff.name})` : ''}
                         {isTabletMode && selectedStaffView && selectedStaffView !== 'all' ? `Showing tables for ${allStaffAssignments[selectedStaffView] || selectedStaffView}` : ''}
                       </span>
@@ -1083,10 +1097,31 @@ export default function StaffDashboard() {
                     
                     if (showMyTablesOnly && staff) {
                       // Filter to show only tables assigned to current staff
+                      console.log('🔍 My Tables Filter - Staff object:', {
+                        staffId: staff.staffId,
+                        id: staff.id,
+                        name: staff.name
+                      });
+                      console.log('🔍 My Tables Filter - Available sessions:', sessions.map(s => ({
+                        sessionId: s.id,
+                        tableId: s.table_id,
+                        served_by: s.served_by
+                      })));
+                      
                       filteredTables = tables.filter(table => {
                         const session = getSessionInfo(table);
-                        return session && session.served_by === staff.staffId;
+                        const matches = session && (session.served_by === staff.staffId || session.served_by === staff.id);
+                        console.log(`🔍 Table ${table.table_number} filter check:`, {
+                          sessionExists: !!session,
+                          sessionServedBy: session?.served_by,
+                          staffStaffId: staff.staffId,
+                          staffId: staff.id,
+                          matches: matches
+                        });
+                        return matches;
                       });
+                      
+                      console.log('🔍 My Tables Filter - Filtered tables count:', filteredTables.length);
                     }
                     
                     if (isTabletMode && selectedStaffView && selectedStaffView !== 'all') {
@@ -1170,6 +1205,7 @@ export default function StaffDashboard() {
                               `${table.capacity} seats`
                             }
                           </p>
+
                           
                           {/* Status badge */}
                           <div className={`
@@ -1279,11 +1315,11 @@ export default function StaffDashboard() {
                   </div>
                   
                 {/* Current Status */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                  <div className="text-sm text-blue-800">
-                    <div className="font-medium mb-1">Current Status:</div>
-                    <div>Moving from: <span className="font-semibold">Table {transferSourceTable.table_number}</span></div>
-                    <div className="text-xs text-blue-600 mt-1">
+                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+                   <div className="text-sm text-gray-700">
+                      <div className="font-medium mb-1">Current Status:</div>
+                      <div>Moving from: <span className="font-semibold">Table {transferSourceTable.table_number}</span></div>
+                     <div className="text-xs text-gray-600 mt-1">
                       Current bill: P{transferSourceSession.orderTotal?.toFixed(2) || '0.00'}
                     </div>
                     </div>
@@ -1411,11 +1447,11 @@ export default function StaffDashboard() {
                   /* Step 2: Adjustment Options */
                   <div className="space-y-6">
                     {/* Current Bill Summary */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <div className="text-sm text-blue-800">
-                        <div className="font-medium mb-1">Current Bill Summary:</div>
-                        <div>Total: <span className="font-semibold">P{managerOverrideSession.orderTotal?.toFixed(2) || '0.00'}</span></div>
-                        <div className="text-xs text-blue-600 mt-1">
+                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                       <div className="text-sm text-gray-700">
+                          <div className="font-medium mb-1">Current Bill Summary:</div>
+                          <div>Total: <span className="font-semibold">P{managerOverrideSession.orderTotal?.toFixed(2) || '0.00'}</span></div>
+                         <div className="text-xs text-gray-600 mt-1">
                           {sessionOrders.length} item{sessionOrders.length !== 1 ? 's' : ''} ordered
               </div>
             </div>
@@ -1526,19 +1562,21 @@ export default function StaffDashboard() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md mx-4">
               <div className="text-center mb-8">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                  <User className="w-8 h-8 text-blue-600" />
+                 <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                   <User className="w-8 h-8 text-gray-600" />
               </div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Staff Login</h2>
-                <p className="text-gray-600">Enter your Staff ID to access personalized features</p>
+                <p className="text-gray-600">Enter your Staff ID and name to access personalized features</p>
           </div>
           
               <form onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target as HTMLFormElement);
                 const staffId = formData.get('staffId') as string;
+                const staffName = formData.get('staffName') as string;
                 const deviceId = formData.get('deviceId') as string;
-                handleStaffLogin(staffId, deviceId);
+                console.log('🔍 Form submission:', { staffId, staffName, deviceId });
+                handleStaffLogin(staffId, deviceId, staffName);
               }} className="space-y-6">
               <div>
                   <label htmlFor="staffId" className="block text-sm font-medium text-gray-700 mb-2">
@@ -1547,10 +1585,24 @@ export default function StaffDashboard() {
                   <input
                     type="text"
                     name="staffId"
-                    placeholder="e.g., STAFF001, W001, EMP-2024-003, 12345, THABO.M"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900"
+                    placeholder="e.g., STAFF001, W001, EMP-2024-003, 12345"
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-colors text-gray-900"
                     required
                   />
+              </div>
+
+              <div>
+                  <label htmlFor="staffName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    name="staffName"
+                    placeholder="e.g., John Smith, Sarah, Thabo"
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-colors text-gray-900"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">This is how customers will see you</p>
               </div>
 
                 <div>
@@ -1561,7 +1613,7 @@ export default function StaffDashboard() {
                     type="text"
                     name="deviceId"
                     placeholder="e.g., iPhone-123, Tablet-456"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900"
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50 focus:border-transparent transition-colors text-gray-900"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Helps track which device you're using
@@ -1578,7 +1630,8 @@ export default function StaffDashboard() {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                     className="flex-1 text-white py-3 px-4 rounded-lg font-medium hover:opacity-80 transition-colors"
+                     style={{ backgroundColor: '#00d9ff' }}
                   >
                     Login
                   </button>

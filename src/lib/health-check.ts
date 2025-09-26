@@ -14,7 +14,7 @@ export async function healthCheck(): Promise<HealthCheckResult> {
   const startTime = Date.now()
   
   try {
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('Running health check...')
     }
     
@@ -29,7 +29,7 @@ export async function healthCheck(): Promise<HealthCheckResult> {
       duration: Date.now() - startTime
     }
     
-    if (isDebugMode) {
+    if (isDebugMode()) {
       console.log('Health check completed:', {
         status: result.status,
         duration: `${result.duration}ms`
@@ -46,18 +46,18 @@ export async function healthCheck(): Promise<HealthCheckResult> {
   } catch (_error) {
     const duration = Date.now() - startTime
     
-    if (isDebugMode) {
-      console.error('Health check failed:', error)
+    if (isDebugMode()) {
+      console.error('Health check failed:', _error)
     }
     
-    debugErrorLog('HEALTH_CHECK', 'Health check failed', error)
+    debugErrorLog('Health check failed', _error)
     
     return {
       status: 'unhealthy',
       timestamp: new Date().toISOString(),
       details: {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        type: error instanceof Error ? error.constructor.name : 'Unknown'
+        error: _error instanceof Error ? _error.message : 'Unknown error',
+        type: _error instanceof Error ? _error.constructor.name : 'Unknown'
       },
       duration
     }

@@ -40,7 +40,8 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
     
     // Calculate total
     const subtotal = orders?.reduce((sum, order) => {
-      const price = order.menu_items?.price || 0;
+      const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
+      const price = menuItem?.price || 0;
       return sum + (price * order.quantity);
     }, 0) || 0;
     

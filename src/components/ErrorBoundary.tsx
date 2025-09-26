@@ -297,7 +297,7 @@ function ErrorDisplay({
           </button>
           <button
             onClick={handleCopyError}
-            className="px-4 py-2 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white text-sm rounded-md hover:style={{ backgroundColor: '#00d9ff' }} focus:outline-none focus:ring-2 focus:ring-2 focus:ring-opacity-50"
           >
             Copy Error
           </button>

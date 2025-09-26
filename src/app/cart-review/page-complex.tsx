@@ -536,7 +536,7 @@ function CartReviewContent() {
                     <h3 className="text-base font-semibold text-gray-900">
                       {item.name}
                       {(item as any).isSplit && (
-                        <span className="text-sm text-blue-600 ml-2">(Split Bill)</span>
+                        <span className="text-sm style={{ color: '#00d9ff' }} ml-2">(Split Bill)</span>
                       )}
                       {item.isShared && !(item as any).isSplit && (
                         <span className="text-sm text-gray-500 ml-2">(Shared)</span>

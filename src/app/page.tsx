@@ -1,103 +1,85 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { QrCode, Smartphone, Utensils, ArrowRight } from 'lucide-react';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [isScanning, setIsScanning] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleScanQR = () => {
+    setIsScanning(true);
+    // In a real implementation, this would open the device camera
+    // For now, we'll simulate the QR scanning experience
+    setTimeout(() => {
+      alert('QR Code scanner would open here. In a real app, this would use the device camera to scan table QR codes.');
+      setIsScanning(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#00d9ff] to-[#0099cc] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+        {/* Restaurant Logo/Brand */}
+        <div className="mb-8">
+          <div className="w-20 h-20 bg-[#00d9ff] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Utensils className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">PulaNodus Restaurant</h1>
+          <p className="text-gray-600">Digital Dining Experience</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Main Message */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Ready to order again?
+          </h2>
+          <p className="text-gray-600 text-lg leading-relaxed">
+            Scan the QR code at your table to browse our menu, place orders, and enjoy a seamless dining experience.
+          </p>
+        </div>
+
+        {/* QR Scanner Button */}
+        <div className="mb-8">
+          <button
+            onClick={handleScanQR}
+            disabled={isScanning}
+            className="w-full bg-[#00d9ff] hover:bg-[#00c4e6] disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-colors duration-200 flex items-center justify-center gap-3 text-lg"
+          >
+            {isScanning ? (
+              <>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                <span>Scanning...</span>
+              </>
+            ) : (
+              <>
+                <QrCode className="w-6 h-6" />
+                <span>Scan QR Code</span>
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Instructions */}
+        <div className="bg-gray-50 rounded-xl p-6 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-3 flex items-center justify-center gap-2">
+            <Smartphone className="w-5 h-5" />
+            How it works
+          </h3>
+          <div className="space-y-2 text-sm text-gray-600">
+            <p>1. 📱 Point your camera at the table QR code</p>
+            <p>2. 🍽️ Browse our digital menu</p>
+            <p>3. 📝 Place your order directly</p>
+            <p>4. 💳 Pay when you're ready</p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-xs text-gray-500">
+          <p>Powered by PulaNodus</p>
+          <p className="mt-1">Smart Seamless Dining</p>
+        </div>
+      </div>
     </div>
   );
 }

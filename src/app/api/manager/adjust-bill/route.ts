@@ -95,9 +95,9 @@ export const POST = async (request: NextRequest) => {
       await logManagerBillAdjustment(sessionId, {
         voids: hasVoids ? voids : undefined,
         discount: hasDiscount ? discount : undefined,
-        table_number: session.tables?.table_number,
-        original_total: session.orderTotal,
-        new_total: session.orderTotal // This would be calculated based on voids/discounts
+        table_number: Array.isArray(session.tables) ? session.tables[0]?.table_number : (session.tables as any)?.table_number,
+        original_total: 0, // TODO: Calculate actual order total from orders table
+        new_total: 0 // TODO: Calculate new total based on voids/discounts
       }, request);
       console.log('✅ Audit log entry created');
     } catch (auditError) {
@@ -132,6 +132,51 @@ export const POST = async (request: NextRequest) => {
       // Don't fail the operation for notification errors
     }
 
+    // 6. Check if all orders are now voided/paid - if so, clear the table
+    if (hasVoids) {
+      const { data: remainingOrders, error: remainingError } = await supabaseServer
+        .from('orders')
+        .select('id, status')
+        .eq('session_id', sessionId)
+        .eq('status', 'confirmed'); // Only confirmed orders that still need payment
+      
+      if (!remainingError && (!remainingOrders || remainingOrders.length === 0)) {
+        console.log('🔍 All orders voided/paid, checking if table should be cleared...');
+        
+        // Check if all diners are inactive
+        const { data: sessionData, error: sessionDataError } = await supabaseServer
+          .from('sessions')
+          .select('diners')
+          .eq('id', sessionId)
+          .single();
+        
+        if (!sessionDataError && sessionData?.diners) {
+          const diners = Array.isArray(sessionData.diners) ? sessionData.diners : [];
+          const allDinersInactive = diners.every((diner: any) => diner.isActive === false);
+          
+          if (allDinersInactive) {
+            console.log('✅ All diners inactive and no unpaid orders - clearing table');
+            
+            // Clear the table
+            const { error: tableClearError } = await supabaseServer
+              .from('tables')
+              .update({ 
+                occupied: false,
+                current_session_id: null,
+                current_pin: null
+              })
+              .eq('current_session_id', sessionId);
+            
+            if (tableClearError) {
+              console.error('❌ Error clearing table:', tableClearError);
+            } else {
+              console.log('✅ Table cleared successfully');
+            }
+          }
+        }
+      }
+    }
+
     console.log('✅ Manager bill adjustment completed successfully');
 
     return NextResponse.json({
@@ -141,7 +186,7 @@ export const POST = async (request: NextRequest) => {
         voids: hasVoids ? voids : null,
         discount: hasDiscount ? discount : null,
         sessionId: sessionId,
-        tableNumber: session.tables?.table_number
+        tableNumber: Array.isArray(session.tables) ? session.tables[0]?.table_number : (session.tables as any)?.table_number
       }
     });
 
@@ -152,4 +197,4 @@ export const POST = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-});
+};

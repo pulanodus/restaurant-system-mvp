@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Clock, CreditCard, Bell, RefreshCw } from 'lucide-react';
+import GlobalNavigation from '@/app/components/GlobalNavigation';
+import { CartProvider } from '@/contexts/CartContext';
 
 interface PaymentStatus {
   status: 'pending' | 'processing' | 'completed' | 'failed';
@@ -10,11 +12,12 @@ interface PaymentStatus {
   details?: string;
 }
 
-export default function PaymentProcessingPage() {
+function PaymentProcessingPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
   const sessionId = searchParams.get('sessionId');
+  const dinerName = searchParams.get('dinerName');
   const notificationId = searchParams.get('notificationId');
 
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>({
@@ -53,7 +56,8 @@ export default function PaymentProcessingPage() {
         // If payment is completed, redirect to receipt
         if (data.payment_status === 'completed') {
           setTimeout(() => {
-            router.push(`/payment-receipt?sessionId=${sessionId}`);
+            const dinerNameParam = dinerName ? `&dinerName=${encodeURIComponent(dinerName)}` : '';
+            router.push(`/payment-receipt?sessionId=${sessionId}${dinerNameParam}`);
           }, 2000);
         }
       } catch (error) {
@@ -78,7 +82,7 @@ export default function PaymentProcessingPage() {
       case 'completed':
         return <CheckCircle className="w-16 h-16 text-green-500" />;
       case 'processing':
-        return <CreditCard className="w-16 h-16 text-blue-500" />;
+        return <CreditCard className="w-16 h-16" style={{ color: '#00d9ff' }} />;
       case 'failed':
         return <CheckCircle className="w-16 h-16 text-red-500" />;
       default:
@@ -91,7 +95,7 @@ export default function PaymentProcessingPage() {
       case 'completed':
         return 'text-green-600 bg-green-50 border-green-200';
       case 'processing':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
+        return 'border';
       case 'failed':
         return 'text-red-600 bg-red-50 border-red-200';
       default:
@@ -144,8 +148,9 @@ export default function PaymentProcessingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-[480px] mx-auto bg-white min-h-screen">
+    <CartProvider sessionId={sessionId || ''} dinerName={dinerName || undefined}>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-[480px] mx-auto bg-white min-h-screen">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 z-10">
           <div className="flex items-center justify-between">
@@ -233,12 +238,12 @@ export default function PaymentProcessingPage() {
             </div>
 
             {/* Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <div className="rounded-xl p-6 border" style={{ backgroundColor: '#f0fdff', borderColor: '#00d9ff' }}>
               <div className="flex items-start space-x-3">
-                <Bell className="w-5 h-5 text-blue-600 mt-0.5" />
+                <Bell className="w-5 h-5 mt-0.5" style={{ color: '#00d9ff' }} />
                 <div>
-                  <h3 className="font-medium text-blue-900 mb-2">What happens next?</h3>
-                  <ul className="text-sm text-blue-700 space-y-1">
+                  <h3 className="font-medium mb-2" style={{ color: '#00d9ff' }}>What happens next?</h3>
+                  <ul className="text-sm space-y-1" style={{ color: '#00d9ff' }}>
                     <li>• A staff member will come to your table</li>
                     <li>• They will process your payment (cash, card, or QR code)</li>
                     <li>• You'll receive a digital receipt</li>
@@ -259,7 +264,26 @@ export default function PaymentProcessingPage() {
             )}
           </div>
         </div>
+
+        {/* Global Navigation Bar */}
+        <GlobalNavigation sessionId={sessionId || undefined} />
       </div>
     </div>
+    </CartProvider>
+  );
+}
+
+export default function PaymentProcessingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Loading...</h1>
+          <p className="text-gray-600">Preparing payment processing...</p>
+        </div>
+      </div>
+    }>
+      <PaymentProcessingPageContent />
+    </Suspense>
   );
 }

@@ -66,13 +66,16 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    // Check if there's an active session
-    const { data: activeSession } = await supabaseServer
+    // Check if there are active sessions
+    const { data: activeSessions } = await supabaseServer
       .from('sessions')
-      .select('id, started_by_name, status')
+      .select('id, started_by_name, status, diners')
       .eq('table_id', table.id)
       .eq('status', 'active')
-      .maybeSingle();
+      .order('created_at', { ascending: false });
+    
+    // Get the most recent active session
+    const activeSession = activeSessions && activeSessions.length > 0 ? activeSessions[0] : null;
 
     console.log('✅ PIN verified successfully:', { 
       tableNumber: table.table_number,
@@ -90,7 +93,8 @@ export const POST = async (request: NextRequest) => {
       session: activeSession ? {
         id: activeSession.id,
         started_by_name: activeSession.started_by_name,
-        status: activeSession.status
+        status: activeSession.status,
+        diners: activeSession.diners || []
       } : null,
       message: activeSession 
         ? `PIN verified. You can join the existing session.`

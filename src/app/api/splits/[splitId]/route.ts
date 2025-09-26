@@ -8,10 +8,10 @@ const supabase = createClient(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { splitId: string } }
+  { params }: { params: Promise<{ splitId: string }> }
 ) {
   try {
-    const { splitId } = params;
+    const { splitId } = await params;
 
     // Get split bill details
     const { data, error } = await supabase
@@ -38,10 +38,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { splitId: string } }
+  { params }: { params: Promise<{ splitId: string }> }
 ) {
   try {
-    const { splitId } = params;
+    const { splitId } = await params;
     const { participants, status } = await request.json();
 
     // Update split bill

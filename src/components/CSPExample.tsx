@@ -89,7 +89,7 @@ export default function CSPExample() {
         <h2 className="text-xl font-semibold mb-2">Dynamic Style Example</h2>
         <button
           onClick={handleAddDynamicStyle}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="px-4 py-2 style={{ backgroundColor: '#00d9ff' }} text-white rounded hover:style={{ backgroundColor: '#00d9ff' }}"
         >
           Add Dynamic Style with Nonce
         </button>
@@ -110,7 +110,7 @@ export default function CSPExample() {
       </div>
 
       {/* CSP Policy Information */}
-      <div className="bg-blue-50 p-4 rounded-lg">
+      <div className="style={{ backgroundColor: '#f0fdff' }} p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-2">CSP Policy Information</h2>
         <div className="text-sm space-y-1">
           <p>✅ <strong>Scripts:</strong> Only allowed with nonce or from trusted sources</p>

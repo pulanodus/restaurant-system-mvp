@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseUrl, getSupabaseServiceKey } from '@/lib/secure-env';
 
-async function loadCartItems(sessionId: string) {
+async function loadCartItems(sessionId: string, dinerName?: string | null) {
   const supabaseUrl = getSupabaseUrl();
   const supabaseServiceKey = getSupabaseServiceKey();
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -46,8 +46,10 @@ async function loadCartItems(sessionId: string) {
     console.log('✅ Cleaned up very old orders (24h+) for session:', sessionId);
   }
 
-  // Load all active orders for this session with split bill data
-  const { data: orders, error } = await supabase
+  // Load cart items for this session
+  // Cart items are orders with status 'cart' (not yet confirmed to kitchen)
+  // Confirmed orders have status 'preparing', 'ready', etc.
+  let query = supabase
     .from('orders')
     .select(`
       id,
@@ -58,6 +60,7 @@ async function loadCartItems(sessionId: string) {
       is_takeaway,
       customizations,
       created_at,
+      diner_name,
       split_bill_id,
       menu_items!inner (
         name,
@@ -66,124 +69,183 @@ async function loadCartItems(sessionId: string) {
       split_bills (
         id,
         original_price,
-        split_count,
         split_price,
+        split_count,
         participants,
         status
       )
     `)
     .eq('session_id', sessionId)
-    .eq('status', 'preparing')
+    .eq('status', 'cart')  // Only load cart items, not confirmed orders
     .order('created_at', { ascending: false });
+
+  // Filter by diner name if provided
+  if (dinerName) {
+    query = query.eq('diner_name', dinerName);
+  }
+
+  const { data: cartItems, error } = await query;
 
   if (error) {
     console.error('Supabase error in loadCartItems:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  if (!orders) {
+  if (!cartItems) {
     return NextResponse.json({ items: [] });
   }
 
-  console.log('📋 Loaded orders for session:', sessionId, 'Count:', orders?.length || 0);
+  console.log('📋 Loaded cart items for session:', sessionId, 'dinerName:', dinerName, 'Count:', cartItems?.length || 0);
   
-  // Debug: Log all orders with their split bill data
-  orders?.forEach((order, index) => {
-    console.log(`🔍 Order ${index + 1} Debug:`, {
-      orderId: order.id,
-      menuItemId: order.menu_item_id,
-      isShared: order.is_shared,
-      splitBillId: order.split_bill_id,
-      hasSplitBillId: !!order.split_bill_id,
-      splitBillData: order.split_bills,
-      menuItemData: order.menu_items
+  // Debug: Log all cart items
+  cartItems?.forEach((item, index) => {
+    console.log(`🔍 Cart Item ${index + 1} Debug:`, {
+      itemId: item.id,
+      menuItemId: item.menu_item_id,
+      dinerName: item.diner_name,
+      isShared: item.is_shared,
+      splitBillId: item.split_bill_id,
+      menuItemData: item.menu_items,
+      splitBillData: item.split_bills
     });
   });
 
-  const cartItems = orders.map(order => {
-    const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
+  // CRITICAL FIX: Check for existing split bills and apply them to cart items
+  console.log('🔍 Checking for existing split bills for session:', sessionId);
+  
+  // Query for split bills for this session
+  const { data: splitBills, error: splitBillsError } = await supabase
+    .from('split_bills')
+    .select('*')
+    .eq('session_id', sessionId)
+    .eq('status', 'active');
+
+  if (splitBillsError) {
+    console.error('❌ Error fetching split bills:', splitBillsError);
+  } else {
+    console.log('🔍 Found split bills:', splitBills?.length || 0);
+    if (splitBills && splitBills.length > 0) {
+      splitBills.forEach(splitBill => {
+        console.log('🔍 Split bill details:', {
+          id: splitBill.id,
+          menu_item_id: splitBill.menu_item_id,
+          original_price: splitBill.original_price,
+          split_price: splitBill.split_price,
+          split_count: splitBill.split_count,
+          participants: splitBill.participants
+        });
+      });
+    }
+  }
+
+  const processedCartItems = cartItems.map(item => {
+    const menuItem = Array.isArray(item.menu_items) ? item.menu_items[0] : item.menu_items;
     const menuItemName = menuItem?.name || 'Unknown Item';
     const menuItemPrice = menuItem?.price || 0;
     
-    // Check if this order has split bill data
-    const splitBill = Array.isArray(order.split_bills) ? order.split_bills[0] : order.split_bills;
-    const isSplit = !!splitBill && splitBill.status === 'active';
+    // CRITICAL FIX: Check for split bill data in multiple ways
+    let isSplit = false;
+    let currentSplitBill = null;
     
-    // Enhanced debugging for split bill data
-    if (order.is_shared) {
-      console.log('🔍 Split Bill Debug for Order:', order.id, {
-        hasSplitBillId: !!order.split_bill_id,
-        splitBillId: order.split_bill_id,
-        splitBillData: splitBill,
-        isSplit: isSplit,
-        splitBillStatus: splitBill?.status,
-        rawSplitBills: order.split_bills
-      });
+    // First, check if this specific order has a split_bill_id
+    if (item.split_bill_id) {
+      console.log('🔍 Order has split_bill_id:', item.split_bill_id, 'for item:', menuItemName);
+      
+      // Find the specific split bill for this order
+      if (splitBills && splitBills.length > 0) {
+        currentSplitBill = splitBills.find(sb => sb.id === item.split_bill_id && sb.status === 'active');
+        
+        if (currentSplitBill) {
+          console.log('🔍 Found matching split bill for order:', {
+            splitBillId: currentSplitBill.id,
+            splitCount: currentSplitBill.split_count,
+            splitPrice: currentSplitBill.split_price,
+            participants: currentSplitBill.participants
+          });
+          isSplit = true;
+        } else {
+          console.log('⚠️ Order has split_bill_id but split bill not found or inactive:', item.split_bill_id);
+        }
+      }
+    } else {
+      // No split_bill_id - this is a regular individual order, not part of a split
+      console.log('🔍 Order has no split_bill_id - treating as individual order:', menuItemName);
+      isSplit = false;
+      currentSplitBill = null;
     }
     
-    console.log(`🔍 Processing Order ${order.id}:`, {
-      hasSplitBill: !!splitBill,
-      splitBillData: splitBill,
-      isSplit: isSplit,
-      menuItemPrice: menuItemPrice,
-      quantity: order.quantity
-    });
-    
-    // Debug logging for split items
-    if (order.is_shared) {
-      console.log('🔄 Cart Load - Split Item Debug:', {
-        orderId: order.id,
-        menuItemId: order.menu_item_id,
-        itemName: menuItemName,
-        isShared: order.is_shared,
-        hasSplitBill: !!splitBill,
-        splitBill: splitBill,
-        isSplit: isSplit,
-        menuItemPrice: menuItemPrice, // Individual item price from menu
-        splitBillOriginalPrice: isSplit ? splitBill.original_price : 'N/A', // Total original price from split bill
-        splitPrice: isSplit ? splitBill.split_price : 'N/A',
-        splitCount: isSplit ? splitBill.split_count : 'N/A',
-        participants: isSplit ? splitBill.participants : 'N/A',
-        quantity: order.quantity,
-        calculatedTotalOriginal: menuItemPrice * order.quantity, // What we calculate
-        storedTotalOriginal: isSplit ? splitBill.original_price : 'N/A' // What's stored in split bill
+    // Debug logging for split bill data
+    if (currentSplitBill) {
+      console.log('🔍 Final Split Bill Data for item:', menuItemName, {
+        id: currentSplitBill.id,
+        original_price: currentSplitBill.original_price,
+        split_price: currentSplitBill.split_price,
+        split_count: currentSplitBill.split_count,
+        participants: currentSplitBill.participants,
+        status: currentSplitBill.status,
+        calculation: {
+          expectedSplitPrice: currentSplitBill.original_price / currentSplitBill.split_count,
+          actualSplitPrice: currentSplitBill.split_price,
+          isCorrect: Math.abs((currentSplitBill.original_price / currentSplitBill.split_count) - currentSplitBill.split_price) < 0.01
+        }
       });
+    } else {
+      console.log('🔍 No split bill data found for item:', menuItemName);
     }
     
     return {
-      id: order.id,
-      menu_item_id: order.menu_item_id,
+      id: item.id,
+      menu_item_id: item.menu_item_id,
       name: menuItemName,
-      price: isSplit ? splitBill.split_price : menuItemPrice,
-      originalPrice: isSplit ? splitBill.original_price : menuItemPrice, // Use split bill's original price for split items
-      quantity: order.quantity,
-      notes: order.notes || undefined,
-      isShared: order.is_shared || false,
-      isTakeaway: order.is_takeaway || false,
-      customizations: order.customizations || [], // Include customizations
-      // Split bill properties
+      price: menuItemPrice, // Always use original menu item price for "each" display
+      quantity: item.quantity,
+      notes: item.notes || undefined,
+      isShared: item.is_shared || false,
+      isTakeaway: item.is_takeaway || false,
+      customizations: item.customizations || [],
+      dinerName: item.diner_name,
+      // Split bill properties - always use the most current data
       isSplit: isSplit,
-      splitPrice: isSplit ? splitBill.split_price : undefined,
-      splitCount: isSplit ? splitBill.split_count : undefined,
-      splitBillId: splitBill?.id,
-      participants: isSplit ? splitBill.participants : [],
+      splitPrice: isSplit ? currentSplitBill.split_price : undefined,
+      originalPrice: isSplit ? currentSplitBill.original_price : undefined,
+      splitCount: isSplit ? currentSplitBill.split_count : undefined,
+      participants: isSplit ? currentSplitBill.participants || [] : undefined,
+      splitBillId: isSplit ? currentSplitBill.id : undefined,
       hasSplitData: isSplit
     };
   });
 
-  return NextResponse.json({ items: cartItems });
+  console.log('📤 Returning processed cart items:', processedCartItems.map(item => ({
+    name: item.name,
+    isSplit: item.isSplit,
+    splitPrice: item.splitPrice,
+    originalPrice: item.originalPrice,
+    splitCount: item.splitCount,
+    participants: item.participants,
+    price: item.price,
+    quantity: item.quantity,
+    calculation: item.isSplit ? {
+      expectedTotal: item.price * item.quantity,
+      expectedSplitPrice: (item.price * item.quantity) / (item.splitCount || 1),
+      actualSplitPrice: item.splitPrice,
+      actualOriginalPrice: item.originalPrice
+    } : null
+  })));
+
+  return NextResponse.json({ items: processedCartItems });
 }
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
+    const dinerName = searchParams.get('dinerName');
     
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    return await loadCartItems(sessionId);
+    return await loadCartItems(sessionId, dinerName);
   } catch (error) {
     console.error('Error loading cart items (GET):', error);
     return NextResponse.json(
@@ -195,13 +257,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { sessionId } = await request.json();
+    const { sessionId, dinerName } = await request.json();
     
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    return await loadCartItems(sessionId);
+    return await loadCartItems(sessionId, dinerName);
   } catch (error) {
     console.error('Error loading cart items (POST):', error);
     return NextResponse.json(

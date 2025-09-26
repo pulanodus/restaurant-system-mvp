@@ -1,5 +1,63 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# ===== PULA NODUS SPECIFIC IGNORES =====
+# Environment Variables (CRITICAL - Supabase keys, Stripe, etc.)
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+.supabase/env
+
+# Supabase Local Development
+.supabase/.temp
+.supabase/.branches
+.supabase/.config
+.supabase/.volumes
+
+# Next.js Build & Cache
+.next/
+out/
+dist/
+build/
+.next-loaders/
+*.tsbuildinfo
+
+# Vercel Deployment
+.vercel/
+
+# Runtime & Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Database (if using local SQLite for development)
+*.sqlite
+*.db
+*.sqlite3
+
+# Visual Studio Code/Cursor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Performance & Cache
+.cache/
+.parcel-cache/
+.nx/cache/
+.turbo/
+
 # dependencies
 /node_modules
 /.pnp
@@ -13,29 +71,10 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
 # misc
-.DS_Store
 *.pem
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
 # typescript
-*.tsbuildinfo
 next-env.d.ts
+
+# IMPORTANT: Ensure supabase/migrations/ and supabase/config.toml remain TRACKED (these are critical for database).

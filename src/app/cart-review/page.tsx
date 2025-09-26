@@ -11,6 +11,7 @@ function CartReviewContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const { state, removeItem, updateQuantity, loadCartItems, clearCart } = useCart();
+  const dinerName = state.dinerName;
   const items = state.items;
   const isLoading = state.isLoading;
 

@@ -47,14 +47,17 @@ export const GET = async (request: NextRequest) => {
     
     // Call the database function to get payment notifications with retry logic
     const result = await withRetry(
-      () => supabaseServer.rpc('get_payment_notifications', {
-        limit_param: limit,
-        status_filter: status
-      }),
+      async () => {
+        const { data, error } = await supabaseServer.rpc('get_payment_notifications', {
+          limit_param: limit,
+          status_filter: status
+        });
+        return { data, error };
+      },
       'fetch payment notifications'
     );
     
-    const { data, error } = result as any;
+    const { data, error } = result;
     
     if (error) {
       console.error('❌ Database function error:', error);

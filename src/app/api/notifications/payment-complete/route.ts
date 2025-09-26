@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { handleError } from '@/lib/error-handling';
 
 export const GET = async (request: NextRequest) => {
   try {
@@ -25,7 +24,7 @@ export const GET = async (request: NextRequest) => {
 
     if (error) {
       console.error('❌ Error fetching payment notifications:', error);
-      return handleError(error, 'Failed to fetch payment notifications', 500);
+      return NextResponse.json({ error: 'Failed to fetch payment notifications' }, { status: 500 });
     }
 
     const hasNotification = notifications && notifications.length > 0;
@@ -56,6 +55,6 @@ export const GET = async (request: NextRequest) => {
 
   } catch (error) {
     console.error('🔍 API: Payment notification check exception:', error);
-    return handleError(error, 'Internal server error', 500);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 };

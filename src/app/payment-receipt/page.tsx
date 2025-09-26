@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Home, Mail, Download } from 'lucide-react';
 import DigitalReceiptModal from '@/app/components/DigitalReceiptModal';
@@ -29,7 +29,7 @@ interface ReceiptData {
   paymentCompletedAt?: string;
 }
 
-export default function PaymentReceiptPage() {
+function PaymentReceiptPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -432,5 +432,20 @@ export default function PaymentReceiptPage() {
         {...(receiptData?.tableNumber && { tableNumber: receiptData.tableNumber })}
       />
     </div>
+  );
+}
+
+export default function PaymentReceiptPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00d9ff] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading receipt...</p>
+        </div>
+      </div>
+    }>
+      <PaymentReceiptPageContent />
+    </Suspense>
   );
 }

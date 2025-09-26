@@ -77,8 +77,9 @@ export default function LiveDashboard() {
         .eq('is_active', true)
         .order('table_number');
 
+      let tablesWithStatus: TableStatus[] = [];
       if (!tablesError && tablesData) {
-        const tablesWithStatus: TableStatus[] = await Promise.all(
+        tablesWithStatus = await Promise.all(
           tablesData.map(async (table) => {
             // Check for active sessions
             const { data: sessionData } = await supabase
@@ -107,9 +108,10 @@ export default function LiveDashboard() {
                 .in('status', ['confirmed', 'preparing', 'ready', 'served']);
 
               if (ordersData) {
-                orderValue = ordersData.reduce((sum, order) => 
-                  sum + ((order.menu_items?.price || 0) * order.quantity), 0
-                );
+                orderValue = ordersData.reduce((sum, order) => {
+                  const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
+                  return sum + ((menuItem?.price || 0) * order.quantity);
+                }, 0);
               }
             }
 
@@ -142,13 +144,17 @@ export default function LiveDashboard() {
         .limit(10);
 
       if (!ordersError && ordersData) {
-        const kitchenOrdersFormatted: KitchenOrder[] = ordersData.map(order => ({
-          id: order.id,
-          tableNumber: `T${order.sessions?.table_id?.slice(-2) || 'XX'}`,
-          items: `${order.quantity}x ${order.menu_items?.name || 'Item'}`,
-          status: order.status as 'preparing' | 'ready',
-          orderTime: new Date(order.created_at).toLocaleTimeString()
-        }));
+        const kitchenOrdersFormatted: KitchenOrder[] = ordersData.map(order => {
+          const session = Array.isArray(order.sessions) ? order.sessions[0] : order.sessions;
+          const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
+          return {
+            id: order.id,
+            tableNumber: `T${session?.table_id?.slice(-2) || 'XX'}`,
+            items: `${order.quantity}x ${menuItem?.name || 'Item'}`,
+            status: order.status as 'preparing' | 'ready',
+            orderTime: new Date(order.created_at).toLocaleTimeString()
+          };
+        });
         setKitchenOrders(kitchenOrdersFormatted);
       }
 
@@ -335,14 +341,14 @@ export default function LiveDashboard() {
                     <div className={`w-4 h-4 rounded-full mx-auto mb-2 ${getTableStatusColor(table.status)}`}></div>
                     <div className="font-bold text-lg text-gray-900">T{table.tableNumber}</div>
                     <div className="text-sm text-gray-600">{getTableStatusText(table.status)}</div>
-                    {table.orderValue > 0 && (
+                    {(table.orderValue || 0) > 0 && (
                       <div className="text-sm font-medium text-green-600 mt-1">
-                        {formatCurrency(table.orderValue)}
+                        {formatCurrency(table.orderValue || 0)}
                       </div>
                     )}
-                    {table.diners > 0 && (
+                    {(table.diners || 0) > 0 && (
                       <div className="text-xs text-gray-500 mt-1">
-                        {table.diners} {table.diners === 1 ? 'diner' : 'diners'}
+                        {table.diners} {(table.diners || 0) === 1 ? 'diner' : 'diners'}
                       </div>
                     )}
                   </div>

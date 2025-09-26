@@ -118,8 +118,9 @@ export default function AnalyticsPage() {
         const itemStats: { [key: string]: { quantity: number; revenue: number } } = {};
         
         ordersData.forEach(order => {
-          const itemName = order.menu_items?.name || 'Unknown Item';
-          const price = order.menu_items?.price || 0;
+          const menuItem = Array.isArray(order.menu_items) ? order.menu_items[0] : order.menu_items;
+          const itemName = menuItem?.name || 'Unknown Item';
+          const price = menuItem?.price || 0;
           
           if (!itemStats[itemName]) {
             itemStats[itemName] = { quantity: 0, revenue: 0 };

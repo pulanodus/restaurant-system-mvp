@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       .from('notifications')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000')
-      .select('*', { count: 'exact', head: true });
+      .select('*');
 
     if (notificationsError) {
       console.error('❌ Error clearing notifications:', notificationsError);
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         .from('payment_notifications')
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000')
-        .select('*', { count: 'exact', head: true });
+         .select('*');
 
       if (clearPaymentError) {
         console.error('❌ Error clearing payment_notifications:', clearPaymentError);

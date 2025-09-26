@@ -49,18 +49,19 @@ export async function POST(request: NextRequest) {
 
     const now = new Date();
     const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const cleanedUsers = [];
+    const cleanedUsers: any[] = [];
     let totalCleanedUsers = 0;
-    const sessionsToUpdate = [];
+    const sessionsToUpdate: any[] = [];
 
     console.log(`🤖 CRON - Processing ${sessions.length} active sessions...`);
 
     // Process each session
     sessions.forEach(session => {
       const diners = Array.isArray(session.diners) ? session.diners : [];
-      const tableNumber = session.tables?.table_number || 'Unknown';
+      const table = Array.isArray(session.tables) ? session.tables[0] : session.tables;
+      const tableNumber = table?.table_number || 'Unknown';
       let sessionNeedsUpdate = false;
-      const updatedDiners = [];
+      const updatedDiners: any[] = [];
 
       diners.forEach((diner: any) => {
         if (diner.isActive === true) {

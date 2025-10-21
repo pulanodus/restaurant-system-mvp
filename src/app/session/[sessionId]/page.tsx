@@ -36,11 +36,8 @@ export default async function SessionPage({ params }: PageProps) {
     .lt('created_at', twentyFourHoursAgo);
 
   if (cleanupError) {
-    console.warn('Warning: Failed to cleanup old orders:', cleanupError.message);
-    // Don't fail the page load for cleanup errors
-  } else {
-    console.log('✅ Cleaned up very old orders (24h+) for session:', sessionId);
-  }
+      console.warn('Warning: Failed to cleanup old orders:', cleanupError.message);
+    }
 
   // Get the restaurant ID from the table
   const restaurantId = session.tables?.restaurant_id;

@@ -21,7 +21,7 @@ import {
 // Simple debug logging
 const debugLog = (...args: any[]) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('[DEBUG]', ...args);
+    // Debug logging enabled in development
   }
 };
 
@@ -33,7 +33,7 @@ const debugErrorLog = (...args: any[]) => {
 
 const debugSessionLog = (...args: any[]) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('[DEBUG SESSION]', ...args);
+    // Session debug logging enabled in development
   }
 };
 
@@ -95,25 +95,15 @@ export function useSessionManagement(): UseSessionManagementReturn {
     // Start performance monitoring
     startPerformanceMonitoring('SESSION_CREATION')
     
-    console.group(`🎯 Session Creation [${operationId}]`)
-    console.log('📋 Operation Details:', {
-      tableId,
-      timestamp: new Date().toISOString(),
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
-      url: typeof window !== 'undefined' ? window.location.href : 'Server'
-    })
-    
     debugLog('Session creation started', { tableId, operationId })
     debugSessionLog('CREATE_SESSION', 'Session creation started', { tableId, operationId })
     
     setState({ isLoading: true, error: null, session: null })
     
     try {
-      console.log('🔍 Step 1: Starting session creation for table:', tableId)
       debugLog('Step 1: Starting session creation for table', { tableId })
       
       // Validate everything before attempting creation using comprehensive validation
-      console.log('🔍 Step 2: Running comprehensive validation...')
       debugLog('COMPREHENSIVE_VALIDATION: Running comprehensive validation', { tableId })
       const validationStartTime = Date.now()
       
@@ -122,11 +112,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
       const tableInfo = { tableId, id: 'placeholder', table_number: 'placeholder' } // Placeholder
       
       const validationDuration = Date.now() - validationStartTime
-      console.log('✅ Step 2 Complete: Validation passed', {
-        duration: `${validationDuration}ms`,
-        user: { id: 'placeholder', email: 'placeholder' },
-        table: { id: tableInfo.id, table_number: tableInfo.table_number }
-      })
       debugLog('COMPREHENSIVE_VALIDATION: Validation passed', {
         duration: `${validationDuration}ms`,
         user: { id: 'placeholder', email: 'placeholder' },
@@ -134,7 +119,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
       })
       
       // Create session with proper user context
-      console.log('🔍 Step 3: Creating session in database...')
       debugLog('INSERT sessions: Creating session in database', { tableId, userId: 'placeholder' })
       const dbStartTime = Date.now()
       
@@ -145,7 +129,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
         diners: 1
       }
       
-      console.log('📤 Session Data:', sessionData)
       debugLog('Session data prepared', sessionData)
       
       const { data: session, error } = await supabase
@@ -155,11 +138,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
         .single()
 
       const dbDuration = Date.now() - dbStartTime
-      console.log('📊 Database Operation:', {
-        duration: `${dbDuration}ms`,
-        success: !error,
-        error: error ? error.message : null
-      })
       debugLog('INSERT sessions: Database operation completed', {
         duration: `${dbDuration}ms`,
         success: !error,
@@ -167,13 +145,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
       })
 
       if (error) {
-        console.error('❌ Step 3 Failed: Supabase error during session creation:', {
-          error,
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint
-        })
         debugErrorLog('Supabase error during session creation', {
           tableId,
           userId: 'placeholder',
@@ -183,7 +154,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
       }
 
       if (!session || !session.id) {
-        console.error('❌ Step 3 Failed: Invalid session response:', session)
         debugErrorLog('Invalid session response', {
           tableId,
           userId: 'placeholder',
@@ -192,12 +162,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
         throw new Error('Session was created but no valid session data was returned')
       }
 
-      console.log('✅ Step 3 Complete: Session created successfully:', {
-        sessionId: session.id,
-        tableId: session.table_id,
-        createdBy: session.created_by,
-        status: session.status
-      })
       debugSessionLog('CREATE_SESSION', 'Session created successfully', {
         sessionId: session.id,
         tableId: session.table_id,
@@ -208,27 +172,18 @@ export function useSessionManagement(): UseSessionManagementReturn {
       setState({ isLoading: false, error: null, session })
       
       // Navigate to menu page
-      console.log('🔍 Step 4: Navigating to menu page...')
       debugLog('session-creation: Navigating to menu page', { sessionId: session.id })
       const navStartTime = Date.now()
       
       try {
         router.push(`/session/${session.id}`)
         const navDuration = Date.now() - navStartTime
-        console.log('✅ Step 4 Complete: Navigation initiated', {
-          duration: `${navDuration}ms`,
-          targetUrl: `/session/${session.id}`
-        })
         debugLog('session-creation: Navigation initiated successfully', {
           duration: `${navDuration}ms`,
           targetUrl: `/session/${session.id}`
         })
       } catch (routerError) {
         const navDuration = Date.now() - navStartTime
-        console.error('❌ Step 4 Failed: Router navigation failed:', {
-          error: routerError,
-          duration: `${navDuration}ms`
-        })
         debugErrorLog('Router navigation failed', {
           from: 'session-creation',
           to: 'menu',
@@ -239,12 +194,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
       }
       
       const totalDuration = Date.now() - startTime
-      console.log('🎉 Session Creation Complete:', {
-        operationId,
-        totalDuration: `${totalDuration}ms`,
-        sessionId: session.id,
-        tableId: session.table_id
-      })
       console.groupEnd()
       
       // End performance monitoring
@@ -259,19 +208,6 @@ export function useSessionManagement(): UseSessionManagementReturn {
       
     } catch (error) {
       const totalDuration = Date.now() - startTime
-      console.error('❌ Session Creation Failed:', {
-        operationId,
-        totalDuration: `${totalDuration}ms`,
-        error: error instanceof Error ? {
-          message: error.message,
-          code: (error as any).code,
-          details: (error as any).details,
-          hint: (error as any).hint
-        } : error,
-        tableId
-      })
-      console.groupEnd()
-      
       // End performance monitoring and track error
       endPerformanceMonitoring('SESSION_CREATION')
       trackError(error, { 
@@ -298,26 +234,18 @@ export function useSessionManagement(): UseSessionManagementReturn {
     // Start performance monitoring
     startPerformanceMonitoring('SESSION_JOIN')
     
-    console.group(`🎯 Session Join [${operationId}]`)
-    console.log('📋 Operation Details:', {
-      sessionId,
-      timestamp: new Date().toISOString(),
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
-      url: typeof window !== 'undefined' ? window.location.href : 'Server'
-    })
+    // Session join started
     
-    debugLog('Session join started', { sessionId, operationId })
-    
-    if (!sessionId) {
-      console.error('❌ Step 1 Failed: No session ID provided')
-      setState({ 
-        isLoading: false,
-        error: 'No session ID provided for joining',
-        session: null
-      })
-      console.groupEnd()
-      return
-    }
+    console.groupEnd()
+      
+      if (!sessionId) {
+        setState({ 
+          isLoading: false,
+          error: 'No session ID provided for joining',
+          session: null
+        })
+        return
+      }
 
     setState({ 
       isLoading: true, 
@@ -326,24 +254,19 @@ export function useSessionManagement(): UseSessionManagementReturn {
     })
 
     try {
-      console.log('🔍 Step 1: Validating session ID:', sessionId)
+      // Validating session ID
       
       // Validate session ID format
       if (typeof sessionId !== 'string' || sessionId.trim().length === 0) {
         throw new Error('Invalid session ID format')
       }
       
-      console.log('✅ Step 1 Complete: Session ID validated')
+      // Session ID validated
       
-      console.log('🔍 Step 2: Fetching session from database...')
+      // Fetching session from database...
       const dbStartTime = Date.now()
 
-      console.log('🔍 Supabase query details:', {
-        table: 'sessions',
-        sessionId,
-        sessionIdType: typeof sessionId,
-        sessionIdLength: sessionId?.length
-      })
+      // Supabase query details removed for security
 
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
@@ -352,14 +275,10 @@ export function useSessionManagement(): UseSessionManagementReturn {
         .single()
 
       const dbDuration = Date.now() - dbStartTime
-      console.log('📊 Database Operation:', {
-        duration: `${dbDuration}ms`,
-        success: !sessionError,
-        error: sessionError ? sessionError.message : null
-      })
+      // Database operation details removed for security
 
       if (sessionError) {
-        console.error('❌ Step 2 Failed: Database error:', {
+        debugLog('Database error occurred:', {
           error: sessionError,
           code: sessionError.code,
           message: sessionError.message,
@@ -369,46 +288,34 @@ export function useSessionManagement(): UseSessionManagementReturn {
       }
 
       if (!session) {
-        console.error('❌ Step 2 Failed: Session not found in database')
+        // Session not found in database
         throw new Error('Session not found')
       }
 
-      console.log('✅ Step 2 Complete: Session fetched successfully:', {
-        sessionId: session.id,
-        tableId: session.table_id,
-        status: session.status,
-        createdBy: session.created_by,
-        startedAt: session.started_at
-      })
+      // Session fetched successfully
 
-      console.log('🔍 Step 3: Validating session status...')
+      // Validating session status...
       
       if (session.status !== 'active') {
-        console.error('❌ Step 3 Failed: Session is not active:', {
-          currentStatus: session.status,
-          expectedStatus: 'active'
-        })
+        // Session is not active
         throw new Error('This session is no longer active')
       }
 
-      console.log('✅ Step 3 Complete: Session status validated')
+      // Session status validated
       
       setState({ isLoading: false, error: null, session })
       
       // Navigate to menu page
-      console.log('🔍 Step 4: Navigating to menu page...')
+      // Navigating to menu page...
       const navStartTime = Date.now()
-      
+
       try {
         router.push(`/session/${session.id}`)
         const navDuration = Date.now() - navStartTime
-        console.log('✅ Step 4 Complete: Navigation initiated', {
-          duration: `${navDuration}ms`,
-          targetUrl: `/session/${session.id}`
-        })
+        // Navigation initiated successfully
       } catch (routerError) {
         const navDuration = Date.now() - navStartTime
-        console.error('❌ Step 4 Failed: Router navigation failed:', {
+        debugLog('Router navigation failed:', {
           error: routerError,
           duration: `${navDuration}ms`
         })
@@ -416,43 +323,14 @@ export function useSessionManagement(): UseSessionManagementReturn {
       }
       
       const totalDuration = Date.now() - startTime
-      console.log('🎉 Session Join Complete:', {
-        operationId,
-        totalDuration: `${totalDuration}ms`,
-        sessionId: session.id,
-        tableId: session.table_id
-      })
       console.groupEnd()
       
       // End performance monitoring
       endPerformanceMonitoring('SESSION_JOIN')
-      debugLog('Session join completed successfully', { 
-        operationId, 
-        sessionId: session.id, 
-        tableId: session.table_id 
-      })
+      // Session join completed successfully
       
     } catch (error) {
       const totalDuration = Date.now() - startTime
-      console.error('❌ Session Join Failed:', {
-        operationId,
-        totalDuration: `${totalDuration}ms`,
-        sessionId,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-          code: (error as any).code,
-          details: (error as any).details,
-          hint: (error as any).hint,
-          status: (error as any).status,
-          statusText: (error as any).statusText
-        } : {
-          type: typeof error,
-          value: error,
-          stringified: JSON.stringify(error, null, 2)
-        }
-      })
       console.groupEnd()
       
       // End performance monitoring and track error
@@ -481,26 +359,16 @@ export function useSessionManagement(): UseSessionManagementReturn {
     // Start performance monitoring
     const perfId = startPerformanceMonitoring('PUBLIC_SESSION_CREATION')
     
-    console.group(`🎯 Public Session Creation [${operationId}]`)
-    console.log('📋 Operation Details:', {
-      tableId,
-      timestamp: new Date().toISOString(),
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'Server',
-      url: typeof window !== 'undefined' ? window.location.href : 'Server'
-    })
-    
-    debugLog('Public session creation started', { tableId, operationId })
+    // Public session creation started
     debugSessionLog('CREATE_PUBLIC_SESSION', 'Public session creation started', { tableId, operationId })
     
     setState({ isLoading: true, error: null, session: null })
     
     try {
-      console.log('🔍 Step 1: Starting public session creation for table:', tableId)
-      debugLog('Step 1: Starting public session creation for table', { tableId })
+      // Starting public session creation for table
       
       // Use public page validation (optional authentication)
-      console.log('🔍 Step 2: Running public page validation...')
-      debugLog('Running public page validation', { tableId })
+      // Running public page validation
       const validationStartTime = Date.now()
       
       // Placeholder for validation - replace with actual implementation
@@ -509,16 +377,7 @@ export function useSessionManagement(): UseSessionManagementReturn {
       const isAuthenticated = false
       
       const validationDuration = Date.now() - validationStartTime
-      console.log('✅ Step 2 Complete: Public page validation passed', {
-        duration: `${validationDuration}ms`,
-        isAuthenticated,
-        userId: user?.id
-      })
-      debugLog('Public page validation passed', {
-        duration: `${validationDuration}ms`,
-        isAuthenticated,
-        userId: user?.id
-      })
+      // Public page validation passed
       
       // Create session data (with or without user)
       const sessionData = {
@@ -528,8 +387,7 @@ export function useSessionManagement(): UseSessionManagementReturn {
         diners: 1
       }
       
-      console.log('🔍 Step 3: Creating session in database...')
-      debugLog('Creating session in database', { sessionData })
+      // Creating session in database
       const dbStartTime = Date.now()
       
       const { data: session, error: sessionError } = await supabase
@@ -539,52 +397,27 @@ export function useSessionManagement(): UseSessionManagementReturn {
         .single()
       
       const dbDuration = Date.now() - dbStartTime
-      console.log('📊 Database Operation:', {
-        duration: `${dbDuration}ms`,
-        success: !sessionError,
-        error: sessionError ? sessionError.message : null
-      })
+      // Database Operation completed
       
       if (sessionError) {
-        console.error('❌ Step 3 Failed: Database session creation failed:', sessionError)
         debugErrorLog('Session creation failed', { sessionError, sessionData })
         throw new Error('Failed to create session: ' + sessionError.message)
       }
       
-      console.log('✅ Step 3 Complete: Session created successfully', {
-        sessionId: session.id,
-        tableId: session.table_id,
-        startedBy: session.started_by_name
-      })
-      debugLog('Session created successfully', { sessionId: session.id })
+      // Session created successfully
       
       setState({ isLoading: false, error: null, session })
       
       // Navigate to menu page
-      console.log('🔍 Step 4: Navigating to menu page...')
-      debugLog('Starting navigation to menu', {
-        sessionId: session.id,
-        tableId: session.table_id
-      })
+      // Starting navigation to menu
       const navStartTime = Date.now()
       
       try {
         router.push(`/session/${session.id}`)
         const navDuration = Date.now() - navStartTime
-        console.log('✅ Step 4 Complete: Navigation initiated', {
-          duration: `${navDuration}ms`,
-          targetUrl: `/session/${session.id}`
-        })
-        debugLog('Navigation initiated successfully', {
-          duration: `${navDuration}ms`,
-          targetUrl: `/session/${session.id}`
-        })
+        // Navigation initiated successfully
       } catch (routerError) {
         const navDuration = Date.now() - navStartTime
-        console.error('❌ Step 4 Failed: Router navigation failed:', {
-          error: routerError,
-          duration: `${navDuration}ms`
-        })
         debugErrorLog('Router navigation failed', {
           from: 'public-session-creation',
           to: 'menu',
@@ -595,39 +428,16 @@ export function useSessionManagement(): UseSessionManagementReturn {
       }
       
       const totalDuration = Date.now() - startTime
-      console.log('🎉 Public Session Creation Complete:', {
-        operationId,
-        totalDuration: `${totalDuration}ms`,
-        sessionId: session.id,
-        tableId: session.table_id,
-        isAuthenticated
-      })
       console.groupEnd()
       
       // End performance monitoring
       endPerformanceMonitoring('SESSION_CREATION')
-      debugLog('Public session creation completed successfully', { 
-        operationId, 
-        sessionId: session.id, 
-        tableId: session.table_id,
-        isAuthenticated
-      })
+      // Public session creation completed successfully
       
       return session
       
     } catch (error) {
       const totalDuration = Date.now() - startTime
-      console.error('❌ Public Session Creation Failed:', {
-        operationId,
-        totalDuration: `${totalDuration}ms`,
-        error: error instanceof Error ? {
-          message: error.message,
-          code: (error as any).code,
-          details: (error as any).details,
-          hint: (error as any).hint
-        } : error,
-        tableId
-      })
       console.groupEnd()
       
       // End performance monitoring and track error

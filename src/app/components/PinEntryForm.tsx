@@ -17,19 +17,9 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
   const router = useRouter();
 
   // Debug logging for props and Supabase client
-  console.log('🔍 PinEntryForm - Props received:', {
-    tableId,
-    tableIdType: typeof tableId,
-    tableIdLength: tableId?.length,
-    currentPin,
-    currentPinType: typeof currentPin
-  });
+  // Debug logging removed for production security
   
-  console.log('🔍 PinEntryForm - Supabase client check:', {
-    supabaseExists: !!supabase,
-    supabaseType: typeof supabase,
-    supabaseFrom: typeof supabase?.from
-  });
+  // Debug logging removed for production security
 
   const handlePinChange = async (value: string) => {
     setPin(value);
@@ -53,8 +43,8 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
       // 2. PIN is correct. Now, either join or create a session.
       try {
         // CRITICAL FIX: Always check for existing active session first
-        console.log('🔍 PinEntryForm - Checking for existing active session for table:', tableId);
-        console.log('🔍 PinEntryForm - Table ID type:', typeof tableId, 'Length:', tableId?.length);
+        // Debug logging removed for production security
+        // Debug logging removed for production security
         
         if (!tableId || typeof tableId !== 'string' || tableId.trim().length === 0) {
           throw new Error('Invalid table ID provided');
@@ -62,22 +52,13 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
 
         // Check if tableId is a UUID format or table number
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(tableId.trim());
-        console.log('🔍 PinEntryForm - Table ID analysis:', {
-          tableId: tableId.trim(),
-          isUUID,
-          length: tableId.trim().length
-        });
+        // Debug logging removed for production security
 
         // Test Supabase connection first
-        console.log('🔍 PinEntryForm - Testing Supabase connection...');
+        // Debug logging removed for production security
         try {
           const testQuery = await supabase.from('tables').select('count').limit(1);
-          console.log('🔍 PinEntryForm - Supabase test query result:', {
-            data: testQuery.data,
-            error: testQuery.error,
-            errorExists: !!testQuery.error,
-            errorType: typeof testQuery.error
-          });
+          // Debug logging removed for production security
         } catch (testError) {
           console.error('🔍 PinEntryForm - Supabase test query failed:', testError);
         }
@@ -87,7 +68,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
         try {
           if (isUUID) {
             // Direct table_id lookup (UUID)
-            console.log('🔍 PinEntryForm - Looking up session by table_id (UUID):', tableId.trim());
+            // Debug logging removed for production security
             // First try to get a single session
             let result = await supabase
               .from('sessions')
@@ -98,7 +79,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             
             // If maybeSingle fails with multiple rows, get the most recent one
             if (result.error && result.error.message?.includes('multiple')) {
-              console.log('🔍 PinEntryForm - Multiple sessions found, getting most recent');
+              // Debug logging removed for production security
               result = await supabase
                 .from('sessions')
                 .select('id, started_by_name, diners')
@@ -109,11 +90,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
                 .single();
             }
             
-            console.log('🔍 PinEntryForm - Session lookup result:', {
-              data: result.data,
-              error: result.error,
-              errorExists: !!result.error
-            });
+            // Debug logging removed for production security
             
             existingActiveSession = result.data;
             
@@ -123,7 +100,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             }
           } else {
             // Table number lookup - need to find the table first
-            console.log('🔍 PinEntryForm - Table ID is not UUID, treating as table number');
+            // Debug logging removed for production security
             
             const { data: table, error: tableError } = await supabase
               .from('tables')
@@ -131,11 +108,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
               .eq('table_number', tableId.trim())
               .single();
             
-            console.log('🔍 PinEntryForm - Table lookup result:', {
-              data: table,
-              error: tableError,
-              errorExists: !!tableError
-            });
+            // Debug logging removed for production security
             
             if (tableError || !table) {
               throw new Error(`Table not found: ${tableId.trim()}`);
@@ -151,7 +124,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             
             // If maybeSingle fails with multiple rows, get the most recent one
             if (result.error && result.error.message?.includes('multiple')) {
-              console.log('🔍 PinEntryForm - Multiple sessions found, getting most recent');
+              // Debug logging removed for production security
               result = await supabase
                 .from('sessions')
                 .select('id, started_by_name, diners')
@@ -162,11 +135,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
                 .single();
             }
             
-            console.log('🔍 PinEntryForm - Session lookup by table ID result:', {
-              data: result.data,
-              error: result.error,
-              errorExists: !!result.error
-            });
+            // Debug logging removed for production security
             
             existingActiveSession = result.data;
             
@@ -187,11 +156,11 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
           // Join existing active session
           targetSessionId = existingActiveSession.id;
           isNewSession = false;
-          console.log('✅ PinEntryForm - Found existing active session:', existingActiveSession.id);
-          console.log('📋 Existing session diners:', existingActiveSession.diners);
+          // Debug logging removed for production security
+          // Debug logging removed for production security
         } else {
           // Create new session
-          console.log('🆕 PinEntryForm - No existing session found, creating new one');
+          // Debug logging removed for production security
           
           let actualTableId = tableId.trim();
           
@@ -208,10 +177,10 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             }
             
             actualTableId = table.id;
-            console.log('🔍 PinEntryForm - Resolved table number to UUID:', actualTableId);
+            // Debug logging removed for production security
           }
           
-          console.log('🔍 PinEntryForm - Creating session with table_id:', actualTableId);
+          // Debug logging removed for production security
           
           // Verify table exists before creating session
           const { data: tableCheck, error: tableCheckError } = await supabase
@@ -224,7 +193,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             throw new Error(`Table validation failed: ${tableCheckError?.message || 'Table not found'}`);
           }
           
-          console.log('🔍 PinEntryForm - Table validation successful:', tableCheck);
+          // Debug logging removed for production security
           
           const { data: newSession, error: sessionError } = await supabase
             .from('sessions')
@@ -235,11 +204,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             .select()
             .single();
 
-          console.log('🔍 PinEntryForm - Session creation result:', {
-            data: newSession,
-            error: sessionError,
-            errorExists: !!sessionError
-          });
+          // Debug logging removed for production security
 
           if (sessionError) {
             console.error('❌ Error creating new session:', sessionError);
@@ -264,7 +229,7 @@ export default function PinEntryForm({ tableId, currentPin }: PinEntryFormProps)
             // Don't fail the whole operation for this
           }
           
-          console.log('✅ PinEntryForm - Created new session:', targetSessionId);
+          // Debug logging removed for production security
         }
 
         // 3. Redirect to name entry page instead of directly to menu

@@ -60,9 +60,9 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('Service Worker registered:', registration);
+        // Service Worker registered
       } catch (error) {
-        console.log('Service Worker registration failed:', error);
+        // Service Worker registration failed
       }
     }
   };
@@ -73,7 +73,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
     
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
-        console.log('Service Worker is ready:', registration);
+        // Service Worker is ready
       });
     }
   };
@@ -94,8 +94,6 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
         
         // TEMPORARY: Skip admin role check for development
         // TODO: Re-enable this check once admin users are properly set up
-        console.log('🔓 PERMISSIVE MODE: Allowing access without admin role check');
-        console.log('⚠️  This is temporary - set up admin roles properly in production');
         
         // Check if user has admin role (but don't block access)
         const { data: profile } = await supabase
@@ -109,7 +107,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
           console.warn('   Run: node scripts/setup-admin-user.js set-admin <user-id>');
           // Don't block access in permissive mode
         } else {
-          console.log('✅ User has admin role');
+          // User has admin role
         }
       } else {
         setIsAuthenticated(false);
@@ -193,7 +191,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
               <p className="text-sm text-yellow-800">
                 <strong>Development Mode:</strong> Admin role check is disabled. 
                 <button 
-                  onClick={() => console.log('Run: node scripts/setup-admin-user.js')}
+                  onClick={() => {/* Run: node scripts/setup-admin-user.js */}}
                   className="ml-2 underline hover:text-yellow-900"
                 >
                   Set up admin users

@@ -391,7 +391,7 @@ function normalizeColumnType(type: string): string {
 
 // Main schema validation function
 export async function validateSchema(): Promise<SchemaValidationResult> {
-  console.log('🔍 Starting schema validation...')
+  // Debug logging removed for production security
   
   const errors: SchemaError[] = []
   const warnings: SchemaWarning[] = []
@@ -402,7 +402,7 @@ export async function validateSchema(): Promise<SchemaValidationResult> {
 
   for (const expectedTable of EXPECTED_SCHEMA) {
     totalTables++
-    console.log(`\n📋 Validating table: ${expectedTable.name}`)
+    // Debug logging removed for production security
     
     const actualTable = await getActualTableInfo(expectedTable.name)
     
@@ -418,7 +418,7 @@ export async function validateSchema(): Promise<SchemaValidationResult> {
     }
 
     validTables++
-    console.log(`✅ Table '${expectedTable.name}' exists`)
+    // Debug logging removed for production security
 
     // Validate columns
     const actualColumns = actualTable.columns || []
@@ -474,7 +474,7 @@ export async function validateSchema(): Promise<SchemaValidationResult> {
       }
 
       validColumns++
-      console.log(`  ✅ Column '${expectedColumn.name}' (${actualType})`)
+      // Debug logging removed for production security
     }
 
     // Check for extra columns
@@ -538,77 +538,64 @@ export async function validateSchema(): Promise<SchemaValidationResult> {
     }
   }
 
-  console.log('\n📊 Schema validation complete!')
-  console.log(`✅ Valid tables: ${validTables}/${totalTables}`)
-  console.log(`✅ Valid columns: ${validColumns}/${totalColumns}`)
-  console.log(`❌ Errors: ${errors.filter(e => e.severity === 'error').length}`)
-  console.log(`⚠️  Warnings: ${errors.filter(e => e.severity === 'warning').length + warnings.length}`)
+  // Debug logging removed for production security
 
   return result
 }
 
 // Helper function to print detailed validation results
 export function printValidationResults(result: SchemaValidationResult): void {
-  console.log('\n' + '='.repeat(80))
-  console.log('📋 SCHEMA VALIDATION RESULTS')
-  console.log('='.repeat(80))
+  // Debug logging removed for production security
 
   // Summary
-  console.log(`\n📊 SUMMARY:`)
-  console.log(`   Tables: ${result.summary.validTables}/${result.summary.totalTables} valid`)
-  console.log(`   Columns: ${result.summary.validColumns}/${result.summary.totalColumns} valid`)
-  console.log(`   Status: ${result.isValid ? '✅ VALID' : '❌ INVALID'}`)
+  // Debug logging removed for production security
 
   // Errors
   if (result.errors.length > 0) {
-    console.log(`\n❌ ERRORS (${result.errors.length}):`)
+    // Debug logging removed for production security
     result.errors.forEach((error, index) => {
-      console.log(`\n   ${index + 1}. ${error.type} - ${error.severity.toUpperCase()}`)
-      console.log(`      ${error.message}`)
+      // Debug logging removed for production security
       if (error.expected && error.actual) {
-        console.log(`      Expected: ${error.expected}`)
-        console.log(`      Actual: ${error.actual}`)
+        // Debug logging removed for production security
       }
       if (error.suggestion) {
-        console.log(`      💡 Suggestion: ${error.suggestion}`)
+        // Debug logging removed for production security
       }
     })
   }
 
   // Warnings
   if (result.warnings.length > 0) {
-    console.log(`\n⚠️  WARNINGS (${result.warnings.length}):`)
+    // Debug logging removed for production security
     result.warnings.forEach((warning, index) => {
-      console.log(`\n   ${index + 1}. ${warning.type}`)
-      console.log(`      ${warning.message}`)
+      // Debug logging removed for production security
       if (warning.suggestion) {
-        console.log(`      💡 Suggestion: ${warning.suggestion}`)
+        // Debug logging removed for production security
       }
     })
   }
 
-  console.log('\n' + '='.repeat(80))
+  // Debug logging removed for production security
 }
 
 // CLI function for running validation from command line
 export async function runSchemaValidation(): Promise<void> {
   try {
-    console.log('🚀 Starting Supabase Schema Validation...')
-    console.log('This will validate your application schema against the actual database.\n')
+    // Debug logging removed for production security
 
     const result = await validateSchema()
     printValidationResults(result)
 
     if (!result.isValid) {
-      console.log('\n❌ Schema validation failed! Please fix the errors above.')
+      // Debug logging removed for production security
       process.exit(1)
     } else {
-      console.log('\n✅ Schema validation passed! Your database schema matches expectations.')
+      // Debug logging removed for production security
       process.exit(0)
     }
   } catch (error) {
     logDetailedError('Schema validation failed', error)
-    console.log('\n💥 Schema validation encountered an error. Check the logs above for details.')
+    // Debug logging removed for production security
     process.exit(1)
   }
 }

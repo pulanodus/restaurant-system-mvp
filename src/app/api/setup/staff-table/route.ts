@@ -3,8 +3,6 @@ import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔧 Setting up staff table...');
-
     // First, try to insert sample staff data directly
     // This will create the table if it doesn't exist
     const { data, error } = await supabaseServer
@@ -21,14 +19,11 @@ export async function POST(request: NextRequest) {
       ], { onConflict: 'staff_id' });
 
     if (error) {
-      console.log('❌ Staff table setup failed:', error);
       return NextResponse.json(
         { error: 'Failed to setup staff table', details: error.message },
         { status: 500 }
       );
     }
-
-    console.log('✅ Staff table setup completed successfully');
 
     return NextResponse.json({
       success: true,

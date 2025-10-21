@@ -119,7 +119,7 @@ function PaymentReceiptPageContent() {
             vat = subtotal * 0.14;
           }
         } catch (error) {
-          console.log('⚠️ Could not fetch order history, using session totals:', error);
+          // Error handling for order history fetch - using session totals as fallback
         }
         
         // If we couldn't get order details, use session totals
@@ -204,7 +204,7 @@ function PaymentReceiptPageContent() {
   // Handle rating submission
   const handleSubmitRating = async (rating: number, comment: string) => {
     // Here you would typically save the rating to your database
-    console.log('Rating submitted:', { rating, comment, sessionId });
+    // Rating submission logic would go here
     
     // For now, we'll just simulate the submission
     return new Promise((resolve) => {

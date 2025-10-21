@@ -23,7 +23,6 @@ export async function createSessionWithServiceRole(
   sessionData: ServerSessionData
 ): Promise<{ data: unknown; error: unknown }> {
   try {
-    console.log('🔧 Creating session with service role:', sessionData)
     
     const { data, error } = await supabaseServer
       .from('sessions')
@@ -32,15 +31,12 @@ export async function createSessionWithServiceRole(
       .single()
     
     if (error) {
-      console.error('Service role session creation', error)
       return { data: null, error }
     }
     
-    console.log('✅ Session created with service role:', data)
     return { data, error: null }
     
   } catch (err) {
-    console.error('Service role session creation exception', err)
     return { 
       data: null, 
       error: new Error('Failed to create session with service role: ' + (err as Error).message)
@@ -56,7 +52,6 @@ export async function getTableInfoWithServiceRole(
   tableId: string
 ): Promise<{ data: ServerTableInfo | null; error: unknown }> {
   try {
-    console.log('🔧 Getting table info with service role:', tableId)
     
     const { data, error } = await supabaseServer
       .from('tables')
@@ -65,15 +60,12 @@ export async function getTableInfoWithServiceRole(
       .single()
     
     if (error) {
-      console.error('Service role table info fetch', error)
       return { data: null, error }
     }
     
-    console.log('✅ Table info retrieved with service role:', data)
     return { data, error: null }
     
   } catch (err) {
-    console.error('Service role table info fetch exception', err)
     return { 
       data: null, 
       error: new Error('Failed to get table info with service role: ' + (err as Error).message)
@@ -90,7 +82,6 @@ export async function updateTableStatusWithServiceRole(
   updates: TableUpdate
 ): Promise<{ data: unknown; error: unknown }> {
   try {
-    console.log('🔧 Updating table status with service role:', tableId, updates)
     
     const { data, error } = await supabaseServer
       .from('tables')
@@ -100,15 +91,12 @@ export async function updateTableStatusWithServiceRole(
       .single()
     
     if (error) {
-      console.error('Service role table update', error)
       return { data: null, error }
     }
     
-    console.log('✅ Table status updated with service role:', data)
     return { data, error: null }
     
   } catch (err) {
-    console.error('Service role table update exception', err)
     return { 
       data: null, 
       error: new Error('Failed to update table status with service role: ' + (err as Error).message)
@@ -122,7 +110,6 @@ export async function updateTableStatusWithServiceRole(
  */
 export async function getAllSessionsWithServiceRole(): Promise<{ data: unknown[]; error: unknown }> {
   try {
-    console.log('🔧 Getting all sessions with service role')
     
     const { data, error } = await supabaseServer
       .from('sessions')
@@ -130,15 +117,12 @@ export async function getAllSessionsWithServiceRole(): Promise<{ data: unknown[]
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error('Service role sessions fetch', error)
       return { data: [], error }
     }
     
-    console.log('✅ All sessions retrieved with service role:', data?.length || 0, 'sessions')
     return { data: data || [], error: null }
     
   } catch (err) {
-    console.error('Service role sessions fetch exception', err)
     return { 
       data: [], 
       error: new Error('Failed to get all sessions with service role: ' + (err as Error).message)
@@ -154,7 +138,6 @@ export async function deleteSessionWithServiceRole(
   sessionId: string
 ): Promise<{ data: unknown; error: unknown }> {
   try {
-    console.log('🔧 Deleting session with service role:', sessionId)
     
     const { data, error } = await supabaseServer
       .from('sessions')
@@ -164,15 +147,12 @@ export async function deleteSessionWithServiceRole(
       .single()
     
     if (error) {
-      console.error('Service role session deletion', error)
       return { data: null, error }
     }
     
-    console.log('✅ Session deleted with service role:', data)
     return { data, error: null }
     
   } catch (err) {
-    console.error('Service role session deletion exception', err)
     return { 
       data: null, 
       error: new Error('Failed to delete session with service role: ' + (err as Error).message)
@@ -188,7 +168,6 @@ export async function createSessionWithFullValidation(
   sessionData: ServerSessionData
 ): Promise<{ data: unknown; error: unknown }> {
   try {
-    console.log('🔧 Creating session with full validation and service role:', sessionData)
     
     // 1. Validate table exists
     const tableInfo = await getTableInfoWithServiceRole(sessionData.table_id)
@@ -208,14 +187,12 @@ export async function createSessionWithFullValidation(
     }
     
     // 2.5. Clean up any old orders for this table before creating new session
-    console.log('🧹 Cleaning up old orders for table:', sessionData.table_id)
     const { error: cleanupError } = await supabaseServer
       .from('orders')
       .delete()
       .eq('session_id', tableInfo.data.current_session_id || '')
     
     if (cleanupError) {
-      console.warn('⚠️ Warning: Failed to cleanup old orders:', cleanupError.message)
       // Don't fail session creation for cleanup errors
     }
     
@@ -240,11 +217,9 @@ export async function createSessionWithFullValidation(
       }
     }
     
-    console.log('✅ Session created with full validation:', sessionResult.data)
     return { data: sessionResult.data, error: null }
     
   } catch (err) {
-    console.error('Full validation session creation exception', err)
     return { 
       data: null, 
       error: new Error('Failed to create session with full validation: ' + (err as Error).message)
@@ -260,7 +235,6 @@ export async function endSessionWithServiceRole(
   sessionId: string
 ): Promise<{ data: unknown; error: unknown }> {
   try {
-    console.log('🔧 Ending session with service role:', sessionId)
     
     // 1. Get session info to find the table
     const { data: session, error: sessionError } = await supabaseServer
@@ -270,7 +244,6 @@ export async function endSessionWithServiceRole(
       .single()
     
     if (sessionError || !session) {
-      console.error('Service role session fetch for ending', sessionError)
       return { data: null, error: sessionError }
     }
     
@@ -283,7 +256,6 @@ export async function endSessionWithServiceRole(
       .single()
     
     if (updateError) {
-      console.error('Service role session end update', updateError)
       return { data: null, error: updateError }
     }
     
@@ -293,15 +265,12 @@ export async function endSessionWithServiceRole(
     })
     
     if (tableUpdateResult.error) {
-      console.error('Service role table status update after session end', tableUpdateResult.error)
       // Don't fail the operation, just log the error
     }
     
-    console.log('✅ Session ended with service role:', updatedSession)
     return { data: updatedSession, error: null }
     
   } catch (err) {
-    console.error('Service role session end exception', err)
     return { 
       data: null, 
       error: new Error('Failed to end session with service role: ' + (err as Error).message)

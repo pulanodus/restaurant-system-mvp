@@ -20,11 +20,8 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔔 Waiter request received:', { sessionId, requestType, timestamp });
-
     // For now, just return success without creating database records
     // This allows the UI to work while we set up the database properly
-    console.log('✅ Waiter request processed successfully (simulated)');
 
     return NextResponse.json({
       success: true,

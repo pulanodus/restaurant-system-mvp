@@ -12,8 +12,6 @@ import {
 // GET /api/admin/data-lifecycle - Get data lifecycle information
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔧 API: Getting data lifecycle information');
-    
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get('restaurantId');
     const action = searchParams.get('action');
@@ -56,8 +54,6 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/data-lifecycle - Perform data lifecycle management actions
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔧 API: Performing data lifecycle management action');
-    
     const body = await request.json();
     const { action, restaurantId, ...params } = body;
     

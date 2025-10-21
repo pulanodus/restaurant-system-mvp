@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = getSupabaseServiceKey();
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🔧 Adding unit_price column to orders table');
-
     // Add unit_price column
     const { error: alterError } = await supabase.rpc('exec_sql', {
       sql: `
@@ -50,8 +48,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Error setting unit_price NOT NULL:', notNullError);
       return NextResponse.json({ error: notNullError.message }, { status: 500 });
     }
-
-    console.log('✅ Successfully added unit_price column');
 
     return NextResponse.json({ 
       success: true,

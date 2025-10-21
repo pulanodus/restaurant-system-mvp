@@ -7,7 +7,6 @@ import { logTableTransfer } from '@/lib/audit-logging';
 export const POST = async (request: NextRequest) => {
   try {
     const { sourceTableId, destinationTableId, sessionId } = await request.json();
-    console.log('🔧 API: Transferring table:', { sourceTableId, destinationTableId, sessionId });
 
     if (!sourceTableId || !destinationTableId || !sessionId) {
       return NextResponse.json(
@@ -84,7 +83,6 @@ export const POST = async (request: NextRequest) => {
     }
 
     // 4. Start transaction-like operations
-    console.log('🔄 Starting table transfer transaction...');
 
     // 4a. Update session to point to new table
     const { data: updatedSession, error: sessionUpdateError } = await supabaseServer
@@ -163,7 +161,6 @@ export const POST = async (request: NextRequest) => {
         destination_table: destinationTable.table_number,
         transferred_by: session.served_by
       }, request);
-      console.log('✅ Transfer audit log created');
     } catch (auditError) {
       console.warn('⚠️ Error creating transfer audit log:', auditError);
       // Don't fail the transfer for audit log errors
@@ -195,12 +192,6 @@ export const POST = async (request: NextRequest) => {
       console.warn('⚠️ Error creating transfer notification:', notificationError);
       // Don't fail the transfer for notification errors
     }
-
-    console.log('✅ Table transfer completed successfully:', {
-      from: sourceTable.table_number,
-      to: destinationTable.table_number,
-      sessionId: sessionId
-    });
 
     return NextResponse.json({
       success: true,

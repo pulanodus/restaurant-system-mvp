@@ -132,7 +132,6 @@ function PaymentConfirmationPageContent() {
   const handleFinalLogout = async () => {
     if (confirm('Are you sure you want to end your session permanently? This will clear all your data and you won\'t be able to resume this session.')) {
       try {
-        console.log('🚪 Final logout - ending session permanently');
         
         // Clear all local storage and session data
         if (typeof window !== 'undefined') {
@@ -145,8 +144,6 @@ function PaymentConfirmationPageContent() {
         
         // Redirect to home page
         router.push('/');
-        
-        console.log('✅ Final logout successful, session ended permanently');
       } catch (error) {
         console.error('❌ Error during final logout:', error);
         // Still redirect even if there's an error
@@ -186,7 +183,7 @@ function PaymentConfirmationPageContent() {
       }
 
       const result = await response.json();
-      console.log('Payment request submitted successfully:', result);
+      // Payment request submitted successfully
 
       // Navigate to payment processing page or show success
       const dinerNameParam = dinerName ? `&dinerName=${encodeURIComponent(dinerName)}` : '';

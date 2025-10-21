@@ -13,8 +13,6 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    console.log('🔧 API: Fetching session details', { sessionId });
-
     // Get session with table information
     const { data: session, error: sessionError } = await supabaseServer
       .from('sessions')
@@ -51,8 +49,6 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
         { status: 404 }
       );
     }
-
-    console.log('✅ Session details fetched:', session);
 
     return NextResponse.json({
       success: true,

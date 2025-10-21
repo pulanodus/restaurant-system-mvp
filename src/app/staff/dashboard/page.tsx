@@ -121,7 +121,8 @@ export default function StaffDashboard() {
   const [isManagerOverrideOpen, setIsManagerOverrideOpen] = useState(false);
   const [managerOverrideTable, setManagerOverrideTable] = useState<Table | null>(null);
   const [managerOverrideSession, setManagerOverrideSession] = useState<Session | null>(null);
-  const [managerPin, setManagerPin] = useState('');
+  const [managerUsername, setManagerUsername] = useState('');
+  const [managerPassword, setManagerPassword] = useState('');
   const [isManagerAuthenticated, setIsManagerAuthenticated] = useState(false);
   const [selectedItemsToVoid, setSelectedItemsToVoid] = useState<string[]>([]);
   const [discountEnabled, setDiscountEnabled] = useState(false);
@@ -223,14 +224,9 @@ export default function StaffDashboard() {
                   setSessions(sessionsData.sessions || []);
                   
                   // Debug: Log diner information
-                  console.log('🔍 Staff Portal - Sessions loaded:', sessionsData.sessions?.length || 0);
+                  // Debug logging removed for production security
                   sessionsData.sessions?.forEach((session: any, index: number) => {
-                    console.log(`🔍 Session ${index + 1}:`, {
-                      sessionId: session.id,
-                      tableNumber: session.tables?.table_number,
-                      diners: session.diners,
-                      dinerCount: Array.isArray(session.diners) ? session.diners.length : 0
-                    });
+                    // Debug logging removed for production security
                   });
                 } catch (tableError) {
                   console.warn('Failed to load table data:', tableError);
@@ -262,7 +258,7 @@ export default function StaffDashboard() {
           const staff = JSON.parse(existingStaff);
           if (staff && staff.staffId) {
             setStaff(staff);
-            console.log('✅ Staff session restored:', staff.name);
+            // Debug logging removed for production security
           } else {
             // Invalid staff data, redirect to PIN entry
             window.location.href = '/staff/pin-entry';
@@ -375,7 +371,7 @@ export default function StaffDashboard() {
         setNotifications(prev => 
           prev.filter(n => n.id !== notificationId)
         );
-        console.log('✅ Notification resolved successfully');
+        // Debug logging removed for production security
       } else {
         console.error('Failed to resolve notification');
       }
@@ -406,7 +402,7 @@ export default function StaffDashboard() {
         localStorage.setItem('staff', JSON.stringify(data.staff));
         setStaff(data.staff);
         setIsStaffLoginOpen(false);
-        console.log('✅ Staff logged in successfully:', data.staff.name);
+        // Debug logging removed for production security
       } else {
         console.error('❌ Staff login failed:', data.error);
         alert(data.error || 'Login failed');
@@ -427,7 +423,7 @@ export default function StaffDashboard() {
     setIsTabletMode(false);
     setSelectedStaffView(null);
     setAllStaffAssignments({});
-    console.log('👋 Staff logged out');
+    // Debug logging removed for production security
     
     // Redirect to PIN entry page
     window.location.href = '/staff/pin-entry';
@@ -451,7 +447,7 @@ export default function StaffDashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log('✅ Table claimed successfully:', data.message);
+        // Debug logging removed for production security
         // Refresh data to show updated assignment
         await loadData(false);
       } else {
@@ -483,7 +479,7 @@ export default function StaffDashboard() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        console.log('✅ PIN generated successfully:', data.message);
+        // Debug logging removed for production security
         // Show success message with PIN
         alert(`PIN ${data.pin} generated for Table ${data.table.table_number}!\n\nYou are now assigned to this table.`);
         // Refresh data to show updated status
@@ -527,12 +523,12 @@ export default function StaffDashboard() {
 
   // Transfer table functions
   const initiateTransfer = (table: Table, session: Session) => {
-    console.log('initiateTransfer called with:', { table: table.table_number, session: session.id });
+    // Debug logging removed for production security
     setTransferSourceTable(table);
     setTransferSourceSession(session);
     setSelectedDestinationTable(null);
     setIsTransferMode(true);
-    console.log('Transfer mode state set to true');
+    // Debug logging removed for production security
   };
 
   const cancelTransfer = () => {
@@ -561,7 +557,7 @@ export default function StaffDashboard() {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        console.log('✅ Table transfer successful:', data.message);
+        // Debug logging removed for production security
         alert('Table Transferred!');
         await loadData(false);
         cancelTransfer();
@@ -585,17 +581,18 @@ export default function StaffDashboard() {
 
   // Manager override functions
   const initiateManagerOverride = async (table: Table, session: Session) => {
-    console.log('initiateManagerOverride called with:', { table: table.table_number, session: session.id });
+    // Debug logging removed for production security
     setManagerOverrideTable(table);
     setManagerOverrideSession(session);
-    setManagerPin('');
+    setManagerUsername('');
+    setManagerPassword('');
     setIsManagerAuthenticated(false);
     setSelectedItemsToVoid([]);
     setDiscountEnabled(false);
     setDiscountAmount('');
     setDiscountType('fixed');
     setIsManagerOverrideOpen(true);
-    console.log('Manager override modal state set to true');
+    // Debug logging removed for production security
 
     // Load session orders
     try {
@@ -610,8 +607,8 @@ export default function StaffDashboard() {
   };
 
   const authenticateManager = async () => {
-    if (!managerPin.trim()) {
-      alert('Please enter manager PIN');
+    if (!managerUsername.trim() || !managerPassword.trim()) {
+      alert('Please enter both username and password');
       return;
     }
 
@@ -619,16 +616,20 @@ export default function StaffDashboard() {
       const response = await fetch('/api/manager/authenticate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ managerPin: managerPin.trim() }),
+        body: JSON.stringify({
+          username: managerUsername.trim(),
+          password: managerPassword.trim()
+        }),
       });
 
       const data = await response.json();
       if (response.ok && data.success) {
         setIsManagerAuthenticated(true);
-        console.log('✅ Manager authenticated successfully');
+        // Debug logging removed for production security
       } else {
-        alert(data.error || 'Invalid manager PIN');
-        setManagerPin('');
+        alert(data.error || 'Invalid credentials');
+        setManagerUsername('');
+        setManagerPassword('');
       }
     } catch (error) {
       console.error('❌ Manager authentication error:', error);
@@ -640,7 +641,8 @@ export default function StaffDashboard() {
     setIsManagerOverrideOpen(false);
     setManagerOverrideTable(null);
     setManagerOverrideSession(null);
-    setManagerPin('');
+    setManagerUsername('');
+    setManagerPassword('');
     setIsManagerAuthenticated(false);
     setSelectedItemsToVoid([]);
     setDiscountEnabled(false);
@@ -684,7 +686,7 @@ export default function StaffDashboard() {
 
       const data = await response.json();
       if (response.ok && data.success) {
-        console.log('✅ Manager adjustments saved successfully');
+        // Debug logging removed for production security
         alert('Bill adjustments saved successfully!');
         await loadData(false);
         cancelManagerOverride();
@@ -1097,31 +1099,17 @@ export default function StaffDashboard() {
                     
                     if (showMyTablesOnly && staff) {
                       // Filter to show only tables assigned to current staff
-                      console.log('🔍 My Tables Filter - Staff object:', {
-                        staffId: staff.staffId,
-                        id: staff.id,
-                        name: staff.name
-                      });
-                      console.log('🔍 My Tables Filter - Available sessions:', sessions.map(s => ({
-                        sessionId: s.id,
-                        tableId: s.table_id,
-                        served_by: s.served_by
-                      })));
+                      // Debug logging removed for production security
+                      // Debug logging removed for production security
                       
                       filteredTables = tables.filter(table => {
                         const session = getSessionInfo(table);
                         const matches = session && (session.served_by === staff.staffId || session.served_by === staff.id);
-                        console.log(`🔍 Table ${table.table_number} filter check:`, {
-                          sessionExists: !!session,
-                          sessionServedBy: session?.served_by,
-                          staffStaffId: staff.staffId,
-                          staffId: staff.id,
-                          matches: matches
-                        });
+                        // Debug logging removed for production security
                         return matches;
                       });
                       
-                      console.log('🔍 My Tables Filter - Filtered tables count:', filteredTables.length);
+                      // Debug logging removed for production security
                     }
                     
                     if (isTabletMode && selectedStaffView && selectedStaffView !== 'all') {
@@ -1414,18 +1402,35 @@ export default function StaffDashboard() {
                       </div>
                     </div>
 
-              <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Manager PIN
-                      </label>
-                      <input
-                        type="password"
-                        value={managerPin}
-                        onChange={(e) => setManagerPin(e.target.value)}
-                        placeholder="Enter manager PIN"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
-                        onKeyPress={(e) => e.key === 'Enter' && authenticateManager()}
-                      />
+              <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Manager Username
+                        </label>
+                        <input
+                          type="text"
+                          value={managerUsername}
+                          onChange={(e) => setManagerUsername(e.target.value)}
+                          placeholder="Enter manager username"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
+                          autoComplete="username"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Manager Password
+                        </label>
+                        <input
+                          type="password"
+                          value={managerPassword}
+                          onChange={(e) => setManagerPassword(e.target.value)}
+                          placeholder="Enter manager password"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
+                          onKeyPress={(e) => e.key === 'Enter' && authenticateManager()}
+                          autoComplete="current-password"
+                        />
+                      </div>
               </div>
 
                     <div className="flex space-x-3">
@@ -1575,7 +1580,7 @@ export default function StaffDashboard() {
                 const staffId = formData.get('staffId') as string;
                 const staffName = formData.get('staffName') as string;
                 const deviceId = formData.get('deviceId') as string;
-                console.log('🔍 Form submission:', { staffId, staffName, deviceId });
+                // Debug logging removed for production security
                 handleStaffLogin(staffId, deviceId, staffName);
               }} className="space-y-6">
               <div>

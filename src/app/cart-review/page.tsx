@@ -16,12 +16,12 @@ function CartReviewContent() {
   const isLoading = state.isLoading;
 
   useEffect(() => {
-    console.log('🛒 Cart Review - useEffect triggered:', { sessionId, hasLoadCartItems: !!loadCartItems });
+    // Debug logging removed for production security
     if (sessionId) {
-      console.log('🛒 Cart Review - Loading cart items for session:', sessionId);
+      // Debug logging removed for production security
       loadCartItems();
     } else {
-      console.log('🛒 Cart Review - No sessionId found in URL params');
+      // Debug logging removed for production security
     }
   }, [sessionId, loadCartItems]);
 
@@ -29,7 +29,7 @@ function CartReviewContent() {
   useEffect(() => {
     const handleFocus = () => {
       if (sessionId && !isLoading) {
-        console.log('🔄 Page focused - refreshing cart data to get latest split info');
+        // Debug logging removed for production security
         loadCartItems();
       }
     };
@@ -40,39 +40,12 @@ function CartReviewContent() {
 
   // Debug cart data
   useEffect(() => {
-    console.log('🛒 Cart Review - Cart data updated:', {
-      items: items,
-      itemsLength: items?.length,
-      isLoading,
-      sessionId,
-      hasItems: !!items,
-      itemsType: typeof items,
-      itemsIsArray: Array.isArray(items)
-    });
+    // Debug logging removed for production security
     
     // Debug split bill data specifically
     if (items && items.length > 0) {
       items.forEach((item, index) => {
-        console.log(`🔍 Cart Item ${index + 1} Debug:`, {
-            name: item.name,
-            menuItemId: item.menu_item_id,
-            isSplit: item.isSplit,
-            originalPrice: item.originalPrice,
-            splitPrice: item.splitPrice,
-            splitCount: item.splitCount,
-            participants: item.participants,
-            hasSplitData: item.hasSplitData,
-            splitBillId: item.splitBillId,
-            quantity: item.quantity,
-            price: item.price,
-          isShared: item.isShared,
-            calculation: {
-              expectedOriginalPrice: item.price * item.quantity,
-              actualOriginalPrice: item.originalPrice,
-              expectedSplitPrice: item.originalPrice && item.splitCount ? item.originalPrice / item.splitCount : 'N/A',
-              actualSplitPrice: item.splitPrice
-            }
-          });
+        // Debug logging removed for production security
       });
     }
   }, [items, isLoading, sessionId]);
@@ -84,21 +57,7 @@ function CartReviewContent() {
       const currentOriginalPrice = item.price * item.quantity;
       const recalculatedSplitPrice = currentOriginalPrice / item.splitCount;
       
-      console.log('💰 Cart Review Split Calculation (RECALCULATED):', {
-        itemName: item.name,
-        storedSplitPrice: item.splitPrice,
-        storedOriginalPrice: item.originalPrice,
-        currentQuantity: item.quantity,
-        currentOriginalPrice: currentOriginalPrice,
-        splitCount: item.splitCount,
-        recalculatedSplitPrice: recalculatedSplitPrice,
-        formula: `${currentOriginalPrice} ÷ ${item.splitCount} = ${recalculatedSplitPrice}`,
-        verification: {
-          isStoredPriceStale: item.originalPrice ? Math.abs(item.originalPrice - currentOriginalPrice) > 0.01 : true,
-          shouldRecalculate: item.originalPrice ? Math.abs(item.originalPrice - currentOriginalPrice) > 0.01 : true,
-          priceDifference: item.originalPrice ? Math.abs(item.originalPrice - currentOriginalPrice) : currentOriginalPrice
-        }
-      });
+      // Debug logging removed for production security
       
       return recalculatedSplitPrice;
     }
@@ -114,21 +73,12 @@ function CartReviewContent() {
     items.forEach(item => {
       const itemPrice = calculateItemPrice(item);
       subtotal += itemPrice;
-      console.log(`💰 Total Calculation: ${item.name} = ${itemPrice}, Running total: ${subtotal}`);
+      // Debug logging removed for production security
     });
     const vat = subtotal * 0.14;
     const total = subtotal + vat;
     
-    console.log('💰 Final Total Calculation:', {
-      subtotal,
-      vat,
-      total,
-      items: items.map(item => ({
-        name: item.name,
-        isSplit: item.isSplit,
-        itemPrice: calculateItemPrice(item)
-      }))
-    });
+    // Debug logging removed for production security
     
     return { subtotal, vat, total };
   };
@@ -141,17 +91,17 @@ function CartReviewContent() {
     if (newQuantity <= 0) {
       handleRemoveItem(itemId);
     } else {
-      console.log('🔄 Updating quantity for item:', itemId, 'to:', newQuantity);
+      // Debug logging removed for production security
       await updateQuantity(itemId, newQuantity);
       
       // CRITICAL: Wait for split bill update to complete, then reload cart data
       if (sessionId) {
-        console.log('🔄 Waiting for split bill update to complete...');
+        // Debug logging removed for production security
         // Wait a bit longer to ensure the API has time to update split bills
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        console.log('🔄 Reloading cart data after quantity change...');
+        // Debug logging removed for production security
         await loadCartItems();
-        console.log('✅ Cart data reloaded after quantity change');
+        // Debug logging removed for production security
       }
     }
   };
@@ -160,25 +110,20 @@ function CartReviewContent() {
   const runSplitBillDiagnostics = async () => {
     if (!sessionId) return;
     
-    console.log('🔍 Running Split Bill Diagnostics...');
+    // Debug logging removed for production security
     
     try {
       // Check split bills in database
       const response = await fetch(`/api/splits/diagnostics?sessionId=${sessionId}`);
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 Split Bill Diagnostics Results:', data);
+        // Debug logging removed for production security
       } else {
-        console.log('❌ Diagnostics API not available, checking cart data only');
+        // Debug logging removed for production security
       }
       
       // Check cart data
-      console.log('🛒 Current Cart Data:', {
-        sessionId,
-        itemsCount: items?.length || 0,
-        splitItems: items?.filter(item => item.isSplit) || [],
-        regularItems: items?.filter(item => !item.isSplit) || []
-      });
+      // Debug logging removed for production security
       
     } catch (error) {
       console.error('❌ Error running diagnostics:', error);
@@ -398,7 +343,7 @@ function CartReviewContent() {
                   }
 
                   try {
-                    console.log('🍽️ Confirming orders from cart review...');
+                    // Debug logging removed for production security
                     
                     // Call the orders confirmation API
                     const response = await fetch('/api/orders/confirm', {
@@ -415,8 +360,8 @@ function CartReviewContent() {
                     }
 
                     const result = await response.json();
-                    console.log('✅ Cart Review - Orders confirmed successfully:', result);
-                    console.log('✅ Cart Review - Confirmed orders count:', result.confirmedOrders?.length || 0);
+                    // Debug logging removed for production security
+                    // Debug logging removed for production security
                     
                     // Small delay to ensure database consistency
                     await new Promise(resolve => setTimeout(resolve, 500));

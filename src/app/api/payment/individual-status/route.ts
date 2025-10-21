@@ -4,8 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Getting individual payment status');
-    
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
     
@@ -17,13 +15,10 @@ export const GET = async (request: NextRequest) => {
     }
     
     // Call the database function to get individual payment status
-    console.log('🔍 Calling get_individual_payment_status function with:', { sessionId });
     
     const { data, error } = await supabaseServer.rpc('get_individual_payment_status', {
       session_id_param: sessionId
     });
-    
-    console.log('🔍 Database function response:', { data, error });
     
     if (error) {
       console.error('❌ Database function error:', error);
@@ -39,8 +34,6 @@ export const GET = async (request: NextRequest) => {
         { status: 404 }
       );
     }
-    
-    console.log('✅ Individual payment status retrieved successfully:', data);
     
     return NextResponse.json({
       success: true,

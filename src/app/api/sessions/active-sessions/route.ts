@@ -4,7 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fetching active sessions with totals');
     
     // Get all active sessions with table information and diners
     const { data: sessions, error } = await supabaseServer
@@ -82,17 +81,9 @@ export const GET = async (request: NextRequest) => {
       })
     );
     
-    console.log('✅ Active sessions with totals fetched:', sessionsWithTotals?.length || 0);
-    
     // Debug: Log diner information for each session
     sessionsWithTotals?.forEach((session, index) => {
       const tableInfo = Array.isArray(session.tables) ? session.tables[0] : session.tables;
-      console.log(`🔍 Session ${index + 1} Diner Info:`, {
-        sessionId: session.id,
-        tableNumber: tableInfo?.table_number,
-        diners: session.diners,
-        dinerCount: Array.isArray(session.diners) ? session.diners.length : 0
-      });
     });
     
     return NextResponse.json({

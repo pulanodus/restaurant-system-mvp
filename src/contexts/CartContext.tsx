@@ -67,7 +67,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return { ...state, sessionId: action.payload }
     
     case 'SET_DINER_NAME':
-      console.log('🔍 CartContext - SET_DINER_NAME reducer called with:', action.payload);
       return { ...state, dinerName: action.payload }
     
     case 'SET_LOADING':
@@ -183,54 +182,31 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
   // Set diner name if provided
   useEffect(() => {
     if (dinerName && dinerName !== state.dinerName) {
-      console.log('🔍 CartProvider - Setting diner name from props:', dinerName);
       dispatch({ type: 'SET_DINER_NAME', payload: dinerName });
     }
   }, [dinerName, state.dinerName]);
-  
-  console.log('🚀 CartProvider initialized:', {
-    sessionId: currentSessionId,
-    dinerName: dinerName,
-    stateDinerName: state.dinerName,
-    sessionIdLength: currentSessionId?.length || 0,
-    stateItems: state.items,
-    stateItemsLength: state.items?.length || 0,
-    isLoading: state.isLoading,
-    error: state.error
-  });
 
   // Load cart items from database
   const loadCartItems = useCallback(async () => {
     if (!currentSessionId) {
-      console.log('CartContext - No sessionId, skipping loadCartItems')
       return
     }
 
     if (!state.dinerName) {
-      console.log('CartContext - No dinerName, skipping loadCartItems')
       // Clear cart if no diner name to prevent showing other users' items
       dispatch({ type: 'LOAD_ITEMS', payload: [] })
       return
     }
 
-    console.log('CartContext - Loading cart items for sessionId:', currentSessionId, 'and dinerName:', state.dinerName)
-
     try {
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'SET_ERROR', payload: null })
-
-      console.log('🟡 CartContext - Making API request to:', window.location.origin + '/api/cart/load');
-      console.log('🟡 CartContext - Request body:', { sessionId: currentSessionId, dinerName: state.dinerName });
-      console.log('🟡 CartContext - Current dinerName state:', state.dinerName);
 
       const response = await fetch('/api/cart/load', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: currentSessionId, dinerName: state.dinerName })
       })
-
-      console.log('🟡 CartContext - API response status:', response.status);
-      console.log('🟡 CartContext - API response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -239,7 +215,6 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
       }
 
       const { items } = await response.json()
-      console.log('CartContext - Loaded cart items for', state.dinerName, ':', items)
       dispatch({ type: 'LOAD_ITEMS', payload: items || [] })
     } catch (error) {
       console.error('Error loading cart items:', error)
@@ -254,7 +229,6 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
 
   // Set session ID when it changes
   useEffect(() => {
-    console.log('🔍 CartContext - useEffect triggered, currentSessionId:', currentSessionId)
     if (currentSessionId) {
       dispatch({ type: 'SET_SESSION', payload: currentSessionId })
     }
@@ -263,7 +237,6 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
   // CRITICAL FIX: Reload cart items when diner name changes
   useEffect(() => {
     if (currentSessionId && state.dinerName) {
-      console.log('🔍 CartContext - Diner name changed, reloading cart items for:', state.dinerName)
       loadCartItems()
     }
   }, [state.dinerName, currentSessionId, loadCartItems])
@@ -271,35 +244,17 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
   // Load cart items when sessionId is available (diner name loading is handled separately)
   useEffect(() => {
     if (currentSessionId) {
-      console.log('🔍 CartContext - SessionId available, loading cart items:', {
-        sessionId: currentSessionId,
-        dinerName: state.dinerName
-      })
       loadCartItems()
-    } else {
-      console.log('🔍 CartContext - Waiting for sessionId:', { 
-        sessionId: currentSessionId, 
-        dinerName: state.dinerName 
-      })
     }
   }, [currentSessionId, loadCartItems])
 
   // Add item to cart
   const addItem = async (item: any, options?: { notes?: string; isShared?: boolean; isTakeaway?: boolean; customizations?: any[] }) => {
-    console.log('🟢 CartContext - addItem called:', {
-      itemName: item.name,
-      itemId: item.id,
-      currentSessionId,
-      options
-    });
-
     if (!currentSessionId) {
       console.error('❌ CartContext - No session ID available');
       dispatch({ type: 'SET_ERROR', payload: 'No session ID available' })
       return
     }
-
-    console.log('CartContext - Adding new item:', item.name, 'Current cart items:', state.items.length)
 
     try {
       dispatch({ type: 'SET_ERROR', payload: null })
@@ -310,17 +265,12 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
       }
 
       const requestBody = { sessionId: currentSessionId, item, options, dinerName: state.dinerName };
-      console.log('🟡 CartContext - Making API request to:', window.location.origin + '/api/cart/add');
-      console.log('🟡 CartContext - Request body:', requestBody);
 
       const response = await fetch('/api/cart/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody)
       })
-
-      console.log('🟡 CartContext - API response status:', response.status);
-      console.log('🟡 CartContext - API response ok:', response.ok);
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -329,7 +279,6 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
       }
 
       const { item: cartItem } = await response.json()
-      console.log('✅ CartContext - Item added successfully:', cartItem.name)
       dispatch({ type: 'ADD_ITEM', payload: cartItem })
     } catch (error) {
       console.error('❌ Error adding item to cart:', error)
@@ -451,12 +400,9 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
     if (!currentSessionId) return
 
     try {
-      console.log('CartContext - Clearing cart for sessionId:', currentSessionId)
-      
       // Only clear local state - don't delete from database
       // The orders should be updated to 'preparing' status by the confirm API
       dispatch({ type: 'CLEAR_CART' })
-      console.log('CartContext - Cart cleared successfully')
     } catch (error) {
       console.error('Error clearing cart:', error)
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : 'Failed to clear cart' })
@@ -464,7 +410,6 @@ export function CartProvider({ children, sessionId, dinerName }: { children: Rea
   }
 
   const setDinerName = (dinerName: string) => {
-    console.log('🔍 CartContext - setDinerName called with:', dinerName);
     dispatch({ type: 'SET_DINER_NAME', payload: dinerName })
   }
 

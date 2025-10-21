@@ -17,17 +17,17 @@ export function startBackgroundCleanup(): void {
     return; // Don't run on server-side or if already running
   }
   
-  console.log('🤖 BACKGROUND-CLEANUP - Temporarily disabled due to server issues');
+  // Temporarily disabled due to server issues
   return; // TEMPORARILY DISABLED - Server issues
   
-  console.log('🤖 BACKGROUND-CLEANUP - Starting automatic cleanup service...');
+  // Starting automatic cleanup service...
   
   isRunning = true;
   
   // Run cleanup every 30 minutes (reduced frequency for better performance)
   cleanupInterval = setInterval(async () => {
     try {
-      console.log('🤖 BACKGROUND-CLEANUP - Running scheduled cleanup...');
+      // Running scheduled cleanup...
       
       const response = await fetch('/api/auto-cleanup', {
         method: 'POST',
@@ -39,7 +39,7 @@ export function startBackgroundCleanup(): void {
       if (response.ok) {
         const result = await response.json();
         if (result.summary.totalCleanedUsers > 0) {
-          console.log(`✅ BACKGROUND-CLEANUP - Cleaned ${result.summary.totalCleanedUsers} stale users automatically`);
+          // Cleaned stale users automatically
         }
       } else {
         console.error('❌ BACKGROUND-CLEANUP - Cleanup failed:', await response.text());
@@ -56,7 +56,7 @@ export function startBackgroundCleanup(): void {
  */
 export function stopBackgroundCleanup(): void {
   if (cleanupInterval) {
-    console.log('🤖 BACKGROUND-CLEANUP - Stopping automatic cleanup service...');
+    // Stopping automatic cleanup service...
     clearInterval(cleanupInterval);
     cleanupInterval = null;
     isRunning = false;
@@ -75,7 +75,7 @@ export function isBackgroundCleanupRunning(): boolean {
  */
 export async function runImmediateCleanup(): Promise<void> {
   try {
-    console.log('🤖 BACKGROUND-CLEANUP - Running immediate cleanup...');
+    // Running immediate cleanup...
     
     const response = await fetch('/api/auto-cleanup', {
       method: 'POST',
@@ -86,7 +86,7 @@ export async function runImmediateCleanup(): Promise<void> {
     
     if (response.ok) {
       const result = await response.json();
-      console.log(`✅ BACKGROUND-CLEANUP - Immediate cleanup completed: ${result.summary.totalCleanedUsers} users cleaned`);
+      // Immediate cleanup completed
     } else {
       console.error('❌ BACKGROUND-CLEANUP - Immediate cleanup failed:', await response.text());
     }

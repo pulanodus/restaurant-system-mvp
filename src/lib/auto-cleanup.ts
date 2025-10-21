@@ -14,7 +14,7 @@ const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
  */
 export async function triggerAutoCleanup(): Promise<void> {
   // TEMPORARILY DISABLED - Server issues
-  console.log('🤖 AUTO-CLEANUP-LIB - Temporarily disabled due to server issues');
+  // Temporarily disabled due to server issues
   return;
   
   const now = Date.now();
@@ -27,7 +27,7 @@ export async function triggerAutoCleanup(): Promise<void> {
   lastCleanupTime = now;
   
   try {
-    console.log('🤖 AUTO-CLEANUP - Triggering automatic cleanup...');
+    // Triggering automatic cleanup...
     
     const response = await fetch('/api/auto-cleanup', {
       method: 'POST',
@@ -39,9 +39,9 @@ export async function triggerAutoCleanup(): Promise<void> {
     if (response.ok) {
       const result = await response.json();
       if (result.summary && result.summary.totalCleanedUsers > 0) {
-        console.log(`✅ AUTO-CLEANUP - Automatically cleaned ${result.summary.totalCleanedUsers} stale users`);
+        // Automatically cleaned stale users
       } else {
-        console.log('✅ AUTO-CLEANUP - No stale users found');
+        // No stale users found
       }
     } else {
       const errorText = await response.text();
@@ -70,7 +70,7 @@ export async function triggerAutoCleanup(): Promise<void> {
  * Trigger cleanup on user actions that are likely to reveal stale users
  */
 export function triggerCleanupOnUserAction(action: string): void {
-  console.log(`🤖 AUTO-CLEANUP - User action detected: ${action}`);
+  // User action detected
   
   // Trigger cleanup in the background (don't await)
   triggerAutoCleanup().catch(error => {

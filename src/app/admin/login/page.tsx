@@ -1,57 +1,57 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { handleError } from '@/lib/error-handling';
-import { Shield, Eye, EyeOff } from 'lucide-react';
+import { Shield, Eye, EyeOff, User } from 'lucide-react';
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Check if already authenticated
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.role === 'admin') {
-        router.push('/admin');
-      }
-    };
-    checkAuth();
-  }, [router]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!username.trim()) {
+      setError('Please enter your username or email');
+      return;
+    }
+    
+    if (!password.trim()) {
+      setError('Please enter your password');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch('/api/manager/authenticate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim()
+        }),
       });
 
-      if (error) {
-        throw error;
-      }
+      const data = await response.json();
 
-      // Check if user has admin role in metadata
-      const userRole = data.user?.user_metadata?.role;
-      if (userRole !== 'admin') {
-        await supabase.auth.signOut();
-        setError('Admin privileges required');
-        return;
+      if (response.ok && data.success) {
+        // Store manager data in localStorage/sessionStorage for use in admin pages
+        localStorage.setItem('manager', JSON.stringify(data.manager));
+        router.push('/admin');
+      } else {
+        setError(data.error || 'Invalid credentials');
       }
-
-      router.push('/admin');
     } catch (error: any) {
       console.error('Login error:', error);
-      setError(error.message || 'Login failed');
+      setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -75,20 +75,25 @@ export default function AdminLoginPage() {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
+              <label htmlFor="username" className="sr-only">
+                Username or Email
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="appearance-none rounded-none relative block w-full pl-10 px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  placeholder="Username or Email"
+                />
+              </div>
             </div>
             <div className="relative">
               <label htmlFor="password" className="sr-only">
@@ -118,6 +123,23 @@ export default function AdminLoginPage() {
               </button>
             </div>
           </div>
+
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">
+                    {error}
+                  </h3>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <button

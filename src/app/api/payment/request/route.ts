@@ -4,10 +4,7 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Processing payment request');
-    
     const body = await request.json();
-    console.log('🔍 Payment request body:', body);
     
     const { sessionId, tipAmount, finalTotal, paymentType = 'individual', subtotal, vat } = body;
     
@@ -34,14 +31,6 @@ export const POST = async (request: NextRequest) => {
     }
     
     // SUSTAINABLE SOLUTION: Handle payment request directly without database function
-    console.log('🔧 PROCESSING PAYMENT REQUEST DIRECTLY:', {
-      sessionId,
-      tipAmount: parseFloat(tipAmount.toString()),
-      finalTotal: parseFloat(finalTotal.toString()),
-      paymentType,
-      subtotal: subtotal ? parseFloat(subtotal.toString()) : null,
-      vat: vat ? parseFloat(vat.toString()) : null
-    });
     
     // Step 1: Get session details (simple query to avoid join issues)
     const { data: sessionData, error: sessionError } = await supabaseServer
@@ -87,14 +76,6 @@ export const POST = async (request: NextRequest) => {
     const subtotalFloat = subtotal ? parseFloat(subtotal.toString()) : null;
     const vatFloat = vat ? parseFloat(vat.toString()) : null;
     
-    console.log('🔍 Session and table details:', {
-      sessionId: sessionData.id,
-      tableNumber,
-      tableId: sessionData.table_id,
-      status: sessionData.status,
-      startedBy: sessionData.started_by_name
-    });
-    
     // Step 2: Update session with payment details (only existing columns)
     const { error: updateError } = await supabaseServer
       .from('sessions')
@@ -112,8 +93,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-    
-    console.log('✅ Session updated successfully with payment details');
     
     // Step 3: Create payment request notification using our calculated values
     let notificationId = null;
@@ -142,7 +121,6 @@ export const POST = async (request: NextRequest) => {
         console.error('⚠️ Failed to create payment request notification:', notificationError);
       } else {
         notificationId = notificationData.id;
-        console.log('✅ Payment request notification created for table:', tableNumber);
       }
     } catch (notificationError) {
       console.error('⚠️ Error creating payment request notification:', notificationError);

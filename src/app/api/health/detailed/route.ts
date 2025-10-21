@@ -18,7 +18,6 @@ export async function GET(_request: NextRequest) {
   
   if (isDebugMode()) {
     console.group(`🏥 Detailed Health Check [${healthCheckId}]`)
-    console.log('Starting detailed health check...')
   }
 
   debugLog('Detailed health check started', { 
@@ -46,7 +45,6 @@ export async function GET(_request: NextRequest) {
       }
 
       if (isDebugMode()) {
-        console.log('❌ Detailed health check failed - configuration error')
         console.groupEnd()
       }
 
@@ -92,13 +90,6 @@ export async function GET(_request: NextRequest) {
     }
 
     if (isDebugMode()) {
-      console.log('Detailed health check completed:', {
-        status: response.status,
-        duration: `${response.duration}ms`,
-        overallSuccess: allTestsPassed,
-        totalTests: response.details.summary.totalTests,
-        passedTests: response.details.summary.passedTests
-      })
       console.groupEnd()
     }
 

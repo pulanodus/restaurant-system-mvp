@@ -55,7 +55,6 @@ export type AdminAuthResponse = AdminAuthResult | AdminAuthError
  */
 export async function authenticateUser(request: NextRequest): Promise<UserAuthResponse> {
   try {
-    console.log('🔍 Authenticating user...')
     
     // Get the authorization header
     const authHeader = request.headers.get('authorization')
@@ -97,7 +96,6 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
     }
 
     logAuthentication('User authentication successful', { type: 'USER_AUTH', status: 'success', success: true, userId: user.id })
-    console.log('✅ User authenticated:', user.id)
     
     return {
       user: {
@@ -125,7 +123,6 @@ export async function authenticateUser(request: NextRequest): Promise<UserAuthRe
  */
 export async function authenticateAdmin(request: NextRequest): Promise<AdminAuthResponse> {
   try {
-    console.log('🔍 Authenticating admin user...')
     
     // First authenticate as a regular user
     const userAuth = await authenticateUser(request)
@@ -145,7 +142,6 @@ export async function authenticateAdmin(request: NextRequest): Promise<AdminAuth
     }
 
     logAuthentication('Admin authentication successful', { type: 'ADMIN_AUTH', status: 'success', success: true, userId: userAuth.user.id })
-    console.log('✅ Admin authenticated:', userAuth.user.id)
     
     return {
       isAdmin: true,
@@ -170,7 +166,6 @@ export async function authenticateAdmin(request: NextRequest): Promise<AdminAuth
  */
 export async function authenticateServiceRole(): Promise<AdminAuthResponse> {
   try {
-    console.log('🔍 Authenticating service role...')
     
     // Service role authentication is implicit when using supabaseServer
     // We just need to verify the service role client is properly configured
@@ -191,7 +186,6 @@ export async function authenticateServiceRole(): Promise<AdminAuthResponse> {
     }
 
     logAuthentication('Service role authentication successful', { type: 'SERVICE_ROLE_AUTH', status: 'success', success: true, role: 'service_role' })
-    console.log('✅ Service role authenticated')
     
     return {
       isAdmin: true
@@ -305,7 +299,6 @@ export const AuthExamples = {
 // Example: User authentication for regular user operations
 export const GET = withUserAuth(async (request: NextRequest, user) => {
   // User is authenticated and available
-  console.log('User ID:', user.id)
   
   // Your API logic here
   return NextResponse.json({ data: 'user data' })
@@ -317,7 +310,6 @@ export const GET = withUserAuth(async (request: NextRequest, user) => {
 // Example: Admin authentication for admin operations
 export const POST = withAdminAuth(async (request: NextRequest, user) => {
   // User is authenticated and has admin privileges
-  console.log('Admin User ID:', user.id)
   
   // Your admin API logic here
   return NextResponse.json({ data: 'admin data' })
@@ -329,7 +321,6 @@ export const POST = withAdminAuth(async (request: NextRequest, user) => {
 // Example: Service role authentication for server-side operations
 export const DELETE = withServiceRoleAuth(async (request: NextRequest) => {
   // Service role is authenticated (no user context needed)
-  console.log('Service role operation')
   
   // Your service role API logic here
   return NextResponse.json({ data: 'service role data' })

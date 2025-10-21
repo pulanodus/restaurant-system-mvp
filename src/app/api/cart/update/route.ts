@@ -6,11 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     const { itemId, quantity, change, options } = await request.json();
     
-    console.log('🚨🚨🚨 CART UPDATE API CALLED 🚨🚨🚨');
-    console.log('🛠️ API /cart/update received request:', { itemId, quantity, change, options });
-    
     if (!itemId || (quantity === undefined && change === undefined)) {
-      console.log('❌ API validation failed: missing itemId or quantity/change');
       return NextResponse.json({ error: 'Item ID and quantity or change are required' }, { status: 400 });
     }
 
@@ -43,7 +39,6 @@ export async function POST(request: NextRequest) {
       }
       
       finalQuantity = Math.max(0, (currentOrder.quantity || 0) + change);
-      console.log('🛠️ API calculated new quantity:', currentOrder.quantity, '+', change, '=', finalQuantity);
     }
 
     // Prepare update data
@@ -56,8 +51,6 @@ export async function POST(request: NextRequest) {
       if (options.isTakeaway !== undefined) updateData.is_takeaway = options.isTakeaway;
       if (options.customizations !== undefined) updateData.customizations = options.customizations;
     }
-
-    console.log('🛠️ API updating order with data:', updateData, 'for itemId:', itemId);
     
     const { error } = await supabase
       .from('orders')
@@ -68,8 +61,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Supabase error in updateQuantity:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    console.log('✅ API successfully updated order');
     
     // CRITICAL: If this order has a split bill, update the split bill's original_price
     // First, get the order details to check if it has a split bill AND its status
@@ -91,32 +82,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true }); // Still return success for the main update
     }
     
-    console.log('🔍 Fetched updated order:', {
-      orderId: updatedOrder.id,
-      quantity: updatedOrder.quantity,
-      splitBillId: updatedOrder.split_bill_id,
-      status: updatedOrder.status
-    });
-    
-    // CRITICAL: Only update split bills for CART orders (status: 'cart')
-    // Confirmed orders (status: 'waiting', 'preparing', 'ready', 'served') should never be modified
-    console.log('🔍 Checking if order has split bill:', {
-      orderId: updatedOrder.id,
-      hasSplitBillId: !!updatedOrder.split_bill_id,
-      splitBillId: updatedOrder.split_bill_id,
-      orderStatus: updatedOrder.status,
-      shouldUpdate: updatedOrder.split_bill_id && updatedOrder.status === 'cart'
-    });
-    
     if (updatedOrder.split_bill_id && updatedOrder.status === 'cart') {
       const menuItem = Array.isArray(updatedOrder.menu_items) ? updatedOrder.menu_items[0] : updatedOrder.menu_items;
-      console.log('🔄 Order has split bill, updating split bill pricing:', {
-        orderId: updatedOrder.id,
-        splitBillId: updatedOrder.split_bill_id,
-        newQuantity: updatedOrder.quantity,
-        menuItemPrice: menuItem?.price,
-        newTotalPrice: updatedOrder.quantity * (menuItem?.price || 0)
-      });
       
       // Get the current split bill to calculate new split price
       const { data: splitBill, error: splitBillError } = await supabase
@@ -134,15 +101,6 @@ export async function POST(request: NextRequest) {
       const newOriginalPrice = updatedOrder.quantity * (menuItem?.price || 0);
       const newSplitPrice = newOriginalPrice / splitBill.split_count;
       
-      console.log('💰 Updating split bill pricing:', {
-        splitBillId: updatedOrder.split_bill_id,
-        oldOriginalPrice: 'unknown',
-        newOriginalPrice: newOriginalPrice,
-        splitCount: splitBill.split_count,
-        newSplitPrice: newSplitPrice,
-        calculation: `${newOriginalPrice} ÷ ${splitBill.split_count} = ${newSplitPrice}`
-      });
-      
       // Update the split bill with new pricing
       const { error: updateSplitBillError } = await supabase
         .from('split_bills')
@@ -155,27 +113,9 @@ export async function POST(request: NextRequest) {
       if (updateSplitBillError) {
         console.error('❌ Error updating split bill pricing:', updateSplitBillError);
         return NextResponse.json({ success: true }); // Still return success for the main update
-      } else {
-        console.log('✅ Successfully updated split bill pricing:', {
-          splitBillId: updatedOrder.split_bill_id,
-          newOriginalPrice: newOriginalPrice,
-          newSplitPrice: newSplitPrice,
-          splitCount: splitBill.split_count
-        });
       }
     } else if (updatedOrder.split_bill_id && updatedOrder.status !== 'cart') {
-      console.log('🛡️ Skipping split bill update for confirmed order:', {
-        orderId: updatedOrder.id,
-        status: updatedOrder.status,
-        reason: 'Order is already confirmed, split bill data must be preserved'
-      });
     } else {
-      console.log('ℹ️ Order does not have split bill or is not in cart status:', {
-        orderId: updatedOrder.id,
-        hasSplitBillId: !!updatedOrder.split_bill_id,
-        splitBillId: updatedOrder.split_bill_id,
-        orderStatus: updatedOrder.status
-      });
     }
     
     return NextResponse.json({ success: true });

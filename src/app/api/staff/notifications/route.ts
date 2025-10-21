@@ -16,8 +16,6 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔔 Fetching staff notifications:', { staffId, status, limit });
-
     // Verify staff exists
     const { data: staff, error: staffError } = await supabaseServer
       .from('staff')
@@ -71,12 +69,6 @@ export const GET = async (request: NextRequest) => {
         is_my_table: notification.is_assigned
       }
     }));
-
-    console.log('✅ Staff notifications fetched:', { 
-      staffName: staff.name,
-      totalNotifications: transformedNotifications.length,
-      assignedNotifications: transformedNotifications.filter((n: any) => n.is_assigned).length
-    });
 
     return NextResponse.json({
       success: true,

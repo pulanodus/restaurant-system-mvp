@@ -63,14 +63,13 @@ export default function StaffPinEntryPage() {
 
       const data = await response.json();
 
-      if (data.success) {
-        // Store staff data in localStorage
-        localStorage.setItem('staff', JSON.stringify(data.staff));
-        console.log('✅ Staff logged in successfully:', data.staff.name);
-        
-        // Redirect to dashboard
-        router.push('/staff/dashboard');
-      } else {
+      if (!error && data) {
+          // Store staff data in localStorage
+          localStorage.setItem('staff', JSON.stringify(data.staff));
+          
+          // Redirect to staff dashboard
+          router.push('/staff/dashboard');
+        } else {
         console.error('❌ Staff login failed:', data.error);
         setError(data.error || 'Login failed');
       }

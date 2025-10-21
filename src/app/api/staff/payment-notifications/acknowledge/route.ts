@@ -4,10 +4,7 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Acknowledging payment notification');
-    
     const body = await request.json();
-    console.log('🔍 Acknowledge request body:', body);
     
     const { notificationId, acknowledgedBy } = body;
     
@@ -50,7 +47,6 @@ export const POST = async (request: NextRequest) => {
     
     // Check if notification is already processed
     if (existingNotification.status !== 'pending') {
-      console.log('⚠️ Notification already processed with status:', existingNotification.status);
       return NextResponse.json({
         success: true,
         message: `Notification already ${existingNotification.status}`,
@@ -92,8 +88,6 @@ export const POST = async (request: NextRequest) => {
         { status: 404 }
       );
     }
-    
-    console.log('✅ Payment notification acknowledged:', data.id);
     
     return NextResponse.json({
       success: true,

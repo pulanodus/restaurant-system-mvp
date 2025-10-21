@@ -39,7 +39,6 @@ async function withRetry<T>(
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fetching all tables');
     
     // Get all tables with their current status with retry logic
     const result = await withRetry(
@@ -68,8 +67,6 @@ export const GET = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-    
-    console.log('✅ Tables fetched:', tables?.length || 0);
     
     return NextResponse.json({
       success: true,

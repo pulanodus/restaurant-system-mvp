@@ -15,7 +15,7 @@ export async function healthCheck(): Promise<HealthCheckResult> {
   
   try {
     if (isDebugMode()) {
-      console.log('Running health check...')
+      // Running health check...
     }
     
     debugLog('Health check started')
@@ -30,10 +30,7 @@ export async function healthCheck(): Promise<HealthCheckResult> {
     }
     
     if (isDebugMode()) {
-      console.log('Health check completed:', {
-        status: result.status,
-        duration: `${result.duration}ms`
-      })
+      // Health check completed
     }
     
     debugLog('Health check completed', {

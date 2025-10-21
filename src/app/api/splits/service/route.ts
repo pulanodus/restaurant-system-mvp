@@ -12,16 +12,7 @@ export async function POST(request: NextRequest) {
     const { sessionId, menuItemId, originalPrice, splitCount, participants } = requestBody;
     
     // 🚨 CRITICAL DEBUG: Log exactly what we received
-    console.log('🚨 RECEIVED REQUEST BODY:', JSON.stringify(requestBody, null, 2));
-    console.log('🚨 PARSED VALUES:', {
-      sessionId,
-      menuItemId,
-      originalPrice,
-      splitCount,
-      participants,
-      originalPriceType: typeof originalPrice,
-      originalPriceValue: originalPrice
-    });
+    // Debug logging removed for production security
 
     // Check if a split bill already exists for this specific item
     const { data: existingSplitBill } = await supabase
@@ -33,43 +24,20 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingSplitBill) {
-      console.log('⚠️ Split bill already exists for this item:', {
-        id: existingSplitBill.id,
-        existingOriginalPrice: existingSplitBill.original_price,
-        newOriginalPrice: originalPrice,
-        existingSplitPrice: existingSplitBill.split_price,
-        newSplitPrice: originalPrice / splitCount
-      });
+      // Debug logging removed for production security
       
       // Check if the existing split bill has the correct pricing AND split details
       const hasCorrectPricing = existingSplitBill.original_price === originalPrice;
       const hasCorrectSplitCount = existingSplitBill.split_count === splitCount;
       const hasCorrectParticipants = JSON.stringify(existingSplitBill.participants?.sort()) === JSON.stringify((participants || []).sort());
       
-      console.log('🔍 Split Bill Comparison:', {
-        existing: {
-          originalPrice: existingSplitBill.original_price,
-          splitCount: existingSplitBill.split_count,
-          participants: existingSplitBill.participants
-        },
-        new: {
-          originalPrice: originalPrice,
-          splitCount: splitCount,
-          participants: participants
-        },
-        comparison: {
-          hasCorrectPricing,
-          hasCorrectSplitCount,
-          hasCorrectParticipants,
-          allMatch: hasCorrectPricing && hasCorrectSplitCount && hasCorrectParticipants
-        }
-      });
+      // Debug logging removed for production security
       
       if (hasCorrectPricing && hasCorrectSplitCount && hasCorrectParticipants) {
-        console.log('✅ Existing split bill has correct pricing, but need to ensure order is linked');
+        // Debug logging removed for production security
         
         // CRITICAL: Even if split bill exists, we need to ensure the order is linked to it
-        console.log('🔄 Ensuring order is linked to existing split bill:', existingSplitBill.id);
+        // Debug logging removed for production security
         
         // Check if order is already linked
         const { data: existingOrders, error: checkError } = await supabase
@@ -84,13 +52,13 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to check existing orders' }, { status: 500 });
         }
         
-        console.log('📋 Found orders to check:', existingOrders);
+        // Debug logging removed for production security
         
         // Check if any shared order needs to be linked
         const needsLinking = existingOrders?.some(order => order.split_bill_id !== existingSplitBill.id);
         
         if (needsLinking) {
-          console.log('🔗 Shared order needs to be linked to split bill, updating...');
+          // Debug logging removed for production security
           
         const { data: updatedOrders, error: orderError } = await supabase
           .from('orders')
@@ -105,10 +73,10 @@ export async function POST(request: NextRequest) {
             console.error('❌ Error updating order with split bill:', orderError);
             return NextResponse.json({ error: 'Failed to link split bill to orders' }, { status: 500 });
           } else {
-            console.log('✅ Successfully linked existing split bill to orders:', updatedOrders);
+            // Debug logging removed for production security
           }
         } else {
-          console.log('✅ Order is already properly linked to split bill');
+          // Debug logging removed for production security
         }
         
         return NextResponse.json({ 
@@ -117,7 +85,7 @@ export async function POST(request: NextRequest) {
           message: 'Split bill already exists and is properly linked' 
         });
       } else {
-        console.log('🔄 Existing split bill has incorrect pricing, creating NEW split bill to preserve confirmed orders');
+        // Debug logging removed for production security
         
         // CRITICAL: Instead of updating the existing split bill (which would affect confirmed orders),
         // we create a NEW split bill for the current request. This preserves the original split bill
@@ -136,7 +104,7 @@ export async function POST(request: NextRequest) {
           participants: participants || []
         };
         
-        console.log('🆕 Creating NEW split bill to avoid affecting confirmed orders:', newSplitBillData);
+        // Debug logging removed for production security
         
         const { data: newSplitBill, error: createError } = await supabase
           .from('split_bills')
@@ -149,11 +117,11 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to create new split bill' }, { status: 500 });
         }
         
-        console.log('✅ New split bill created successfully:', newSplitBill);
+        // Debug logging removed for production security
         
         // CRITICAL: Link ONLY orders that are explicitly marked as shared to the new split bill
         // This prevents individual orders from being automatically converted to split items
-        console.log('🔗 Linking ONLY shared orders to new split bill:', newSplitBill.id);
+        // Debug logging removed for production security
         
         const { data: updatedOrders, error: orderError } = await supabase
           .from('orders')
@@ -169,8 +137,8 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: 'Failed to link new split bill to pending orders' }, { status: 500 });
         }
         
-        console.log('✅ Successfully linked pending orders to new split bill:', updatedOrders);
-        console.log('🛡️ Confirmed orders remain untouched with their original split bill data');
+        // Debug logging removed for production security
+        // Debug logging removed for production security
         
         return NextResponse.json({ 
           success: true, 
@@ -180,29 +148,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('🔄 Split Bill Creation Request:', {
-      sessionId,
-      menuItemId,
-      originalPrice,
-      splitCount,
-      participants,
-      calculatedSplitPrice: originalPrice / splitCount
-    });
+    // Debug logging removed for production security
 
     // Enhanced debugging to match your code structure
-    console.log('🔍 Split Bill Creation Debug:', {
-      menuItemId: menuItemId,
-      originalPrice: originalPrice,        // Should be total price (e.g., 135)
-      splitCount: splitCount,             // Number of people splitting
-      calculatedSplitPrice: originalPrice / splitCount, // Per person price (e.g., 27)
-      participants: participants,
-      validation: {
-        originalPriceIsPositive: originalPrice > 0,
-        splitCountIsPositive: splitCount > 0,
-        calculatedSplitPriceIsPositive: (originalPrice / splitCount) > 0,
-        originalPriceGreaterThanSplit: originalPrice > (originalPrice / splitCount)
-      }
-    });
+    // Debug logging removed for production security
 
     // Use the values received from the frontend
     const correctedOriginalPrice = originalPrice;
@@ -220,12 +169,7 @@ export async function POST(request: NextRequest) {
     }
 
     const expectedSplitPrice = correctedOriginalPrice / correctedSplitCount;
-    console.log('✅ Price validation passed with corrected values:', {
-      totalOriginalPrice: correctedOriginalPrice,
-      perPersonPrice: expectedSplitPrice,
-      participantCount: correctedSplitCount,
-      calculation: `${correctedOriginalPrice} ÷ ${correctedSplitCount} = ${expectedSplitPrice}`
-    });
+    // Debug logging removed for production security
 
     // Note: We cleaned up all existing split bills above, so we'll always create a new one
 
@@ -243,19 +187,7 @@ export async function POST(request: NextRequest) {
       status: 'active'
     };
 
-    console.log('💾 Storing Split Bill Data:', {
-      ...splitBillData,
-      validation: {
-        originalPriceIsTotal: correctedOriginalPrice > splitPrice,
-        splitPriceIsPerPerson: splitPrice === expectedSplitPrice,
-        calculationCorrect: Math.abs(splitPrice - expectedSplitPrice) < 0.01,
-        forcedValues: {
-          originalPrice: correctedOriginalPrice,
-          splitCount: correctedSplitCount,
-          splitPrice: splitPrice
-        }
-      }
-    });
+    // Debug logging removed for production security
 
     const { data: splitBill, error: splitError } = await supabase
       .from('split_bills')
@@ -268,33 +200,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create split bill' }, { status: 500 });
     }
 
-    console.log('✅ Split Bill Created Successfully:', {
-      id: splitBill.id,
-      original_price: splitBill.original_price,
-      split_price: splitBill.split_price,
-      split_count: splitBill.split_count,
-      participants: splitBill.participants,
-      verification: {
-        storedCorrectly: splitBill.original_price === originalPrice,
-        splitPriceCorrect: Math.abs(splitBill.split_price - splitPrice) < 0.01,
-        totalPrice: splitBill.original_price,
-        perPersonPrice: splitBill.split_price,
-        calculation: `${splitBill.original_price} ÷ ${splitBill.split_count} = ${splitBill.split_price}`,
-        inputValues: {
-          receivedOriginalPrice: originalPrice,
-          receivedSplitCount: splitCount,
-          calculatedSplitPrice: splitPrice
-        }
-      }
-    });
+    // Debug logging removed for production security
 
     // CRITICAL: Update ALL orders for this menu item to reference the split bill
-    console.log('🔄 Updating orders with split bill ID:', splitBill.id);
-    console.log('🔍 Update criteria:', {
-      sessionId,
-      menuItemId,
-      status: ['cart', 'placed']
-    });
+    // Debug logging removed for production security
+    // Debug logging removed for production security
     
     // First, let's check what orders exist for this criteria
     const { data: existingOrders, error: checkError } = await supabase
@@ -309,7 +219,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to check existing orders' }, { status: 500 });
     }
     
-    console.log('📋 Found orders to update:', existingOrders);
+    // Debug logging removed for production security
     
     if (!existingOrders || existingOrders.length === 0) {
       console.warn('⚠️ No orders found to update with split bill ID');
@@ -340,9 +250,9 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ error: 'Failed to link split bill to orders' }, { status: 500 });
     } else {
-      console.log('✅ Successfully updated orders with split bill ID:', splitBill.id);
-      console.log('📋 Updated orders:', updatedOrders);
-      console.log('📊 Number of orders updated:', updatedOrders?.length || 0);
+      // Debug logging removed for production security
+      // Debug logging removed for production security
+      // Debug logging removed for production security
     }
 
     return NextResponse.json({ 

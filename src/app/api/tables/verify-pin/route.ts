@@ -13,8 +13,6 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔍 Verifying PIN for table:', { tableId, pin });
-
     // Find table by ID or table_number
     let table = null;
     let tableError = null;
@@ -55,11 +53,6 @@ export const POST = async (request: NextRequest) => {
 
     // Verify PIN
     if (pin !== table.current_pin) {
-      console.log('❌ PIN verification failed:', { 
-        provided: pin, 
-        expected: table.current_pin,
-        tableNumber: table.table_number 
-      });
       return NextResponse.json(
         { error: 'Invalid PIN. Please check with your server.' },
         { status: 401 }
@@ -76,12 +69,6 @@ export const POST = async (request: NextRequest) => {
     
     // Get the most recent active session
     const activeSession = activeSessions && activeSessions.length > 0 ? activeSessions[0] : null;
-
-    console.log('✅ PIN verified successfully:', { 
-      tableNumber: table.table_number,
-      hasActiveSession: !!activeSession,
-      sessionId: activeSession?.id
-    });
 
     return NextResponse.json({
       success: true,

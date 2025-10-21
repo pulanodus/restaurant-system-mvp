@@ -4,13 +4,13 @@
 export const withApiDebugging = (handler: Function, operation: string) => {
   return async (...args: any[]) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[API] Starting ${operation}`, args);
+      // Starting operation
     }
     
     try {
       const result = await handler(...args);
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[API] Completed ${operation}`, result);
+        // Completed operation
       }
       return result;
     } catch (error) {
@@ -24,12 +24,12 @@ export const withApiDebugging = (handler: Function, operation: string) => {
 
 export const logDatabaseOperation = (operation: string, data?: any) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[DB] ${operation}`, data);
+    // Database operation
   }
 };
 
 export const logAuthentication = (action: string, data?: any) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[AUTH] ${action}`, data);
+    // Authentication action
   }
 };

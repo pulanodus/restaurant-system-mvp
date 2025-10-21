@@ -4,10 +4,7 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Completing payment');
-    
     const body = await request.json();
-    console.log('🔍 Complete payment request body:', body);
     
     const { sessionId, paymentMethod, completedBy, paymentType = 'table', dinerName, paymentAmount } = body;
     
@@ -43,14 +40,6 @@ export const POST = async (request: NextRequest) => {
     }
     
     // SUSTAINABLE SOLUTION: Handle payment completion directly without database function
-    console.log('🔧 PROCESSING PAYMENT COMPLETION DIRECTLY:', {
-      sessionId,
-      paymentMethod,
-      completedBy,
-      paymentType,
-      dinerName,
-      paymentAmount
-    });
     
     // Step 1: Get session details to verify it exists and get table info
     const { data: sessionData, error: sessionError } = await supabaseServer
@@ -60,7 +49,6 @@ export const POST = async (request: NextRequest) => {
       .single();
     
     if (sessionError) {
-      console.error('❌ Error fetching session:', sessionError);
       return NextResponse.json(
         { error: `Session not found: ${sessionError.message}` },
         { status: 404 }
@@ -68,7 +56,6 @@ export const POST = async (request: NextRequest) => {
     }
     
     if (!sessionData) {
-      console.error('❌ Session not found');
       return NextResponse.json(
         { error: 'Session not found' },
         { status: 404 }
@@ -79,7 +66,6 @@ export const POST = async (request: NextRequest) => {
     const isAlreadyCompleted = sessionData.payment_status === 'completed';
     
     if (isAlreadyCompleted && paymentType !== 'table') {
-      console.log('✅ Payment already completed, returning success');
       return NextResponse.json({
         success: true,
         message: 'Payment was already completed',
@@ -94,20 +80,11 @@ export const POST = async (request: NextRequest) => {
     }
     
     if (!isAlreadyCompleted && sessionData.payment_status !== 'pending') {
-      console.error('❌ Payment not in pending status:', sessionData.payment_status);
       return NextResponse.json(
         { error: `Payment is not pending (current status: ${sessionData.payment_status})` },
         { status: 400 }
       );
     }
-    
-    console.log('🔍 Session details:', {
-      sessionId: sessionData.id,
-      tableId: sessionData.table_id,
-      currentStatus: sessionData.status,
-      paymentStatus: sessionData.payment_status,
-      finalTotal: sessionData.final_total
-    });
     
     // Step 3: Update session to completed status (only if not already completed)
     if (!isAlreadyCompleted) {
@@ -121,16 +98,12 @@ export const POST = async (request: NextRequest) => {
         .eq('id', sessionId);
       
       if (updateError) {
-        console.error('❌ Error updating session:', updateError);
         return NextResponse.json(
           { error: `Failed to update session: ${updateError.message}` },
           { status: 500 }
         );
       }
-      
-      console.log('✅ Session updated to completed status');
     } else {
-      console.log('✅ Session already completed, skipping status update');
     }
     
     // Step 4: Clear the table (mark as available)
@@ -144,17 +117,11 @@ export const POST = async (request: NextRequest) => {
       .eq('id', sessionData.table_id);
     
     if (tableError) {
-      console.error('⚠️ Warning: Failed to clear table:', tableError);
       // Don't fail the payment completion if table clearing fails
-    } else {
-      console.log('✅ Table cleared successfully');
     }
-    
-    console.log('✅ Payment completed successfully');
     
         // Step 5: For table payments, clear all orders and mark all diners as inactive
         if (paymentType === 'table') {
-          console.log('🧹 TABLE PAYMENT: Clearing all orders and marking diners inactive');
           
           try {
             // First, update payment notification status to completed
@@ -169,9 +136,6 @@ export const POST = async (request: NextRequest) => {
               .eq('type', 'payment_request');
             
             if (notificationUpdateError) {
-              console.error('⚠️ Warning: Failed to update payment notification:', notificationUpdateError);
-            } else {
-              console.log('✅ Payment notification marked as completed');
             }
 
             // Clear all orders for this session
@@ -181,9 +145,6 @@ export const POST = async (request: NextRequest) => {
               .eq('session_id', sessionId);
             
             if (ordersError) {
-              console.error('⚠️ Warning: Failed to clear orders:', ordersError);
-            } else {
-              console.log('✅ All orders cleared for session');
             }
         
         // Get current session with diners to mark them all inactive
@@ -194,7 +155,6 @@ export const POST = async (request: NextRequest) => {
           .single();
         
         if (dinersError) {
-          console.error('⚠️ Warning: Failed to fetch diners:', dinersError);
         } else if (sessionWithDiners?.diners) {
           // Parse diners array (might be JSON string or object)
           let diners = sessionWithDiners.diners;
@@ -202,7 +162,6 @@ export const POST = async (request: NextRequest) => {
             try {
               diners = JSON.parse(diners);
             } catch (parseError) {
-              console.error('⚠️ Warning: Failed to parse diners JSON:', parseError);
             }
           }
           
@@ -223,9 +182,6 @@ export const POST = async (request: NextRequest) => {
               .eq('id', sessionId);
             
             if (updateDinersError) {
-              console.error('⚠️ Warning: Failed to update diners status:', updateDinersError);
-            } else {
-              console.log('✅ All diners marked as inactive');
             }
           }
         }
@@ -250,13 +206,9 @@ export const POST = async (request: NextRequest) => {
           .single();
 
         if (notificationError) {
-          console.error('⚠️ Warning: Failed to create redirect notification:', notificationError);
-        } else {
-          console.log('✅ Redirect notification created for all diners');
         }
         
       } catch (cleanupError) {
-        console.error('⚠️ Warning: Error during table payment cleanup:', cleanupError);
         // Don't fail the payment completion if cleanup fails
       }
     }
@@ -275,7 +227,6 @@ export const POST = async (request: NextRequest) => {
     });
     
   } catch (error) {
-    console.error('🔍 API: Complete payment exception:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

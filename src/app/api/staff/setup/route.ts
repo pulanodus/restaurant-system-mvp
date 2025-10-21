@@ -4,8 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 Setting up staff system...');
-
     // For now, let's just test if we can create a simple staff record
     // We'll use a simpler approach without complex table creation
     
@@ -30,8 +28,6 @@ export const POST = async (request: NextRequest) => {
         details: insertStaffError.message
       }, { status: 500 });
     }
-
-    console.log('✅ Staff system setup completed');
 
     return NextResponse.json({
       success: true,

@@ -33,8 +33,6 @@ export async function GET(
     // Extract unique participant names
     const participants = [...new Set(orders.map(order => order.diner_name))].filter(Boolean);
 
-    console.log('Session participants:', participants);
-
     return NextResponse.json({ 
       participants,
       count: participants.length 

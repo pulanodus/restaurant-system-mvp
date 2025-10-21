@@ -90,7 +90,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
       if (currentDinerId) {
         setSelectedParticipants([currentDinerId]); // Start with ONLY current user selected
         setHasInitializedSelection(true);
-        console.log('✅ Initialized with current user only:', state.dinerName);
+        // Debug logging removed for production security
       }
     }
   }, [sessionDiners, state.dinerName, hasInitializedSelection]);
@@ -111,7 +111,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
           // Get current diner name from cart context
           const currentDiner = state.dinerName;
           setCurrentDinerName(currentDiner);
-          console.log('🔍 Current diner name from cart context:', currentDiner);
+          // Debug logging removed for production security
         }
       }
 
@@ -127,20 +127,11 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
         const cartData = await cartResponse.json();
         const cartItems = cartData.items || [];
         setItems(cartItems);
-        console.log('🛒 Loaded cart items for split bill:', cartItems);
+        // Debug logging removed for production security
         
         // Debug: Log all items with their split data
         cartItems.forEach((item: any, index: number) => {
-          console.log(`🔍 Cart Item ${index + 1} Split Data:`, {
-            name: item.name,
-            menu_item_id: item.menu_item_id,
-            isSplit: item.isSplit,
-            participants: item.participants,
-            splitCount: item.splitCount,
-            splitPrice: item.splitPrice,
-            originalPrice: item.originalPrice,
-            splitBillId: item.splitBillId
-          });
+          // Debug logging removed for production security
         });
 
         // If specific itemId is provided, select only that item
@@ -148,20 +139,15 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
           const item = cartItems.find((item: CartItem) => item.menu_item_id === itemId);
           if (item) {
             setSelectedItems(new Set([item.id]));
-            console.log('✅ Selected item for splitting:', item.name);
-            console.log('🔍 Item split data:', {
-              isSplit: item.isSplit,
-              participants: item.participants,
-              splitCount: item.splitCount,
-              splitPrice: item.splitPrice
-            });
+            // Debug logging removed for production security
+            // Debug logging removed for production security
             
             // SIMPLIFIED: Always start fresh with only current user selected
             // This prevents cross-contamination between different items
-            console.log('🔍 Starting fresh selection for item:', item.name);
+            // Debug logging removed for production security
             setHasInitializedSelection(false); // Reset initialization flag
           } else {
-            console.log('❌ Item not found in cart:', itemId);
+            // Debug logging removed for production security
           }
         } else {
           // Select all shared items by default
@@ -239,7 +225,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
           )
         );
       } else {
-        console.log(`✅ Updated quantity for item ${itemId} to ${newQuantity}`);
+        // Debug logging removed for production security
       }
     } catch (error) {
       console.error('Error updating quantity:', error);
@@ -261,7 +247,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
     const currentDinerId = sessionDiners.find(d => d.name === currentDiner)?.id;
     
     if (participantId === currentDinerId) {
-      console.log('🔒 Current user is permanently selected:', currentDiner);
+      // Debug logging removed for production security
       return; // Always keep current user selected
     }
     
@@ -270,26 +256,22 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
     const index = newSelected.indexOf(participantId);
     if (index > -1) {
       newSelected.splice(index, 1);
-      console.log('🔍 Removed participant:', participantId);
+      // Debug logging removed for production security
     } else {
       newSelected.push(participantId);
-      console.log('🔍 Added participant:', participantId);
+      // Debug logging removed for production security
     }
     setSelectedParticipants(newSelected);
   };
 
   const selectAllParticipants = () => {
     const allDinerIds = sessionDiners.map(diner => diner.id);
-    console.log('🔍 SELECT ALL DEBUG:', {
-      sessionDiners: sessionDiners,
-      allDinerIds: allDinerIds,
-      count: allDinerIds.length
-    });
+    // Debug logging removed for production security
     setSelectedParticipants(allDinerIds);
   };
 
   const deselectAllParticipants = () => {
-    console.log('🔍 DESELECT ALL DEBUG: Clearing all participants');
+    // Debug logging removed for production security
     setSelectedParticipants([]);
   };
 
@@ -327,51 +309,21 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
     // CRITICAL FIX: Calculate total amount correctly
     const totalAmount = selectedItemsData.reduce((sum, item) => {
       const itemTotal = item.price * item.quantity;
-      console.log(`💰 Item ${item.name}: ${item.price} × ${item.quantity} = ${itemTotal}`);
+      // Debug logging removed for production security
       return sum + itemTotal;
     }, 0);
     
     // CRITICAL FIX: Ensure participant count is a number and debug the array
     const participantCount = Number(selectedParticipants.length);
     
-    console.log('🔍 PARTICIPANT DEBUG:', {
-      selectedParticipants: selectedParticipants,
-      participantCount: participantCount,
-      participantArrayLength: selectedParticipants.length,
-      participantDetails: selectedParticipants.map(id => {
-        const diner = sessionDiners.find(d => d.id === id);
-        return { id, name: diner?.name || 'Unknown' };
-      })
-    });
+    // Debug logging removed for production security
     
     if (participantCount === 0) return { totalAmount: 0, perPerson: 0 };
     
     // CRITICAL FIX: Simple division - this should be the correct formula
     const perPerson = totalAmount / participantCount;
     
-    console.log('🧮 CORRECTED Split Calculation:', {
-      selectedItems: selectedItemsData.map(item => ({ 
-        name: item.name, 
-        quantity: item.quantity, 
-        price: item.price,
-        itemTotal: item.price * item.quantity,
-        isSplit: item.isSplit,
-        splitPrice: item.splitPrice,
-        originalPrice: item.originalPrice
-      })),
-      calculation: {
-        totalAmount,
-        participantCount,
-        perPerson,
-        formula: `${totalAmount} ÷ ${participantCount} = ${perPerson}`,
-        verification: {
-          isParticipantCountNumber: typeof participantCount === 'number',
-          isParticipantCountPositive: participantCount > 0,
-          isTotalAmountPositive: totalAmount > 0,
-          expectedResult: totalAmount / participantCount
-        }
-      }
-    });
+    // Debug logging removed for production security
     
     return { totalAmount, perPerson };
   };
@@ -403,19 +355,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
         // Don't use stored originalPrice as it might be from old split bills
         const originalPrice = item.price * item.quantity;
         
-        console.log('🔄 Creating split bill for item:', {
-          itemName: item.name,
-          menuItemId: item.menu_item_id,
-          itemPrice: item.price,
-          itemQuantity: item.quantity,
-          calculatedOriginalPrice: item.price * item.quantity,
-          storedOriginalPrice: item.originalPrice,
-          finalOriginalPrice: originalPrice,
-          splitCount: selectedParticipants.length,
-          participants: participantNames,
-          expectedSplitPrice: originalPrice / selectedParticipants.length,
-          calculation: `${originalPrice} ÷ ${selectedParticipants.length} = ${originalPrice / selectedParticipants.length}`
-        });
+        // Debug logging removed for production security
 
         // Create split bill via API
         const splitResponse = await fetch('/api/splits/service', {
@@ -438,11 +378,11 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
         }
 
         const splitResult = await splitResponse.json();
-        console.log('✅ Split bill created successfully:', splitResult);
+        // Debug logging removed for production security
       }
 
       // Reload cart items to get updated split bill data
-      console.log('🔄 Reloading cart items to reflect split bill changes...');
+      // Debug logging removed for production security
       await loadCartItems();
 
       // Navigate back to cart review
@@ -463,15 +403,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
   const { totalAmount, perPerson } = calculateSplitAmounts();
 
   // Debug logging
-  console.log('🔍 Split Bill Debug:', {
-    selectedItems: Array.from(selectedItems),
-    selectedParticipants,
-    items: items.map(item => ({ id: item.id, name: item.name, menu_item_id: item.menu_item_id })),
-    totalAmount,
-    perPerson,
-    isLoading,
-    error
-  });
+  // Debug logging removed for production security
 
   if (isLoading) {
     return (
@@ -511,7 +443,7 @@ function SplitBillContent({ sessionId, itemId }: SplitBillContentProps) {
                 {Array.from(selectedItems).map((itemId) => {
                   const item = items.find(i => i.id === itemId);
                   if (!item) {
-                    console.log('❌ Item not found for ID:', itemId);
+                    // Debug logging removed for production security
                     return null;
                   }
                   return (

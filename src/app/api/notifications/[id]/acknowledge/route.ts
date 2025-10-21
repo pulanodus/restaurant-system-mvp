@@ -18,8 +18,6 @@ export const POST = async (
       );
     }
     
-    console.log('🔧 API: Acknowledging notification', { id, action, staff_member });
-    
     // Update notification status
     const updateData: any = {
       updated_at: new Date().toISOString()
@@ -64,19 +62,13 @@ export const POST = async (
       );
     }
     
-    console.log('✅ Notification updated:', data);
-    
     // CRITICAL FEATURE: Auto-mark orders as served when resolving kitchen_ready notifications
     if (action === 'resolve' && data.type === 'kitchen_ready') {
-      console.log('🍽️ AUTO-SERVE: Resolving kitchen_ready notification - marking related orders as served');
-      
       try {
         // Get the order ID from the notification metadata
         const orderId = data.metadata?.order_id;
         
         if (orderId) {
-          console.log('🍽️ AUTO-SERVE: Found order ID in notification metadata:', orderId);
-          
           // Mark the specific order as served
           const { data: updatedOrder, error: orderError } = await supabaseServer
             .from('orders')
@@ -88,12 +80,6 @@ export const POST = async (
           if (orderError) {
             console.error('❌ AUTO-SERVE: Failed to mark order as served:', orderError);
           } else {
-            console.log('✅ AUTO-SERVE: Order marked as served:', {
-              orderId: updatedOrder.id,
-              menuItem: updatedOrder.menu_item_id,
-              quantity: updatedOrder.quantity,
-              diner: updatedOrder.diner_name
-            });
           }
         } else {
           console.warn('⚠️ AUTO-SERVE: No order_id found in notification metadata:', data.metadata);

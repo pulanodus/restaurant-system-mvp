@@ -39,13 +39,10 @@ async function withRetry<T>(
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fetching daily kitchen orders');
     
     // Get orders from the last 24 hours (more flexible than just today)
     const now = new Date();
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    
-    console.log('📅 Fetching orders from last 24 hours:', last24Hours.toISOString(), 'to:', now.toISOString());
 
 
     // Get all orders from the last 24 hours (including completed ones) with retry logic
@@ -94,8 +91,6 @@ export const GET = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log('✅ Daily kitchen orders fetched:', orders?.length || 0);
 
     // Group orders by session and transform the data
     const sessionMap = new Map();

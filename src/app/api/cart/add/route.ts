@@ -6,8 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const { sessionId, item, options, dinerName } = await request.json();
     
-    console.log('🛠️ API /cart/add received request:', { sessionId, item, options, dinerName });
-    
     if (!sessionId || !item || !dinerName) {
       return NextResponse.json({ error: 'Session ID, item, and diner name are required' }, { status: 400 });
     }
@@ -39,10 +37,6 @@ export async function POST(request: NextRequest) {
 
     // Check if the diner name matches the waitstaff (session starter)
     if (session.started_by_name && dinerName.toLowerCase() === session.started_by_name.toLowerCase()) {
-      console.log('🚫 CRITICAL: Preventing waitstaff from adding items to cart:', {
-        waitstaff: session.started_by_name,
-        attemptedDiner: dinerName
-      });
       return NextResponse.json({ 
         error: 'Waitstaff cannot add items to cart. Please use a different name.',
         waitstaff: session.started_by_name 
@@ -52,16 +46,6 @@ export async function POST(request: NextRequest) {
     // Check if item already exists in this diner's cart with same options AND customizations
     const customizations = item.customizations || [];
     const customizationsKey = JSON.stringify(customizations.sort());
-    
-    console.log('🔍 Checking for existing cart item with full comparison:', {
-      sessionId,
-      menuItemId: item.id,
-      notes: options?.notes || null,
-      isShared: options?.isShared || false,
-      isTakeaway: options?.isTakeaway || false,
-      customizations: customizations,
-      customizationsKey: customizationsKey
-    });
 
     // Get all cart items for this session, menu item, and diner to check for exact matches
     const { data: allCartItems, error: fetchError } = await supabase
@@ -77,8 +61,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: fetchError.message }, { status: 500 });
     }
 
-    console.log('🔍 Found cart items for this menu item:', allCartItems?.length || 0);
-
     // Find exact match including customizations
     const existingCartItem = allCartItems?.find(cartItem => {
       const cartItemCustomizations = cartItem.customizations || [];
@@ -90,27 +72,14 @@ export async function POST(request: NextRequest) {
         cartItem.is_takeaway === (options?.isTakeaway || false) &&
         cartItemCustomizationsKey === customizationsKey;
       
-      console.log('🔍 Comparing cart item:', {
-        cartItemId: cartItem.id,
-        cartItemNotes: cartItem.notes,
-        cartItemIsShared: cartItem.is_shared,
-        cartItemIsTakeaway: cartItem.is_takeaway,
-        cartItemCustomizations: cartItemCustomizations,
-        cartItemCustomizationsKey: cartItemCustomizationsKey,
-        isExactMatch: isExactMatch
-      });
-      
       return isExactMatch;
     });
-
-    console.log('🔍 Existing cart item found:', existingCartItem);
 
     let cartItem;
     let error;
 
     if (existingCartItem) {
       // Update existing item quantity
-      console.log('✅ Updating existing cart item:', existingCartItem.id, 'from quantity', existingCartItem.quantity, 'to', existingCartItem.quantity + 1);
       const { data: updatedCartItem, error: updateError } = await supabase
         .from('orders')
         .update({ quantity: existingCartItem.quantity + 1 })
@@ -120,10 +89,8 @@ export async function POST(request: NextRequest) {
       
       cartItem = updatedCartItem;
       error = updateError;
-      console.log('✅ Updated cart item result:', updatedCartItem);
     } else {
       // Create new cart item
-      console.log('➕ Creating new cart item for item:', item.id);
       const { data: newCartItem, error: insertError } = await supabase
         .from('orders')
         .insert({
@@ -142,7 +109,6 @@ export async function POST(request: NextRequest) {
       
       cartItem = newCartItem;
       error = insertError;
-      console.log('➕ New cart item created:', newCartItem);
     }
 
     if (error) {
@@ -165,7 +131,6 @@ export async function POST(request: NextRequest) {
       addedAt: Date.now()
     };
 
-    console.log('🛠️ API returning cart item:', responseCartItem);
     return NextResponse.json({ item: responseCartItem });
 
   } catch (error) {

@@ -17,8 +17,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('🌅 CRON - Starting automatic daily reset at 3AM...');
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     
@@ -42,8 +40,6 @@ export async function POST(request: NextRequest) {
 
     if (sessionCountError) {
       console.error('❌ CRON - Error counting sessions:', sessionCountError);
-    } else {
-      console.log('📊 CRON - Sessions to be reset:', activeSessions?.length || 0);
     }
 
     // 1. Mark all active sessions as 'completed'
@@ -111,8 +107,6 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ CRON - Warning: Failed to log daily reset:', logError.message);
       // Don't fail the whole operation for this
     }
-
-    console.log('✅ CRON - Automatic daily reset completed successfully');
 
     return NextResponse.json({
       success: true,

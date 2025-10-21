@@ -13,7 +13,6 @@ import {
 // GET /api/sessions - Get all sessions (admin only)
 export const GET = async (_request: NextRequest) => {
   try {
-    console.log('🔧 API: Getting all sessions with service role')
     
     // Example: Ensure API routes check for admin privileges
     // For service role operations, we use service role authentication
@@ -29,12 +28,10 @@ export const GET = async (_request: NextRequest) => {
     */
     
     // Log authentication attempt (service role)
-    console.log('GET_SESSIONS: service_role authentication')
     
     const result = await getAllSessionsWithServiceRole()
     
     if (result.error) {
-      console.log('SELECT_ALL_SESSIONS: sessions error', result.error)
       console.error('API: Get sessions', result.error)
       const errorMessage = result.error instanceof Error ? result.error.message : 'Failed to get sessions'
       return NextResponse.json(
@@ -43,8 +40,6 @@ export const GET = async (_request: NextRequest) => {
       )
     }
     
-    console.log('SELECT_ALL_SESSIONS: sessions success', { count: result.data.length })
-    console.log('✅ API: Retrieved sessions:', result.data.length)
     return NextResponse.json({ 
       success: true, 
       data: result.data,
@@ -63,19 +58,14 @@ export const GET = async (_request: NextRequest) => {
 // POST /api/sessions - Create a new session (admin only)
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Creating session with service role')
     
     const body = await request.json()
-    console.log('🔍 Request body received:', body)
     const sessionData: ServerSessionData = {
       table_id: body.table_id,
       status: body.status || 'active',
       started_by_name: body.started_by_name || 'Admin',
       served_by: body.served_by || null // Add staff assignment
     }
-    console.log('🔍 Processed session data:', sessionData)
-    
-    console.log('📤 Session Data Received:', sessionData)
     
     // Validate required fields
     if (!sessionData.table_id) {
@@ -87,12 +77,9 @@ export const POST = async (request: NextRequest) => {
     }
     
     // Use full validation for session creation
-    console.log('🔍 Running full validation for session creation...')
-    console.log('🔍 Session data being validated:', sessionData)
     let result
     try {
       result = await createSessionWithFullValidation(sessionData)
-      console.log('🔍 Full validation result:', result)
     } catch (validationError) {
       console.error('🔍 Full validation exception:', validationError)
       return NextResponse.json(
@@ -112,7 +99,6 @@ export const POST = async (request: NextRequest) => {
       )
     }
     
-    console.log('✅ API: Session created successfully:', result.data)
     return NextResponse.json({ 
       success: true, 
       data: result.data 

@@ -99,7 +99,9 @@ export default function ActiveSessionView() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'table' | 'individual'>('table');
   const [showAdjustModal, setShowAdjustModal] = useState(false);
-  const [managerPin, setManagerPin] = useState('');
+  const [managerPin, setManagerPin] = useState(''); // Old format - keeping for compatibility
+  const [managerUsername, setManagerUsername] = useState('');
+  const [managerPassword, setManagerPassword] = useState('');
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [availableTables, setAvailableTables] = useState<any[]>([]);
   const [selectedDestinationTable, setSelectedDestinationTable] = useState<string | null>(null);
@@ -151,11 +153,6 @@ export default function ActiveSessionView() {
       setSession(sessionData.session);
       
       // Debug: Log diner information
-      console.log('🔍 Staff Session - Session data loaded:', {
-        sessionId: sessionData.session.id,
-        diners: sessionData.session.diners,
-        dinerCount: sessionData.session.diners ? sessionData.session.diners.length : 0
-      });
 
       // Fetch orders for this session using the same logic as Live Bill
       const ordersResponse = await fetch(`/api/orders/confirm?sessionId=${sessionId}&isLiveBillRequest=true`);
@@ -170,16 +167,6 @@ export default function ActiveSessionView() {
       setOrders(orderItems);
       
       // Debug: Log order items to see diner names
-      console.log('🔍 Staff Session - Order items loaded:', orderItems.length);
-      orderItems.forEach((order: any, index: number) => {
-        console.log(`🔍 Order ${index + 1}:`, {
-          id: order.id,
-          diner_name: order.diner_name,
-          menu_item_name: Array.isArray(order.menu_items) ? order.menu_items[0]?.name : order.menu_items?.name,
-          quantity: order.quantity,
-          is_shared: order.split_bills && order.split_bills.participants && order.split_bills.participants.length > 0
-        });
-      });
       
       // Process diners and their orders using the fresh session data
       processDiners(orderItems, sessionData.session);
@@ -235,15 +222,6 @@ export default function ActiveSessionView() {
     
     // Get all session diners from the passed session data or state
     const sessionDiners = (sessionData?.diners || session?.diners) || [];
-    console.log('🔍 processDiners - Session data:', {
-      sessionData: sessionData,
-      sessionState: session,
-      sessionDiners: sessionDiners,
-      orderItemsCount: orderItems.length,
-      hasSessionData: !!sessionData,
-      hasSessionState: !!session,
-      hasSessionDiners: !!(sessionData?.diners || session?.diners)
-    });
     
     // Initialize diner map with all session diners
     sessionDiners.forEach((diner: any) => {
@@ -270,25 +248,7 @@ export default function ActiveSessionView() {
         // FIXED: split_price is the per-person amount for the total quantity
         const splitAmountPerPerson = splitBill.split_price || 0;
         
-        console.log('🔍 Staff Portal - Processing shared item (FIXED CALCULATION):', {
-          orderId: orderItem.id,
-          itemName: menuItem?.name,
-          splitBillData: {
-            split_price: splitBill.split_price,
-            split_count: splitBill.split_count,
-            participants: splitBill.participants,
-            original_price: splitBill.original_price
-          },
-          orderQuantity: orderItem.quantity,
-          splitAmountPerPerson: splitAmountPerPerson,
-          originalTotal: (menuItem?.price || 0) * orderItem.quantity,
-          calculation: {
-            splitPricePerPerson: splitBill.split_price,
-            quantity: orderItem.quantity,
-            splitAmountPerPerson: splitAmountPerPerson,
-            formula: `${splitBill.split_price} (per-person for total quantity)`
-          }
-        });
+        // Debug logging removed
         
         splitBill.participants.forEach((participantName: string) => {
           const diner = dinerMap.get(participantName);
@@ -302,7 +262,6 @@ export default function ActiveSessionView() {
               originalPrice: (menuItem?.price || 0) * orderItem.quantity // Store original for reference
             });
             diner.sharedTotal += splitAmountPerPerson;
-            console.log('🔍 Staff Portal - Added shared item to diner:', participantName, 'split amount:', splitAmountPerPerson);
           }
         });
       } else {
@@ -330,13 +289,6 @@ export default function ActiveSessionView() {
     
     // Filter out diners with no orders
     const finalDiners = Array.from(dinerMap.values()).filter(diner => diner.orders.length > 0);
-    console.log('🔍 processDiners - Final diners with orders:', finalDiners.map(d => ({
-      name: d.name,
-      orderCount: d.orders.length,
-      personalTotal: d.personalTotal,
-      sharedTotal: d.sharedTotal,
-      total: d.total
-    })));
     
     setDiners(finalDiners);
   };
@@ -593,6 +545,41 @@ export default function ActiveSessionView() {
     } catch (error) {
       console.error('Error updating order status:', error);
       setError(error instanceof Error ? error.message : 'Failed to update status');
+    }
+  };
+
+  // Handle manager authentication for bill adjustments
+  const handleManagerAuth = async () => {
+    if (!managerUsername.trim() || !managerPassword.trim()) {
+      alert('Please enter both username and password');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/manager/authenticate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: managerUsername.trim(),
+          password: managerPassword.trim()
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert('Manager authenticated! Adjust bill functionality will be implemented here.');
+        setShowAdjustModal(false);
+        setManagerUsername('');
+        setManagerPassword('');
+      } else {
+        alert(data.error || 'Authentication failed');
+      }
+    } catch (error) {
+      console.error('Manager authentication error:', error);
+      alert('Network error. Please try again.');
     }
   };
 
@@ -1357,6 +1344,8 @@ export default function ActiveSessionView() {
                   onClick={() => {
                     setShowAdjustModal(false);
                     setManagerPin('');
+                    setManagerUsername('');
+                    setManagerPassword('');
                   }}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
@@ -1368,55 +1357,53 @@ export default function ActiveSessionView() {
               <div className="space-y-6">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <div className="text-sm text-red-800">
-                    <div className="font-medium mb-1">🔒 Manager Override Required</div>
+                    <div className="font-medium mb-1">🔒 Manager Authentication Required</div>
                     <div>This action requires manager authorization to modify bill amounts.</div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Manager PIN
-                  </label>
-                  <input
-                    type="password"
-                    value={managerPin}
-                    onChange={(e) => setManagerPin(e.target.value)}
-                    placeholder="Enter manager PIN"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        if (managerPin === '1234') { // Simple demo PIN
-                          alert('Manager authenticated! Adjust bill functionality will be implemented here.');
-                          setShowAdjustModal(false);
-                          setManagerPin('');
-                        } else {
-                          alert('Invalid manager PIN');
-                        }
-                      }
-                    }}
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Manager Username
+                    </label>
+                    <input
+                      type="text"
+                      value={managerUsername}
+                      onChange={(e) => setManagerUsername(e.target.value)}
+                      placeholder="Enter manager username"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={managerPassword}
+                      onChange={(e) => setManagerPassword(e.target.value)}
+                      placeholder="Enter manager password"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
+                      onKeyPress={(e) => e.key === 'Enter' && handleManagerAuth()}
+                    />
+                  </div>
                 </div>
 
                 <div className="flex space-x-3">
                   <button
                     onClick={() => {
                       setShowAdjustModal(false);
-                      setManagerPin('');
+                      setManagerUsername('');
+                      setManagerPassword('');
                     }}
                     className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => {
-                      if (managerPin === '1234') { // Simple demo PIN
-                        alert('Manager authenticated! Adjust bill functionality will be implemented here.');
-                        setShowAdjustModal(false);
-                        setManagerPin('');
-                      } else {
-                        alert('Invalid manager PIN');
-                      }
-                    }}
+                    onClick={handleManagerAuth}
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     Authenticate

@@ -8,8 +8,6 @@ export const GET = async (request: NextRequest) => {
     const status = searchParams.get('status') || 'pending';
     const limit = parseInt(searchParams.get('limit') || '50');
 
-    console.log('🔔 Fetching waiter requests:', { status, limit });
-
     // Fetch waiter requests
     const { data: requests, error: fetchError } = await supabaseServer
       .from('waiter_requests')
@@ -35,7 +33,6 @@ export const GET = async (request: NextRequest) => {
       
       // If table doesn't exist, return empty array
       if (fetchError.code === 'PGRST116') {
-        console.log('📋 Waiter requests table not found, returning empty array');
         return NextResponse.json({
           success: true,
           data: [],
@@ -48,8 +45,6 @@ export const GET = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log(`✅ Fetched ${requests?.length || 0} waiter requests with status: ${status}`);
 
     return NextResponse.json({
       success: true,
@@ -87,8 +82,6 @@ export const PATCH = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔔 Updating waiter request:', { id, status, acknowledgedBy });
-
     // Prepare update data
     const updateData: any = { status };
     
@@ -117,11 +110,6 @@ export const PATCH = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log('✅ Waiter request updated successfully:', {
-      id: updatedRequest.id,
-      status: updatedRequest.status
-    });
 
     return NextResponse.json({
       success: true,

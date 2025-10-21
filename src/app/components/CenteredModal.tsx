@@ -76,38 +76,39 @@ const CenteredModal = ({
     // The mutual exclusivity is handled by the fact that takeaway is always disabled
   };
 
-  const handleShareWithOthers = async (): Promise<void> => {
-    if (isUpdating) return;
-    
+  const handleMakeShared = async () => {
+    if (!item || !sessionId) return;
+
     setIsUpdating(true);
-    console.log('Making item shared and navigating to split-bill page');
     
     try {
-      // Check if item is already in cart
-      console.log('Current cart items:', cart);
-      console.log('Looking for menu item:', item.id);
-      const existingCartItem = cart?.find((cartItem: any) => cartItem.menu_item_id === item.id);
-      console.log('Found existing cart item:', existingCartItem);
+      // First, check if item is already in cart
+      
+      const existingCartItem = cart?.find((cartItem: any) => 
+        cartItem.menu_item_id === item.id && 
+        cartItem.diner_name === cartItem.diner_name
+      );
+      
       
       if (existingCartItem) {
         // Update existing item to be shared
         const updateData = {
-          itemId: existingCartItem.id,
-          quantity: existingCartItem.quantity, // Include current quantity as required by API
-          options: {
-            notes,
-            isShared: true,
-            isTakeaway: false
-          }
+          is_shared: true,
+          notes: notes || undefined
         };
-        console.log('Updating existing cart item:', updateData);
+        
         
         const response = await fetch('/api/cart/update', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updateData)
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            itemId: existingCartItem.id,
+            options: updateData
+          })
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('❌ FAILED TO UPDATE ITEM TO SHARED:');
@@ -115,68 +116,59 @@ const CenteredModal = ({
           console.error('Error:', errorText);
           console.error('Item ID:', existingCartItem.id);
           console.error('Update Data:', updateData);
-          console.log('Update failed, but item already exists in cart - skipping fallback to prevent duplication');
-          // Don't add new item if update fails - item already exists
-          // Just refresh cart to get latest data
-          await loadCartItems();
-          // Even if update fails, proceed with navigation since item exists
-          console.log('Proceeding with navigation despite update failure');
+          
+          // Special case: If item is already in cart, we can still proceed
+          if (response.status === 400 && errorText.includes('already in cart')) {
+            // Don't add a new item, just proceed to split-bill page
+          }
         }
       } else {
-        // Item not in cart, add it as shared
-        console.log('Item not in cart, adding as shared');
-        const options = {
-          notes,
-          isShared: true,
-          isTakeaway: false
-        };
-        await addItem(item, options);
-        // Refresh cart to get the latest data
-        await loadCartItems();
+        // Add new item as shared
+        await addItem(item, { 
+          notes: notes || undefined, 
+          isShared: true, 
+          isTakeaway: false 
+        });
       }
       
       // Navigate to split-bill page
-      onClose();
-      // CRITICAL FIX: Preserve diner name when navigating to split-bill page
-      const currentDinerName = state.dinerName;
-      const dinerNameParam = currentDinerName ? `&dinerName=${encodeURIComponent(currentDinerName)}` : '';
-      window.location.href = `/split-bill?sessionId=${_sessionId}&itemId=${item.id}${dinerNameParam}`;
+      window.location.href = `/split-bill?itemId=${existingCartItem?.id || 'new'}&sessionId=${sessionId}`;
     } catch (error) {
       console.error('Error making item shared:', error);
-    } finally {
       setIsUpdating(false);
     }
   };
 
-  const handleConfirmAndReview = async (): Promise<void> => {
-    if (isUpdating) return;
-    
+  const handleUpdateItem = async () => {
+    if (!item || !sessionId) return;
+
     setIsUpdating(true);
-    console.log('Updating item and navigating to cart review page');
     
     try {
       // Check if item is already in cart
-      const existingCartItem = cart?.find((cartItem: any) => cartItem.menu_item_id === item.id);
+      const existingCartItem = cart?.find((cartItem: any) => 
+        cartItem.menu_item_id === item.id && 
+        cartItem.diner_name === cartItem.diner_name
+      );
       
       if (existingCartItem) {
-        // Update existing item with notes
+        // Update existing item
         const updateData = {
-          itemId: existingCartItem.id,
-          quantity: existingCartItem.quantity, // Include current quantity as required by API
-          options: {
-            notes,
-            isShared: false,
-            isTakeaway: false
-          }
+          notes: notes || undefined
         };
-        console.log('Updating existing cart item:', updateData);
+        
         
         const response = await fetch('/api/cart/update', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updateData)
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            itemId: existingCartItem.id,
+            options: updateData
+          })
         });
-        
+
         if (!response.ok) {
           const errorText = await response.text();
           console.error('❌ FAILED TO UPDATE ITEM:');
@@ -184,38 +176,26 @@ const CenteredModal = ({
           console.error('Error:', errorText);
           console.error('Item ID:', existingCartItem.id);
           console.error('Update Data:', updateData);
-          console.log('Update failed, but item already exists in cart - skipping fallback to prevent duplication');
-          // Don't add new item if update fails - item already exists
-          // Just refresh cart to get latest data
-          await loadCartItems();
-          // Even if update fails, proceed with navigation since item exists
-          console.log('Proceeding with navigation despite update failure');
+          
+          // Special case: If item is already in cart, we can still proceed
+          if (response.status === 400 && errorText.includes('already in cart')) {
+            // Don't add a new item, just proceed to cart review
+          }
         }
       } else {
-        // Item not in cart, add it
-        const options = {
-          notes,
-          isShared: false,
-          isTakeaway: false
-        };
-        await addItem(item, options);
-        // Refresh cart to get the latest data
-        await loadCartItems();
+        // Add new item
+        await addItem(item, { 
+          notes: notes || undefined, 
+          isShared: false, 
+          isTakeaway: false 
+        });
       }
       
-      // Navigate to cart review page with diner name
+      // Navigate to cart review page
+      window.location.href = `/cart-review?sessionId=${sessionId}`;
       onClose();
-      const currentDinerName = state.dinerName;
-      if (currentDinerName) {
-        window.location.href = `/cart-review?sessionId=${_sessionId}&dinerName=${encodeURIComponent(currentDinerName)}`;
-      } else {
-        // CRITICAL FIX: If no diner name, redirect to table scan to prevent session corruption
-        console.warn('⚠️ No diner name available, redirecting to table scan');
-        window.location.href = `/scan/${_sessionId}`;
-      }
     } catch (error) {
       console.error('Error updating item:', error);
-    } finally {
       setIsUpdating(false);
     }
   };

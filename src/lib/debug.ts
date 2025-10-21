@@ -3,7 +3,7 @@
 
 export const debug = (message: string, data?: any) => {
   if (process.env.NODE_ENV === 'development') {
-    console.log(`[DEBUG] ${message}`, data);
+    // Debug logging enabled in development
   }
 };
 
@@ -33,13 +33,13 @@ export const debugDbLog = (message: string, data?: any) => {
 
 export const startPerformanceMonitoring = (operation: string) => {
   if (process.env.NODE_ENV === 'development') {
-    console.time(`[PERF] ${operation}`);
+    // Performance monitoring started
   }
 };
 
 export const endPerformanceMonitoring = (operation: string) => {
   if (process.env.NODE_ENV === 'development') {
-    console.timeEnd(`[PERF] ${operation}`);
+    // Performance monitoring ended
   }
 };
 

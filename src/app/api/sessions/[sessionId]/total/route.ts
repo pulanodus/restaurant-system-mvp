@@ -12,8 +12,6 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
         { status: 400 }
       );
     }
-
-    console.log('🔧 API: Fetching session total for session:', sessionId);
     
     // Get all orders for this session with menu item prices
     const { data: orders, error } = await supabaseServer
@@ -47,8 +45,6 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
     
     const tax = subtotal * 0.14; // 14% tax
     const total = subtotal + tax;
-    
-    console.log('✅ Session total calculated:', { sessionId, subtotal, tax, total });
     
     return NextResponse.json({
       success: true,

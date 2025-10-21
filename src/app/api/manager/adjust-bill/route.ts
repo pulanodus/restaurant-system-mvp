@@ -7,7 +7,6 @@ import { logManagerBillAdjustment } from '@/lib/audit-logging';
 export const POST = async (request: NextRequest) => {
   try {
     const { sessionId, voids, discount } = await request.json();
-    console.log('🔧 API: Manager bill adjustment:', { sessionId, voids, discount });
 
     if (!sessionId) {
       return NextResponse.json(
@@ -42,7 +41,7 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔄 Starting manager bill adjustment...');
+    
 
     // 2. Handle item voids
     if (hasVoids) {
@@ -63,7 +62,7 @@ export const POST = async (request: NextRequest) => {
         );
       }
 
-      console.log('✅ Voided', voids.length, 'items');
+      
     }
 
     // 3. Handle discount application
@@ -87,7 +86,7 @@ export const POST = async (request: NextRequest) => {
         );
       }
 
-      console.log('✅ Applied discount:', discount.type, discount.amount);
+      
     }
 
     // 4. Create audit log entry
@@ -99,7 +98,7 @@ export const POST = async (request: NextRequest) => {
         original_total: 0, // TODO: Calculate actual order total from orders table
         new_total: 0 // TODO: Calculate new total based on voids/discounts
       }, request);
-      console.log('✅ Audit log entry created');
+      
     } catch (auditError) {
       console.warn('⚠️ Error creating audit log:', auditError);
       // Don't fail the operation for audit log errors
@@ -141,7 +140,7 @@ export const POST = async (request: NextRequest) => {
         .eq('status', 'confirmed'); // Only confirmed orders that still need payment
       
       if (!remainingError && (!remainingOrders || remainingOrders.length === 0)) {
-        console.log('🔍 All orders voided/paid, checking if table should be cleared...');
+        
         
         // Check if all diners are inactive
         const { data: sessionData, error: sessionDataError } = await supabaseServer
@@ -155,7 +154,7 @@ export const POST = async (request: NextRequest) => {
           const allDinersInactive = diners.every((diner: any) => diner.isActive === false);
           
           if (allDinersInactive) {
-            console.log('✅ All diners inactive and no unpaid orders - clearing table');
+            
             
             // Clear the table
             const { error: tableClearError } = await supabaseServer
@@ -170,14 +169,14 @@ export const POST = async (request: NextRequest) => {
             if (tableClearError) {
               console.error('❌ Error clearing table:', tableClearError);
             } else {
-              console.log('✅ Table cleared successfully');
+              
             }
           }
         }
       }
     }
 
-    console.log('✅ Manager bill adjustment completed successfully');
+    
 
     return NextResponse.json({
       success: true,

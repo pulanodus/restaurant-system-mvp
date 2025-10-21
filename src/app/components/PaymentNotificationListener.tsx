@@ -15,7 +15,7 @@ export default function PaymentNotificationListener({ sessionId }: PaymentNotifi
   useEffect(() => {
     if (!sessionId) return;
 
-    console.log('🔔 Starting payment notification listener for session:', sessionId);
+    // Debug logging removed for production
     setIsListening(true);
 
     // Poll for payment completion notifications
@@ -30,11 +30,11 @@ export default function PaymentNotificationListener({ sessionId }: PaymentNotifi
           const data = await response.json();
           
           if (data.hasNotification && data.notification) {
-            console.log('🔔 Payment completion notification received:', data.notification);
+            // Debug logging removed for production
             
             // Check if this is a table payment completion
             if (data.notification.metadata?.payment_type === 'table') {
-              console.log('🧹 TABLE PAYMENT DETECTED: Redirecting to receipt page');
+              // Debug logging removed for production
               
               // Redirect to receipt page
               const redirectUrl = data.notification.metadata?.redirect_url || `/payment-receipt?sessionId=${sessionId}`;
@@ -53,7 +53,7 @@ export default function PaymentNotificationListener({ sessionId }: PaymentNotifi
 
     // Cleanup on unmount
     return () => {
-      console.log('🔔 Stopping payment notification listener');
+      // Debug logging removed for production
       clearInterval(pollInterval);
       setIsListening(false);
     };

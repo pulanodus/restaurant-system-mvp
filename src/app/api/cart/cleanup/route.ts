@@ -16,8 +16,6 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = getSupabaseServiceKey();
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🧹 Manual cleanup for session:', sessionId);
-
     // Only delete cart items (status 'placed'), preserve confirmed orders
     const { data: deletedOrders, error } = await supabase
       .from('orders')
@@ -30,8 +28,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Error in manual cleanup:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    console.log('✅ Manual cleanup completed successfully, deleted', deletedOrders?.length || 0, 'orders');
 
     return NextResponse.json({ 
       success: true,

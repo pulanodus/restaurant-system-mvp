@@ -133,7 +133,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
     const { errorId } = this.state
     
     if (isDebugMode()) {
-      console.log(`🔄 Resetting session error boundary [${errorId}]`)
+      // Resetting session error boundary [${errorId}] - Debug only
     }
 
     this.setState({
@@ -159,7 +159,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
     const { sessionId, tableId } = this.state
     
     if (isDebugMode()) {
-      console.log(`🔄 Restarting session [${sessionId}] for table [${tableId}]`)
+      // Restarting session [${sessionId}] for table [${tableId}] - Debug only
     }
 
     // Reset error boundary
@@ -173,7 +173,7 @@ class SessionErrorBoundary extends Component<SessionErrorBoundaryProps, SessionE
 
   handleTableSelection = (): void => {
     if (isDebugMode()) {
-      console.log('🔄 Navigating to table selection')
+      // Navigating to table selection - Debug only
     }
 
     // Reset error boundary
@@ -265,7 +265,7 @@ function SessionErrorDisplay({
 
     navigator.clipboard.writeText(JSON.stringify(errorData, null, 2))
       .then(() => {
-        console.log('Session error data copied to clipboard')
+        // Session error data copied to clipboard - Debug only
       })
       .catch((err) => {
         console.error('Failed to copy session error data:', err)

@@ -137,7 +137,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     const { errorId } = this.state
     
     if (isDebugMode) {
-      console.log(`🔄 Resetting error boundary [${errorId}]`)
+      // Resetting error boundary [${errorId}] - Debug only
     }
 
     this.setState({
@@ -237,7 +237,7 @@ function ErrorDisplay({
 
     navigator.clipboard.writeText(JSON.stringify(errorData, null, 2))
       .then(() => {
-        console.log('Error data copied to clipboard')
+        // Error data copied to clipboard - Debug only
       })
       .catch((err) => {
         console.error('Failed to copy error data:', err)

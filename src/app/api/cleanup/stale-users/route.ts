@@ -12,8 +12,6 @@ export async function GET(request: NextRequest) {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    console.log('🔍 CLEANUP - Checking for stale active users...');
-
     // Get all active sessions with their diners
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
@@ -38,8 +36,6 @@ export async function GET(request: NextRequest) {
     const staleUsers: any[] = [];
     let totalActiveUsers = 0;
     let totalStaleUsers = 0;
-
-    console.log(`🔍 CLEANUP - Analyzing ${sessions.length} active sessions...`);
 
     sessions.forEach(session => {
       const diners = Array.isArray(session.diners) ? session.diners : [];
@@ -68,8 +64,6 @@ export async function GET(request: NextRequest) {
         }
       });
     });
-
-    console.log(`🔍 CLEANUP - Found ${totalStaleUsers} stale users out of ${totalActiveUsers} total active users`);
 
     return NextResponse.json({
       message: `Found ${totalStaleUsers} stale active users`,
@@ -119,8 +113,6 @@ export async function POST(request: NextRequest) {
       auth: { autoRefreshToken: false, persistSession: false }
     });
 
-    console.log('🧹 CLEANUP - Starting stale user cleanup...');
-
     // Get all active sessions with their diners
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
@@ -145,8 +137,6 @@ export async function POST(request: NextRequest) {
     const cleanedUsers: any[] = [];
     let totalCleanedUsers = 0;
     const sessionsToUpdate: any[] = [];
-
-    console.log(`🧹 CLEANUP - Processing ${sessions.length} active sessions...`);
 
     // Process each session
     sessions.forEach(session => {
@@ -183,7 +173,6 @@ export async function POST(request: NextRequest) {
             });
 
             sessionNeedsUpdate = true;
-            console.log(`🧹 CLEANUP - Marking stale user as inactive: ${diner.name} (inactive for ${cleanedUser.hoursInactive}h)`);
           } else {
             // Keep active user as-is
             updatedDiners.push(diner);
@@ -217,7 +206,6 @@ export async function POST(request: NextRequest) {
         updateErrorCount++;
       } else {
         updateSuccessCount++;
-        console.log(`✅ CLEANUP - Updated session ${sessionUpdate.id}`);
       }
     }
 
@@ -239,8 +227,6 @@ export async function POST(request: NextRequest) {
     if (logError) {
       console.error('❌ CLEANUP - Failed to log cleanup action:', logError);
     }
-
-    console.log(`🧹 CLEANUP - Cleanup completed: ${totalCleanedUsers} users cleaned, ${updateSuccessCount} sessions updated`);
 
     return NextResponse.json({
       message: `Successfully cleaned ${totalCleanedUsers} stale users`,

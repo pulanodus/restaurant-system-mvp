@@ -4,8 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Processing customer help request');
-    
     const body = await request.json();
     const { sessionId, helpType = 'general', message = 'Customer needs assistance' } = body;
     
@@ -76,8 +74,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-    
-    console.log('✅ Customer help notification created:', notification);
     
     return NextResponse.json({
       success: true,

@@ -5,7 +5,6 @@ import { handleError } from '@/lib/error-handling';
 export const POST = async (request: NextRequest) => {
   try {
     const { staffId, deviceId, staffName } = await request.json();
-    console.log('🔍 API received:', { staffId, deviceId, staffName });
     
     if (!staffId) {
       return NextResponse.json(
@@ -13,14 +12,6 @@ export const POST = async (request: NextRequest) => {
         { status: 400 }
       );
     }
-
-    console.log('🔐 Staff login attempt:', { staffId, deviceId });
-    console.log('🔍 Valid staff IDs:', [
-      'STAFF001', 'STAFF002', 'STAFF003', 'STAFF004', 'STAFF005',
-      'WAITER01', 'WAITER02', 'WAITER03', 'WAITER04', 'WAITER05',
-      'SERVER01', 'SERVER02', 'SERVER03', 'SERVER04', 'SERVER05',
-      'MANAGER01', 'MANAGER02', 'MANAGER03'
-    ]);
 
     // Get staff member by staff_id (with fallback if staff table doesn't exist)
     let staff = null;
@@ -43,7 +34,6 @@ export const POST = async (request: NextRequest) => {
 
     // If staff table doesn't exist, use fallback authentication
     if (staffError && ((staffError as any).code === 'PGRST116' || (staffError as any).message?.includes('Could not find the table'))) {
-      console.log('ℹ️ Using fallback staff authentication');
       
       // Create a mock staff object for valid staff IDs
       const validStaffIds = [
@@ -64,19 +54,12 @@ export const POST = async (request: NextRequest) => {
           is_active: true
         };
         staffError = null;
-        console.log('✅ Created mock staff object:', staff);
       } else {
-        console.log('❌ Invalid staff ID provided:', staffId);
       }
     }
 
     if (staffError || !staff) {
       console.error('❌ Staff not found:', staffError);
-      console.log('🔍 Staff error details:', { 
-        code: (staffError as any)?.code, 
-        message: (staffError as any)?.message,
-        staffId: staffId 
-      });
       return NextResponse.json(
         { error: 'Invalid staff ID or staff member is inactive' },
         { status: 401 }
@@ -102,13 +85,6 @@ export const POST = async (request: NextRequest) => {
       console.warn('⚠️ Staff login logging not available, using mock session');
       session = `mock-session-${Date.now()}`;
     }
-
-    console.log('✅ Staff logged in successfully:', { 
-      staffId: staff.staff_id, 
-      name: staff.name,
-      role: staff.role,
-      sessionId: session
-    });
 
     return NextResponse.json({
       success: true,

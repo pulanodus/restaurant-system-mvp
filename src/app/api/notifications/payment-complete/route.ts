@@ -10,8 +10,6 @@ export const GET = async (request: NextRequest) => {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    console.log('🔔 API: Checking for payment completion notifications for session:', sessionId);
-
     // Check for payment completion notifications for this session
     const { data: notifications, error } = await supabaseServer
       .from('notifications')
@@ -31,8 +29,6 @@ export const GET = async (request: NextRequest) => {
     const notification = hasNotification ? notifications[0] : null;
 
     if (hasNotification) {
-      console.log('🔔 Found payment completion notification:', notification);
-      
       // Mark notification as acknowledged (but don't delete it yet)
       const { error: acknowledgeError } = await supabaseServer
         .from('notifications')
@@ -41,8 +37,6 @@ export const GET = async (request: NextRequest) => {
       
       if (acknowledgeError) {
         console.error('⚠️ Warning: Failed to acknowledge notification:', acknowledgeError);
-      } else {
-        console.log('✅ Payment completion notification acknowledged');
       }
     }
 

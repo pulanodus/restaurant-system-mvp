@@ -36,7 +36,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
     try {
       if (isNewSession) {
         // Update the session with the starter's name
-        console.log('🔄 NameEntryForm - Creating new session with diner:', name.trim());
         const { error } = await supabase
           .from('sessions')
           .update({ 
@@ -51,7 +50,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
           .eq('id', sessionId);
 
         if (error) throw error;
-        console.log('✅ NameEntryForm - New session created with diner:', name.trim());
         
         // Show welcome message for new session creator
         setIsRecognized(true);
@@ -60,7 +58,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
         }, 2000);
       } else {
         // Add the user to the existing session's diners array
-        console.log('🔄 NameEntryForm - Adding diner to existing session:', name.trim());
         
         const { data: session, error: fetchError } = await supabase
           .from('sessions')
@@ -72,45 +69,17 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
 
         const currentDiners = Array.isArray(session.diners) ? session.diners : [];
         
-        // DEBUG: Log all diners to see their current state
-        console.log('🔍 DEBUG - All diners in session:', currentDiners);
-        console.log('🔍 DEBUG - Looking for name:', name.trim());
-        console.log('🔍 DEBUG - Session ID:', sessionId);
-        console.log('🔍 DEBUG - Session data:', session);
-        
-        // CRITICAL DEBUG: Check each diner's status
-        console.log('🔍 CRITICAL DEBUG - Detailed diner analysis:');
-        currentDiners.forEach((diner, index) => {
-          console.log(`  Diner ${index + 1}:`, {
-            name: diner.name,
-            isActive: diner.isActive,
-            lastActive: diner.lastActive,
-            logoutTime: diner.logoutTime,
-            fullObject: diner
-          });
-        });
-        
         // Check if there's an active user with this name
         const existingActiveDiner = currentDiners.find(diner => 
           diner.name.toLowerCase() === name.trim().toLowerCase() && 
           diner.isActive === true
         );
         
-        console.log('🔍 DEBUG - Found active diner:', existingActiveDiner);
-        
         // Check if this is a returning user (inactive) - reactivate them
         const existingInactiveDiner = currentDiners.find(diner => 
           diner.name.toLowerCase() === name.trim().toLowerCase() && 
           diner.isActive === false
         );
-        
-        console.log('🔍 DEBUG - Found inactive diner (returning user):', existingInactiveDiner);
-        console.log('🔍 DEBUG - Decision logic:', {
-          hasActiveDiner: !!existingActiveDiner,
-          hasInactiveDiner: !!existingInactiveDiner,
-          willBlock: !!existingActiveDiner && !existingInactiveDiner,
-          willReactivate: !!existingInactiveDiner
-        });
         
         // If there's an active user with this name, block them (someone else is using it)
         if (existingActiveDiner) {
@@ -127,17 +96,8 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
           const timeAway = logoutTime ? now.getTime() - new Date(logoutTime).getTime() : 0;
           const minutesAway = timeAway / (1000 * 60); // Convert to minutes
           
-          console.log('🔍 DEBUG - Time away:', {
-            logoutTime,
-            lastActive: existingInactiveDiner.lastActive,
-            now: now.toISOString(),
-            timeAwayMs: timeAway,
-            minutesAway: Math.round(minutesAway)
-          });
-          
           // For now, let's simplify: if user is inactive, always allow them to return
           // We can add time-based logic later if needed
-          console.log('✅ Returning inactive user detected:', name.trim());
           
           // Show welcome back message
           setIsRecognized(true);
@@ -156,7 +116,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
             .eq('id', sessionId);
           
           if (updateError) {
-            console.error('❌ Error reactivating user:', updateError);
             setError('Failed to reactivate user. Please try again.');
             setIsLoading(false);
             return;
@@ -181,7 +140,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
             lastActive: new Date().toISOString()
           }
         ];
-        console.log('✅ Adding new user:', name.trim());
         setIsReturningUser(false); // Explicitly mark as new user
 
         const { error: updateError } = await supabase
@@ -190,7 +148,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
           .eq('id', sessionId);
 
         if (updateError) throw updateError;
-        console.log('✅ NameEntryForm - Diner added to session:', name.trim());
         
         // Show welcome back message for returning users, then navigate
         if (isReturningUser) {
@@ -204,7 +161,6 @@ export default function NameEntryForm({ sessionId, isNewSession, tableNumber, ho
         }
       }
     } catch (error) {
-      console.error('Error in name entry:', error);
       setError('Failed to process name entry. Please try again.');
     } finally {
       setIsLoading(false);

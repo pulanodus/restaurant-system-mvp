@@ -14,8 +14,6 @@ import {
 // GET /api/admin/storage - Get storage usage information
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔧 API: Getting storage usage information');
-    
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get('restaurantId');
     const global = searchParams.get('global') === 'true';
@@ -62,8 +60,6 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/storage - Perform storage management actions
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔧 API: Performing storage management action');
-    
     const body = await request.json();
     const { action, restaurantId, ...params } = body;
     

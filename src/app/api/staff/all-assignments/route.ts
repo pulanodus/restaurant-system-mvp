@@ -5,8 +5,6 @@ import { logDetailedError } from '@/lib/error-handling';
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fetching all staff assignments');
-
     // Get all active sessions (served_by column may not exist yet)
     const { data: sessions, error: sessionsError } = await supabaseServer
       .from('sessions')
@@ -55,10 +53,7 @@ export const GET = async (request: NextRequest) => {
 
     // If no staff table exists, return empty assignments but don't fail
     if (!staff && Object.keys(assignments).length === 0) {
-      console.log('ℹ️ No staff assignments found (staff table may not exist yet)');
     }
-
-    console.log('✅ Staff assignments fetched successfully:', Object.keys(assignments).length, 'staff members');
 
     return NextResponse.json({
       success: true,

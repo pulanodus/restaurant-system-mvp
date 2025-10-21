@@ -13,8 +13,6 @@ export const POST = withAdminAuth(async (request: NextRequest, adminUser) => {
       );
     }
 
-    console.log('🔄 Admin daily reset initiated by:', adminUser.email);
-
     const supabaseUrl = getSupabaseUrl();
     const supabaseServiceKey = getSupabaseServiceKey();
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -35,8 +33,6 @@ export const POST = withAdminAuth(async (request: NextRequest, adminUser) => {
 
     if (sessionCountError) {
       console.error('❌ Error counting sessions:', sessionCountError);
-    } else {
-      console.log('📊 Sessions to be reset:', activeSessions?.length || 0);
     }
 
     // 1. Mark all active sessions as 'completed'
@@ -104,8 +100,6 @@ export const POST = withAdminAuth(async (request: NextRequest, adminUser) => {
       console.warn('⚠️ Warning: Failed to log daily reset:', logError.message);
       // Don't fail the whole operation for this
     }
-
-    console.log('✅ Daily reset completed successfully');
 
     return NextResponse.json({
       success: true,

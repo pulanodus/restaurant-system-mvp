@@ -27,16 +27,7 @@ const MenuItemWithCart = ({ item, sessionId }: MenuItemWithCartProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const router = useRouter();
 
-  console.log('🍽️ MenuItemWithCart rendered:', {
-    itemName: item.name,
-    itemId: item.id,
-    sessionId,
-    currentQuantity,
-    cartState: state,
-    cartItemsLength: state.items?.length || 0,
-    hasAddItem: typeof addItem === 'function',
-    hasUpdateQuantity: typeof updateQuantity === 'function'
-  });
+  // Debug logging
 
   // Test if cart context is working
   if (typeof addItem !== 'function') {
@@ -51,34 +42,19 @@ const MenuItemWithCart = ({ item, sessionId }: MenuItemWithCartProps) => {
     e.stopPropagation();
     e.preventDefault();
     
-    console.log('🔵 MenuItemWithCart - Button clicked!', {
-      itemName: item.name,
-      itemId: item.id,
-      currentQuantity,
-      isLoading,
-      isProcessing,
-      cartItem,
-      cartItemId,
-      sessionId
-    });
-    
     if (isLoading || isProcessing) {
-      console.log('MenuItemWithCart - Already processing, ignoring click');
       return;
     }
     
-    console.log('MenuItemWithCart - Incrementing item:', item.name, 'Current quantity:', currentQuantity);
     setIsLoading(true);
     setIsProcessing(true);
     
     try {
       if (cartItem) {
         // If item is in cart, increment quantity
-        console.log('MenuItemWithCart - Updating existing item quantity');
         await updateQuantity(cartItemId!, currentQuantity + 1);
       } else {
         // If new item, add it with default options
-        console.log('MenuItemWithCart - Adding new item to cart');
         await addItem(item);
       }
     } catch (error) {
@@ -95,20 +71,16 @@ const MenuItemWithCart = ({ item, sessionId }: MenuItemWithCartProps) => {
     e.preventDefault();
     
     if (isLoading || isProcessing || !cartItemId) {
-      console.log('MenuItemWithCart - Already processing or no cart item, ignoring click');
       return;
     }
     
-    console.log('MenuItemWithCart - Decrementing item:', item.name, 'Current quantity:', currentQuantity);
     setIsLoading(true);
     setIsProcessing(true);
     
     try {
       if (currentQuantity > 1) {
-        console.log('MenuItemWithCart - Decreasing quantity');
         await updateQuantity(cartItemId!, currentQuantity - 1);
       } else {
-        console.log('MenuItemWithCart - Removing item from cart');
         await removeItem(cartItemId);
       }
     } catch (error) {

@@ -6,8 +6,6 @@ import { getSupabaseUrl, getSupabaseServiceKey } from '@/lib/secure-env';
 export async function POST(request: NextRequest) {
   try {
     const { sessionId, userName } = await request.json();
-    
-    console.log('🔄 Admin reset user status:', { sessionId, userName });
 
     const supabaseUrl = getSupabaseUrl();
     const supabaseServiceKey = getSupabaseServiceKey();
@@ -32,12 +30,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    console.log('🔍 Current diners:', session.diners);
-
     // Find and reset the specific user
     const updatedDiners = session.diners.map((diner: any) => {
       if (diner.name.toLowerCase() === userName.toLowerCase()) {
-        console.log('🔍 Resetting user:', diner.name);
         return {
           ...diner,
           isActive: false,
@@ -47,8 +42,6 @@ export async function POST(request: NextRequest) {
       }
       return diner;
     });
-
-    console.log('🔍 Updated diners:', updatedDiners);
 
     // Update the session
     const { data: updateData, error: updateError } = await supabase
@@ -61,8 +54,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Error updating session:', updateError);
       return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
-
-    console.log('✅ User status reset successfully');
 
     return NextResponse.json({
       success: true,

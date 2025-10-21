@@ -25,12 +25,7 @@ export default function DynamicLayout({ children }: DynamicLayoutProps) {
   // Check if this is a staff route synchronously to avoid hydration mismatch
   const isStaffRoute = pathname.startsWith('/staff/')
 
-  console.log('🏗️ DynamicLayout - pathname:', pathname)
-  console.log('🏗️ DynamicLayout - searchParams:', searchParams.toString())
-  console.log('🏗️ DynamicLayout - sessionId:', sessionId)
-  console.log('🏗️ DynamicLayout - sessionId length:', sessionId.length)
-  console.log('🏗️ DynamicLayout - sessionId type:', typeof sessionId)
-  console.log('🏗️ DynamicLayout - isStaffRoute:', isStaffRoute)
+  // DEBUG: Log all the values
 
   // Static className to prevent hydration mismatch
   const containerClassName = "min-h-screen bg-gray-50"

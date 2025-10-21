@@ -23,16 +23,7 @@ export default function TableOptions({
   const [showNameInput, setShowNameInput] = useState(false)
   const [guestName, setGuestName] = useState('')
 
-  // Debug logging for props
-  console.log('🔍 TableOptions props:', {
-    tableId,
-    sessionId,
-    isNew,
-    tableNumber,
-    startedByName,
-    sessionIdType: typeof sessionId,
-    sessionIdExists: !!sessionId
-  })
+  // Debug logging removed for production
 
   const handleStartNewSession = () => {
     // Show name input instead of directly creating session
@@ -53,11 +44,7 @@ export default function TableOptions({
   }
 
   const handleJoinSession = async () => {
-    console.log('🔍 TableOptions - handleJoinSession called:', {
-      sessionId,
-      sessionIdType: typeof sessionId,
-      sessionIdLength: sessionId?.length
-    })
+    // Debug logging removed for production
     
     if (sessionId) {
       try {

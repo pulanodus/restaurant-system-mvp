@@ -4,8 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Checking payment status');
-    
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get('sessionId');
     
@@ -87,12 +85,6 @@ export const GET = async (request: NextRequest) => {
         details += ` (Completed by ${notification.completed_by || 'staff'})`;
       }
     }
-    
-    console.log('✅ Payment status retrieved:', {
-      sessionId,
-      payment_status: session.payment_status,
-      message
-    });
     
     return NextResponse.json({
       success: true,

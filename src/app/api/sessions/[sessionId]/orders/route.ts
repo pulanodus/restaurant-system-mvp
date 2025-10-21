@@ -6,7 +6,6 @@ import { logDetailedError } from '@/lib/error-handling';
 export const GET = async (request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) => {
   try {
     const { sessionId } = await params;
-    console.log('🔧 API: Fetching orders for session:', sessionId);
 
     if (!sessionId) {
       return NextResponse.json(
@@ -39,8 +38,6 @@ export const GET = async (request: NextRequest, { params }: { params: Promise<{ 
         { status: 500 }
       );
     }
-
-    console.log('✅ Session orders fetched successfully:', orders?.length || 0, 'orders');
 
     return NextResponse.json({
       success: true,

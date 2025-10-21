@@ -4,8 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🧹 Starting database cleanup...');
-    
     // Clear all orders
     const { error: ordersError } = await supabaseServer
       .from('orders')
@@ -78,8 +76,6 @@ export async function POST(request: NextRequest) {
       console.error('Error resetting tables:', tablesError);
       throw new Error(`Failed to reset tables: ${tablesError.message}`);
     }
-    
-    console.log('✅ Database cleanup completed successfully');
     
     return NextResponse.json({
       success: true,

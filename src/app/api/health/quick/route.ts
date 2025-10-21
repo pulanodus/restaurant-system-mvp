@@ -10,7 +10,7 @@ export async function GET(_request: NextRequest) {
   const healthCheckId = Math.random().toString(36).substring(2, 15)
   
   if (isDebugMode()) {
-    console.log(`🏥 Quick Health Check [${healthCheckId}]`)
+    // Debug mode enabled
   }
 
   debugLog('Quick health check started', { 
@@ -60,11 +60,7 @@ export async function GET(_request: NextRequest) {
     }
 
     if (isDebugMode()) {
-      console.log('Quick health check completed:', {
-        status: response.status,
-        duration: `${response.duration}ms`,
-        healthy: healthResult.status === 'healthy'
-      })
+      // Debug mode enabled
     }
 
     debugLog('Quick health check completed', {

@@ -45,10 +45,8 @@ export default function QRCodeScanner({ onQRCodeDetected, onError }: QRCodeScann
         null, // Use default camera
         videoRef.current!,
         (result, err) => {
-          if (result) {
-            const detectedText = result.getText();
-            console.log('QR Code detected:', detectedText);
-            handleQRCodeDetected(detectedText);
+          if (detectedText) {
+            onScanSuccess(detectedText);
           }
           if (err && err.name !== 'NotFoundException') {
             console.error('QR Code detection error:', err);

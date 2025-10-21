@@ -14,8 +14,6 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔧 API: Fetching order history for session:', sessionId);
-
     // Fetch all orders for this session regardless of status
     const { data: orders, error: ordersError } = await supabaseServer
       .from('orders')
@@ -55,8 +53,6 @@ export const GET = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log(`✅ Order history fetched: ${orders?.length || 0} orders`);
 
     return NextResponse.json({
       success: true,

@@ -16,7 +16,6 @@ export async function GET(_request: NextRequest) {
   
   if (isDebugMode()) {
     console.group(`🏥 Health Check [${healthCheckId}]`)
-    console.log('Starting health check...')
   }
 
   debugLog('Health check started', { 
@@ -51,7 +50,6 @@ export async function GET(_request: NextRequest) {
       }
 
       if (isDebugMode()) {
-        console.log('❌ Health check failed - configuration error')
         console.groupEnd()
       }
 
@@ -85,11 +83,6 @@ export async function GET(_request: NextRequest) {
     }
 
     if (isDebugMode()) {
-      console.log('Health check completed:', {
-        status: response.status,
-        duration: `${response.duration}ms`,
-        connectionSuccess: connectionTest.success
-      })
       console.groupEnd()
     }
 
@@ -141,7 +134,6 @@ export async function POST(request: NextRequest) {
   
   if (isDebugMode()) {
     console.group(`🏥 Detailed Health Check [${healthCheckId}]`)
-    console.log('Starting detailed health check...')
   }
 
   debugLog('Detailed health check started', { 
@@ -176,7 +168,6 @@ export async function POST(request: NextRequest) {
       }
 
       if (isDebugMode()) {
-        console.log('❌ Detailed health check failed - configuration error')
         console.groupEnd()
       }
 
@@ -210,13 +201,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (isDebugMode()) {
-      console.log('Detailed health check completed:', {
-        status: response.status,
-        duration: `${response.duration}ms`,
-        overallSuccess: comprehensiveResult.overallSuccess,
-        totalTests: comprehensiveResult.summary.total,
-        passedTests: comprehensiveResult.summary.passed
-      })
       console.groupEnd()
     }
 

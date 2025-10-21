@@ -8,8 +8,6 @@ export async function GET(request: NextRequest) {
     const restaurantId = searchParams.get('restaurantId');
     const timeRange = searchParams.get('timeRange');
     
-    console.log('🔧 Simple Analytics API: Fetching data for timeRange:', timeRange);
-    
     let analytics;
     
     if (timeRange === 'summary') {
@@ -30,8 +28,6 @@ export async function GET(request: NextRequest) {
       
       analytics = getErrorAnalytics(restaurantId || undefined, timeFilter);
     }
-    
-    console.log('✅ Simple Analytics API: Returning data:', analytics);
     
     return NextResponse.json({
       success: true,

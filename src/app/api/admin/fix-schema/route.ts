@@ -8,8 +8,6 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = getSupabaseServiceKey();
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('🔧 Fixing database schema - adding unit_price column');
-
     // First, let's check what columns exist in the orders table
     const { data: columns, error: columnsError } = await supabase
       .from('information_schema.columns')
@@ -22,13 +20,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: columnsError.message }, { status: 500 });
     }
 
-    console.log('📋 Existing columns in orders table:', columns?.map(c => c.column_name));
-
     // Check if unit_price already exists
     const hasUnitPrice = columns?.some(col => col.column_name === 'unit_price');
     
     if (hasUnitPrice) {
-      console.log('✅ unit_price column already exists');
       return NextResponse.json({ 
         success: true,
         message: 'unit_price column already exists',
@@ -71,8 +66,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Error setting unit_price NOT NULL:', notNullError);
       return NextResponse.json({ error: notNullError.message }, { status: 500 });
     }
-
-    console.log('✅ Successfully added unit_price column');
 
     return NextResponse.json({ 
       success: true,

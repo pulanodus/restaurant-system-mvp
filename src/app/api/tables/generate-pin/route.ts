@@ -13,8 +13,6 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔑 Generating PIN for table:', { tableId, staffId });
-
     // Verify staff exists and is active (with fallback if staff table doesn't exist)
     let staff = null;
     let staffError = null;
@@ -37,7 +35,6 @@ export const POST = async (request: NextRequest) => {
 
     // If staff table doesn't exist, use fallback authentication
     if (staffError && ((staffError as any).code === 'PGRST116' || (staffError as any).message?.includes('Could not find the table'))) {
-      console.log('ℹ️ Using fallback staff authentication for PIN generation');
       
       // Create a mock staff object for valid staff IDs
       const validStaffIds = [
@@ -61,7 +58,6 @@ export const POST = async (request: NextRequest) => {
           is_active: true
         };
         staffError = null;
-        console.log('✅ Using staff name:', staffName?.trim() || `Staff ${actualStaffId}`);
       }
     }
 
@@ -176,13 +172,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log('✅ PIN generated and table assigned successfully:', { 
-      tableNumber: table.table_number,
-      pin,
-      staffName: staff.name,
-      sessionId: session.id
-    });
 
     return NextResponse.json({
       success: true,

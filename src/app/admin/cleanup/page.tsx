@@ -37,10 +37,9 @@ export default function CleanupPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setStaleUsers(data.staleUsers || []);
-        setSummary(data.summary);
-        setLastChecked(new Date());
-        console.log('✅ Check completed:', data);
+        if (!error) {
+          setResults(data);
+        }
       } else {
         console.error('❌ Check failed:', data.error);
         setCleanupResult(`❌ Check failed: ${data.error}`);

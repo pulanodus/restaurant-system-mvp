@@ -59,11 +59,7 @@ export async function createAuditLog(
       return { success: false, error: error.message };
     }
 
-    console.log('✅ Audit log created:', {
-      action: entry.action,
-      performed_by: entry.performed_by,
-      session_id: entry.session_id
-    });
+    // Audit log created successfully
 
     return { success: true };
 

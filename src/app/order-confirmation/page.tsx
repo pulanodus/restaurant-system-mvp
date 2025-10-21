@@ -25,9 +25,15 @@ function OrderConfirmationContent() {
     // Clear cart after successful confirmation
     const clearCartAfterConfirmation = async () => {
       try {
-        console.log('🧹 Clearing cart after order confirmation...');
-        await clearCart();
-        console.log('✅ Cart cleared successfully');
+        const { error: clearError } = await supabase
+          .from('orders')
+          .delete()
+          .eq('session_id', sessionId)
+          .eq('status', 'cart');
+
+        if (clearError) {
+          console.error('Error clearing cart:', clearError);
+        }
       } catch (error) {
         console.error('❌ Error clearing cart:', error);
       }

@@ -12,8 +12,6 @@ import {
 // GET /api/admin/jobs - Get scheduled jobs information
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔧 API: Getting scheduled jobs information');
-    
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
     
@@ -51,8 +49,6 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/jobs - Execute scheduled jobs
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔧 API: Executing scheduled jobs');
-    
     const body = await request.json();
     const { action, jobName } = body;
     

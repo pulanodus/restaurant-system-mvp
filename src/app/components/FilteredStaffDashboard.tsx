@@ -117,10 +117,10 @@ export default function FilteredStaffDashboard({
       });
 
       if (response.ok) {
-        setNotifications(prev => 
-          prev.filter(n => n.id !== notificationId)
-        );
-        console.log('✅ Notification resolved successfully');
+        if (!error) {
+          // Refresh notifications after resolving
+          loadNotifications();
+        }
       } else {
         console.error('Failed to resolve notification');
       }

@@ -65,7 +65,6 @@ export const DEFAULT_RETENTION_POLICIES = {
  */
 export async function getRetentionPolicy(restaurantId: string): Promise<RetentionPolicy> {
   try {
-    console.log(`📋 Getting retention policy for restaurant: ${restaurantId}`);
     
     // TODO: In the future, this could be stored in a restaurant_settings table
     // For now, we'll use default policies based on restaurant tier
@@ -86,7 +85,6 @@ export async function getRetentionPolicy(restaurantId: string): Promise<Retentio
     const tier = restaurant?.tier || 'basic';
     const policy = DEFAULT_RETENTION_POLICIES[tier as keyof typeof DEFAULT_RETENTION_POLICIES] || DEFAULT_RETENTION_POLICIES.basic;
     
-    console.log(`✅ Retention policy retrieved for restaurant ${restaurantId} (tier: ${tier})`);
     return {
       restaurantId,
       ...policy
@@ -112,7 +110,6 @@ export async function cleanupTableData(
   archiveBeforeDelete: boolean = true
 ): Promise<CleanupResult> {
   try {
-    console.log(`🧹 Cleaning up ${tableName} data for restaurant ${restaurantId} (older than ${retentionDays} days)`);
     
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
@@ -163,7 +160,6 @@ export async function cleanupTableData(
       deletedCount = deleteResult.count || 0;
     }
     
-    console.log(`✅ Cleaned up ${tableName}: ${archivedCount} archived, ${deletedCount} deleted`);
     return {
       tableName,
       deletedCount,
@@ -190,7 +186,6 @@ export async function runDataLifecycleForRestaurant(restaurantId: string): Promi
   const errors: string[] = [];
   
   try {
-    console.log(`🔄 Starting data lifecycle management for restaurant: ${restaurantId}`);
     
     // Get retention policy for this restaurant
     const policy = await getRetentionPolicy(restaurantId);
@@ -247,7 +242,6 @@ export async function runDataLifecycleForRestaurant(restaurantId: string): Promi
       duration
     };
     
-    console.log(`✅ Data lifecycle management completed for restaurant ${restaurantId}:`, jobResult);
     return jobResult;
     
   } catch (error) {
@@ -273,7 +267,6 @@ export async function runDataLifecycleForRestaurant(restaurantId: string): Promi
  */
 export async function runGlobalDataLifecycle(): Promise<LifecycleJobResult[]> {
   try {
-    console.log('🔄 Starting global data lifecycle management');
     
     // Get all restaurants
     const { data: restaurants, error } = await supabaseServer
@@ -286,7 +279,6 @@ export async function runGlobalDataLifecycle(): Promise<LifecycleJobResult[]> {
     }
     
     if (!restaurants || restaurants.length === 0) {
-      console.log('ℹ️ No restaurants found for data lifecycle management');
       return [];
     }
     
@@ -309,19 +301,6 @@ export async function runGlobalDataLifecycle(): Promise<LifecycleJobResult[]> {
         }
       })
     );
-    
-    const totalProcessed = results.reduce((sum, r) => sum + r.totalProcessed, 0);
-    const totalArchived = results.reduce((sum, r) => sum + r.totalArchived, 0);
-    const totalDeleted = results.reduce((sum, r) => sum + r.totalDeleted, 0);
-    const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
-    
-    console.log(`✅ Global data lifecycle management completed:`, {
-      restaurantsProcessed: results.length,
-      totalProcessed,
-      totalArchived,
-      totalDeleted,
-      totalErrors
-    });
     
     return results;
     
@@ -351,7 +330,6 @@ export async function getDataLifecycleStats(restaurantId: string): Promise<{
   };
 }> {
   try {
-    console.log(`📊 Getting data lifecycle stats for restaurant: ${restaurantId}`);
     
     const policy = await getRetentionPolicy(restaurantId);
     
@@ -408,7 +386,6 @@ export async function getDataLifecycleStats(restaurantId: string): Promise<{
       estimatedCleanup
     };
     
-    console.log(`✅ Data lifecycle stats retrieved for restaurant: ${restaurantId}`, stats);
     return stats;
     
   } catch (error) {

@@ -98,7 +98,6 @@ export const GET = async (request: NextRequest) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
-      console.log('📊 Order status breakdown:', statusCounts);
     }
 
     return NextResponse.json({
@@ -111,9 +110,6 @@ export const POST = async (request: NextRequest) => {
   const body = await request.json();
     const { sessionId, dinerName } = body;
     
-    console.log('🔧 API: Confirming orders for session:', sessionId);
-    console.log('🔧 API: Diner name:', dinerName);
-
     // Validate input
     if (!sessionId) {
       return NextResponse.json({ 
@@ -145,10 +141,6 @@ export const POST = async (request: NextRequest) => {
 
     // Check if the diner name matches the waitstaff (session starter)
     if (session.started_by_name && dinerName.toLowerCase() === session.started_by_name.toLowerCase()) {
-      console.log('🚫 CRITICAL: Preventing waitstaff from confirming orders:', {
-        waitstaff: session.started_by_name,
-        attemptedDiner: dinerName
-      });
       return NextResponse.json({ 
         success: false,
         error: 'Waitstaff cannot confirm orders. Please use a different name.',

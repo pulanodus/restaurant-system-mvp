@@ -17,8 +17,6 @@ export const GET = withAdminAuth(async (_request: NextRequest, adminUser) => {
       )
     }
     
-    console.log('🔧 API: Getting all users (admin):', adminUser.id)
-    
     // Get all users from database (admin operation)
     const { data: users, error } = await supabase
       .from('user_profiles')
@@ -33,7 +31,6 @@ export const GET = withAdminAuth(async (_request: NextRequest, adminUser) => {
       )
     }
     
-    console.log('✅ API: Retrieved users:', users?.length || 0)
     return NextResponse.json({ 
       success: true, 
       data: users || [],
@@ -58,8 +55,6 @@ export const POST = withAdminAuth(async (_request: NextRequest, adminUser) => {
         { status: 401 }
       )
     }
-    
-    console.log('🔧 API: Creating user (admin):', adminUser.id)
     
     const body = await _request.json()
     
@@ -92,7 +87,6 @@ export const POST = withAdminAuth(async (_request: NextRequest, adminUser) => {
       )
     }
     
-    console.log('✅ API: User created:', user.id)
     return NextResponse.json({ 
       success: true, 
       data: user 
@@ -110,8 +104,6 @@ export const POST = withAdminAuth(async (_request: NextRequest, adminUser) => {
 // Alternative implementation using manual admin authentication
 export async function PUT(_request: NextRequest) {
   try {
-    console.log('🔧 API: Manual admin authentication example')
-    
     // Manual authentication check (as per your example)
     const { data: { user }, error } = await supabase.auth.getUser()
     
@@ -123,8 +115,6 @@ export async function PUT(_request: NextRequest) {
     if (user.role !== 'admin') {
       return NextResponse.json({ error: 'Admin privileges required' }, { status: 403 })
     }
-    
-    console.log('✅ API: Admin authenticated manually:', user.id)
     
     // Your admin API logic here
     return NextResponse.json({ 

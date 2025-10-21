@@ -34,14 +34,11 @@ export async function runDailyStorageMonitoring(): Promise<JobResult> {
   const errors: string[] = [];
   
   try {
-    console.log('🔄 Starting daily storage monitoring job');
     
     await runStorageMonitoringJob();
     
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
-    
-    console.log(`✅ Daily storage monitoring job completed in ${duration}ms`);
     
     return {
       jobName: 'daily_storage_monitoring',
@@ -80,7 +77,6 @@ export async function runWeeklyDataCleanup(): Promise<JobResult> {
   const errors: string[] = [];
   
   try {
-    console.log('🔄 Starting weekly data cleanup job');
     
     const results = await runGlobalDataLifecycle();
     
@@ -94,8 +90,6 @@ export async function runWeeklyDataCleanup(): Promise<JobResult> {
       totalDeleted: results.reduce((sum, r) => sum + r.totalDeleted, 0),
       totalErrors: results.reduce((sum, r) => sum + r.errors.length, 0)
     };
-    
-    console.log(`✅ Weekly data cleanup job completed in ${duration}ms:`, summary);
     
     return {
       jobName: 'weekly_data_cleanup',
@@ -135,7 +129,6 @@ export async function runMonthlyStorageOptimization(): Promise<JobResult> {
   const errors: string[] = [];
   
   try {
-    console.log('🔄 Starting monthly storage optimization job');
     
     // This job could include:
     // - Database optimization (VACUUM, REINDEX)
@@ -148,8 +141,6 @@ export async function runMonthlyStorageOptimization(): Promise<JobResult> {
     
     const endTime = new Date();
     const duration = endTime.getTime() - startTime.getTime();
-    
-    console.log(`✅ Monthly storage optimization job completed in ${duration}ms`);
     
     return {
       jobName: 'monthly_storage_optimization',
@@ -232,17 +223,12 @@ export async function runAllJobs(): Promise<JobResult[]> {
   const jobs = getScheduledJobs().filter(job => job.enabled);
   const results: JobResult[] = [];
   
-  console.log(`🔄 Running ${jobs.length} scheduled jobs`);
-  
   for (const job of jobs) {
     try {
-      console.log(`🔄 Running job: ${job.name}`);
       const result = await runJob(job.name);
       results.push(result);
       
-      if (result.success) {
-        console.log(`✅ Job ${job.name} completed successfully`);
-      } else {
+      if (!result.success) {
         console.error(`❌ Job ${job.name} failed:`, result.errors);
       }
     } catch (error) {
@@ -257,11 +243,6 @@ export async function runAllJobs(): Promise<JobResult[]> {
       });
     }
   }
-  
-  const successCount = results.filter(r => r.success).length;
-  const failureCount = results.length - successCount;
-  
-  console.log(`✅ Scheduled jobs completed: ${successCount} successful, ${failureCount} failed`);
   
   return results;
 }

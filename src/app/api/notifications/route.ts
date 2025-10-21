@@ -4,8 +4,6 @@ import { handleError } from '@/lib/error-handling';
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fetching all notifications for staff');
-    
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const status = searchParams.get('status') || 'pending';
@@ -35,8 +33,6 @@ export const GET = async (request: NextRequest) => {
       );
     }
     
-    console.log('✅ Notifications fetched:', data?.length || 0);
-    
     return NextResponse.json({
       success: true,
       notifications: data || [],
@@ -54,8 +50,6 @@ export const GET = async (request: NextRequest) => {
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Creating new notification');
-    
     const body = await request.json();
     const { 
       session_id, 
@@ -113,8 +107,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-    
-    console.log('✅ Notification created:', data);
     
     return NextResponse.json({
       success: true,

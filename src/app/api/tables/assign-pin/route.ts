@@ -13,8 +13,6 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔑 Assigning PIN to occupied table:', { tableId });
-
     // Verify table exists
     const { data: table, error: tableError } = await supabaseServer
       .from('tables')
@@ -65,11 +63,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log('✅ PIN assigned successfully:', { 
-      tableNumber: table.table_number,
-      pin
-    });
 
     return NextResponse.json({
       success: true,

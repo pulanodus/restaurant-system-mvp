@@ -45,9 +45,9 @@ export default function StaffLogin({ onLogin }: StaffLoginProps) {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        console.log('✅ Staff login successful:', data);
-        onLogin(data.staff, data.sessionId);
+      if (!error && data) {
+        // Redirect to staff dashboard
+        router.push('/staff/dashboard');
       } else {
         setError(data.error || 'Login failed');
       }

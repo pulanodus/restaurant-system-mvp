@@ -10,12 +10,8 @@ export async function POST(request: NextRequest) {
   try {
     const { sessionId, menuItemId, originalPrice, splitCount, participants } = await request.json();
 
-    console.log('🔍 Split bill creation request:', { sessionId, menuItemId, originalPrice, splitCount, participants });
-
     // Calculate split price
     const splitPrice = originalPrice / splitCount;
-
-    console.log('🔍 Calculated split price:', splitPrice);
 
     // Create split bill record
     const { data, error } = await supabase
@@ -36,8 +32,6 @@ export async function POST(request: NextRequest) {
       console.error('❌ Error creating split bill:', error);
       return NextResponse.json({ error: `Failed to create split bill: ${error.message}` }, { status: 500 });
     }
-
-    console.log('✅ Split bill created successfully:', data);
 
     return NextResponse.json({ 
       success: true, 

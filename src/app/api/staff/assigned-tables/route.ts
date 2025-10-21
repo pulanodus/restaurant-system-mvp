@@ -14,8 +14,6 @@ export const GET = async (request: NextRequest) => {
       );
     }
 
-    console.log('📋 Fetching staff assigned tables:', { staffId });
-
     // Verify staff exists
     const { data: staff, error: staffError } = await supabaseServer
       .from('staff')
@@ -63,11 +61,6 @@ export const GET = async (request: NextRequest) => {
         role: staff.role
       }
     }));
-
-    console.log('✅ Staff assigned tables fetched:', { 
-      staffName: staff.name,
-      assignedTablesCount: transformedTables.length
-    });
 
     return NextResponse.json({
       success: true,

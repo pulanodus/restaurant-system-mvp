@@ -15,8 +15,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
-    console.log('🔍 Running diagnostics for session:', sessionId);
-
     // Get all split bills for this session
     const { data: splitBills, error: splitError } = await supabase
       .from('split_bills')
@@ -113,8 +111,6 @@ export async function GET(request: NextRequest) {
         `${diagnostics.analysis.ordersWithoutSplitBills} shared orders without split bills`
       );
     }
-
-    console.log('📊 Diagnostics completed:', diagnostics);
 
     return NextResponse.json(diagnostics);
 

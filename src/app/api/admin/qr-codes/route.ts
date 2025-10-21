@@ -8,8 +8,6 @@ import { generateQRCodeSVG, generateQRCodeURL } from '@/lib/qr-code-generator';
  */
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔧 API: Generating QR codes for all tables');
-    
     // Get all active tables
     const { data: tables, error } = await supabaseServer
       .from('tables')
@@ -71,8 +69,6 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    console.log('✅ QR codes generated for', qrCodes.length, 'tables');
-    
     return NextResponse.json({
       success: true,
       data: qrCodes,
@@ -103,8 +99,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('🔧 API: Generating QR code for table:', tableId);
-    
     // Get table information
     const { data: table, error: tableError } = await supabaseServer
       .from('tables')
@@ -141,8 +135,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('✅ QR code generated and saved for table:', table.table_number);
-    
     return NextResponse.json({
       success: true,
       data: {

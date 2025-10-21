@@ -8,8 +8,6 @@ export const useDebouncedQuantityUpdate = (dispatch: any, updateQuantityAPI: any
     if (pendingUpdates.size === 0) return;
 
     const timeoutId = setTimeout(async () => {
-      console.log('⏰ Processing debounced updates:', Array.from(pendingUpdates.entries()));
-      
       for (const [itemId, totalChange] of pendingUpdates) {
         if (totalChange !== 0) {
           // Update frontend state immediately
@@ -21,7 +19,6 @@ export const useDebouncedQuantityUpdate = (dispatch: any, updateQuantityAPI: any
           // Make backend API call
           try {
             await updateQuantityAPI(itemId, totalChange);
-            console.log('✅ Backend API updated for itemId:', itemId, 'change:', totalChange);
           } catch (error) {
             console.error('❌ Backend API update failed for itemId:', itemId, 'change:', totalChange, error);
           }
@@ -40,7 +37,6 @@ export const useDebouncedQuantityUpdate = (dispatch: any, updateQuantityAPI: any
       const currentPending = newMap.get(itemId) || 0;
       const newTotal = currentPending + change;
       newMap.set(itemId, newTotal);
-      console.log(`⏳ Queued update for ${itemId}: ${currentPending} + ${change} = ${newTotal}`);
       return newMap;
     });
   }, []);

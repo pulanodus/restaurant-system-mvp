@@ -39,8 +39,6 @@ async function withRetry<T>(
 
 export const GET = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fetching payment notifications for staff');
-    
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '50');
     const status = searchParams.get('status');
@@ -66,8 +64,6 @@ export const GET = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-    
-    console.log('✅ Payment notifications fetched:', data?.length || 0);
     
     return NextResponse.json({
       success: true,

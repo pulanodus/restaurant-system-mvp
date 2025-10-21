@@ -21,8 +21,6 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('🔧 API: Updating order item status', { orderItemId, status });
-
     // Update the order item status
     const { data, error } = await supabaseServer
       .from('orders')
@@ -47,8 +45,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log('✅ Order item status updated:', data);
 
     // Create notification when order is marked as ready
     if (status === 'ready') {
@@ -88,8 +84,6 @@ export const POST = async (request: NextRequest) => {
 
           if (notificationError) {
             console.error('⚠️ Failed to create kitchen ready notification:', notificationError);
-          } else {
-            console.log('✅ Kitchen ready notification created for table:', Array.isArray(sessionData.tables) ? sessionData.tables[0]?.table_number : (sessionData.tables as any)?.table_number);
           }
         }
       } catch (notificationError) {
@@ -101,9 +95,6 @@ export const POST = async (request: NextRequest) => {
     // Note: We don't mark the session as completed when all items are served
     // The session should remain active until payment is actually processed
     // This allows customers to see their served items and request payment
-    if (status === 'served') {
-      console.log('✅ Order item marked as served - session remains active for payment');
-    }
 
     return NextResponse.json({
       success: true,

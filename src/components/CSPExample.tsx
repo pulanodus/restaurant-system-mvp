@@ -22,7 +22,6 @@ export default function CSPExample() {
       script.setAttribute('nonce', scriptNonce)
       script.textContent = `
         // This script will work with CSP because it has a nonce
-        console.log('CSP-compliant script executed');
         window.cspTest = 'CSP is working correctly';
       `
       document.head.appendChild(script)

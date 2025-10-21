@@ -4,10 +4,7 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Sending digital receipt');
-    
     const body = await request.json();
-    console.log('🔍 Receipt request body:', body);
     
     const { 
       sessionId, 
@@ -71,10 +68,6 @@ export const POST = async (request: NextRequest) => {
     // 1. Use an email service like SendGrid, AWS SES, or Resend
     // 2. Send the receipt HTML as an email
     // 3. Handle email delivery status
-    
-    // For now, we'll simulate successful email sending
-    console.log('✅ Receipt email would be sent to:', email);
-    console.log('📧 Receipt content length:', receiptHtml.length);
     
     // TODO: Implement actual email sending
     // Example with Resend:

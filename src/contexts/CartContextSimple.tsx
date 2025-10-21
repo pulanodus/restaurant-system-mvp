@@ -46,11 +46,6 @@ type CartAction =
   | { type: 'LOAD_ITEMS'; payload: CartItem[] };
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
-  console.log(`🛒 CART REDUCER: ${action.type}`, { 
-    action, 
-    currentItems: state.items.length 
-  });
-  
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
@@ -60,7 +55,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     
     case 'ADD_ITEM': {
       const newItem = action.payload;
-      console.log(`🔍 ADD_ITEM: Looking for existing item`, { newItem });
 
       // Find existing item by menu_item_id
       const existingItemIndex = state.items.findIndex(item => 
@@ -69,7 +63,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       
       if (existingItemIndex >= 0) {
         // Update existing item - INCREMENT quantity
-        console.log(`✅ Found existing item at index ${existingItemIndex}`);
           const updatedItems = [...state.items];
         const existingItem = updatedItems[existingItemIndex];
         if (existingItem) {
@@ -87,7 +80,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         };
       } else {
         // Add new item
-        console.log(`➕ Adding new item to cart`);
         const newItems = [...state.items, { 
           ...newItem, 
           quantity: 1,
@@ -107,7 +99,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     
     case 'UPDATE_QUANTITY': {
       const { id, quantity } = action.payload;
-      console.log(`🔄 UPDATE_QUANTITY:`, { id, quantity });
       
       if (quantity <= 0) {
         // Remove item if quantity is 0 or negative
@@ -132,7 +123,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     
     case 'REMOVE_ITEM': {
       const id = action.payload;
-      console.log(`🗑️ REMOVE_ITEM:`, { id });
       const filteredItems = state.items.filter(item => item.id !== id);
       return {
         ...state,
@@ -142,11 +132,9 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     }
     
     case 'CLEAR_CART':
-      console.log(`🧹 CLEAR_CART: Clearing all items`);
       return { ...state, items: [], total: 0 };
     
     case 'LOAD_ITEMS':
-      console.log(`📥 LOAD_ITEMS:`, { items: action.payload });
       const loadedItems = action.payload || [];
       return {
         ...state,
@@ -156,7 +144,6 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       };
     
     default:
-      console.warn(`⚠️ Unknown cart action:`, (action as any).type);
       return state;
   }
 };
@@ -204,20 +191,16 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
   // Load cart items from database
   const loadCartItems = useCallback(async () => {
     if (!sessionId) {
-      console.log('🚫 No sessionId, skipping cart load');
       return;
     }
 
     try {
-      console.log('🛒 CONTEXT-LOAD: Starting to load cart for session:', sessionId);
       dispatch({ type: 'SET_LOADING', payload: true });
 
       const response = await fetch(`/api/cart/load?sessionId=${sessionId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
-
-      console.log('🛒 CONTEXT-LOAD: Response status:', response.status, response.ok);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -226,10 +209,8 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
       }
 
       const data = await response.json();
-      console.log('🛒 CONTEXT-LOAD: Raw API response:', data);
       
       const items = data.items || [];
-      console.log('🛒 CONTEXT-LOAD: Processed items:', items, 'Count:', items.length);
       
       dispatch({ type: 'LOAD_ITEMS', payload: items });
     } catch (error) {
@@ -241,12 +222,9 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
   // Add item to cart
   const addItem = useCallback(async (item: any, options?: { notes?: string; isShared?: boolean; isTakeaway?: boolean; customizations?: any[] }) => {
     if (!sessionId) return;
-    
-    console.log('🛒 CONTEXT-ADD: Called with item:', item.name);
 
     // Prevent duplicate calls
     if (state.isLoading) {
-      console.log('🚫 BLOCKED: Cart is already loading, ignoring duplicate addItem call');
       return;
     }
 
@@ -278,7 +256,6 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
       }
 
       const { item: addedItem } = await response.json();
-      console.log('🛒 Frontend received item from API:', addedItem);
       
       dispatch({ type: 'ADD_ITEM', payload: addedItem });
       
@@ -293,8 +270,6 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
   // Update item quantity
   const updateQuantity = useCallback(async (itemId: string, quantity: number) => {
     if (!sessionId) return;
-
-    console.log('🛒 CONTEXT-UPDATE: Called with itemId:', itemId, 'quantity:', quantity);
 
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
@@ -358,7 +333,6 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
     if (!sessionId) return;
 
     try {
-      console.log('🛒 CONTEXT-CLEAR: Clearing cart for session:', sessionId);
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'SET_ERROR', payload: null });
 
@@ -373,7 +347,6 @@ export function CartProvider({ children, sessionId }: { children: ReactNode; ses
         throw new Error(errorData.error || 'Failed to clear cart');
       }
 
-      console.log('🛒 CONTEXT-CLEAR: Cart cleared successfully');
       dispatch({ type: 'CLEAR_CART' });
       
     } catch (error) {

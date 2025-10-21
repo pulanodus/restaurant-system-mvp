@@ -4,10 +4,10 @@ import { handleError } from '@/lib/error-handling';
 
 export const POST = async (request: NextRequest) => {
   try {
-    console.log('🔧 API: Fixing database schema issues');
+    
 
     // 1. Test sessions table access with served_by column
-    console.log('🔍 Testing sessions table structure...');
+    
     
     let hasServedBy = false;
     try {
@@ -17,14 +17,14 @@ export const POST = async (request: NextRequest) => {
         .limit(1);
       
       if (testError) {
-        console.log('⚠️ served_by column test failed:', testError.message);
+        
         hasServedBy = false;
       } else {
-        console.log('✅ served_by column exists and accessible');
+        
         hasServedBy = true;
       }
     } catch (error) {
-      console.log('⚠️ served_by column test exception:', error);
+      
       hasServedBy = false;
     }
 
@@ -43,7 +43,7 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('✅ Sessions table accessible:', sessions?.length || 0, 'active sessions');
+    
 
     // 4. Check orders table
     const { data: orders, error: ordersError } = await supabaseServer
@@ -59,7 +59,7 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('✅ Orders table accessible:', orders?.length || 0, 'orders');
+    
 
     // 5. Check if discounts table exists
     const { data: discounts, error: discountsError } = await supabaseServer
@@ -68,9 +68,9 @@ export const POST = async (request: NextRequest) => {
       .limit(1);
 
     if (discountsError) {
-      console.log('⚠️ Discounts table missing or inaccessible:', discountsError.message);
+      
     } else {
-      console.log('✅ Discounts table accessible');
+      
     }
 
     return NextResponse.json({

@@ -13,8 +13,6 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    console.log('👤 Assigning staff to session:', { sessionId, staffId });
-
     // Verify staff exists and is active
     const { data: staff, error: staffError } = await supabaseServer
       .from('staff')
@@ -85,13 +83,6 @@ export const POST = async (request: NextRequest) => {
         { status: 500 }
       );
     }
-
-    console.log('✅ Staff assigned to table successfully:', { 
-      staffName: staff.name,
-      staffId: staff.staff_id,
-      tableNumber: Array.isArray(session.tables) ? session.tables[0]?.table_number : (session.tables as any)?.table_number,
-      sessionId
-    });
 
     return NextResponse.json({
       success: true,

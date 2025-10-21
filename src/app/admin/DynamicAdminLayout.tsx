@@ -58,9 +58,9 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('Service Worker registered:', registration);
+        // Service Worker registered
       } catch (error) {
-        console.log('Service Worker registration failed:', error);
+        // Service Worker registration failed
       }
     }
   };
@@ -71,7 +71,7 @@ export default function DynamicAdminLayout({ children }: DynamicAdminLayoutProps
     
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((registration) => {
-        console.log('Service Worker is ready:', registration);
+        // Service Worker is ready
       });
     }
   };

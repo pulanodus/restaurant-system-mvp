@@ -32,20 +32,12 @@ export const AddToCartButton: React.FC<AddToCartButtonProps> = ({
     
     // Prevent double-clicks and multiple dispatches
     if (isAdding || disabled) {
-      console.log('🚫 Add to cart blocked - already adding or disabled');
       return;
     }
 
     setIsAdding(true);
     
     try {
-      console.log('🛒 Adding to cart:', {
-        name: item.name,
-        id: item.id,
-        quantity: quantity,
-        price: item.price
-      });
-
       const cartItem = {
         id: item.id,
         menu_item_id: item.menu_item_id,

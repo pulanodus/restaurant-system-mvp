@@ -10,8 +10,6 @@ import { supabase } from '@/lib/supabase'
 // GET /api/user/profile - Get user profile (authenticated users only)
 export const GET = withUserAuth(async (_request: NextRequest, user) => {
   try {
-    console.log('🔧 API: Getting user profile for:', user.id)
-    
     // Get user profile from database
     const { data: profile, error } = await supabase
       .from('user_profiles')
@@ -27,7 +25,6 @@ export const GET = withUserAuth(async (_request: NextRequest, user) => {
       )
     }
     
-    console.log('✅ API: User profile retrieved:', user.id)
     return NextResponse.json({ 
       success: true, 
       data: profile 
@@ -45,8 +42,6 @@ export const GET = withUserAuth(async (_request: NextRequest, user) => {
 // PUT /api/user/profile - Update user profile (authenticated users only)
 export const PUT = withUserAuth(async (_request: NextRequest, user) => {
   try {
-    console.log('🔧 API: Updating user profile for:', user.id)
-    
     const body = await _request.json()
     
     // Validate required fields
@@ -77,7 +72,6 @@ export const PUT = withUserAuth(async (_request: NextRequest, user) => {
       )
     }
     
-    console.log('✅ API: User profile updated:', user.id)
     return NextResponse.json({ 
       success: true, 
       data: profile 
@@ -95,16 +89,12 @@ export const PUT = withUserAuth(async (_request: NextRequest, user) => {
 // Alternative implementation using manual authentication (as per your example)
 export async function POST(_request: NextRequest) {
   try {
-    console.log('🔧 API: Manual authentication example')
-    
     // Manual authentication check (as per your example)
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
-    console.log('✅ API: User authenticated manually:', user.id)
     
     // Your API logic here
     return NextResponse.json({ 

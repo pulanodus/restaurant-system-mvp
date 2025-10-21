@@ -56,47 +56,35 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
   // CRITICAL FIX: Use ref to maintain stable user reference
   const currentDinerRef = useRef<string | null>(dinerNameFromUrl);
 
-  // CRITICAL FIX: Update ref whenever diner name changes and add debugging
+  // CRITICAL FIX: Update ref whenever diner name changes
   useEffect(() => {
     if (state.dinerName) {
       currentDinerRef.current = state.dinerName;
-      console.log('🔍 USER STATE DEBUG - Updated currentDinerRef to:', state.dinerName);
     }
     if (dinerNameFromUrl) {
       currentDinerRef.current = dinerNameFromUrl;
-      console.log('🔍 USER STATE DEBUG - Updated currentDinerRef from URL to:', dinerNameFromUrl);
     }
     
-    console.log('🔍 USER STATE DEBUG - Current state:', {
-      stateDinerName: state.dinerName,
-      dinerNameFromUrl: dinerNameFromUrl,
-      currentDinerRef: currentDinerRef.current,
-      sessionId: session.id
-    });
+    // Debug info removed for production
   }, [state.dinerName, dinerNameFromUrl, session.id]);
 
   // Set the diner name when the component mounts
   React.useEffect(() => {
-    console.log('🔍 SessionPageClient - dinerNameFromUrl:', dinerNameFromUrl);
-    console.log('🔍 SessionPageClient - current state.dinerName:', state.dinerName);
-    console.log('🔍 SessionPageClient - session.started_by_name:', session.started_by_name);
-    console.log('🔍 SessionPageClient - session.diners:', session.diners);
+    // Debug logs removed for production
     
     // CRITICAL FIX: Only use dinerName from URL, never fallback to session starter
     // This ensures each diner has their own individual cart
     if (dinerNameFromUrl && !state.dinerName) {
-      console.log('🔍 Setting diner name from URL:', dinerNameFromUrl);
+      // Setting diner name from URL
       setDinerName(dinerNameFromUrl);
     } else if (dinerNameFromUrl && state.dinerName && state.dinerName !== dinerNameFromUrl) {
       // If URL has a different diner name than current state, update it
-      console.log('🔍 Switching diner name from', state.dinerName, 'to', dinerNameFromUrl);
       setDinerName(dinerNameFromUrl);
     }
     
     // CRITICAL FIX: Never fallback to session starter (waitstaff) for user sessions
     // This was causing the system to show "Thando" instead of individual user names
     if (!dinerNameFromUrl && !state.dinerName) {
-      console.log('⚠️ No diner name available - redirecting to name entry flow');
       // Redirect to name entry flow to establish user identity
       window.location.href = `/scan/${session.tables?.table_number || 'unknown'}?step=name&sessionId=${session.id}&isNew=false`;
       return;
@@ -109,15 +97,10 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
         // CRITICAL FIX: Determine the correct user to logout using multiple fallbacks
         const userToLogout = state.dinerName || currentDinerRef.current || dinerNameFromUrl;
         
-        console.log('🚪 LOGOUT DEBUG - All user references:');
-        console.log('  - dinerName state:', state.dinerName);
-        console.log('  - currentDinerRef:', currentDinerRef.current);
-        console.log('  - dinerNameFromUrl:', dinerNameFromUrl);
-        console.log('  - userToLogout (final):', userToLogout);
+        // Debug logs removed for production
         
         if (!userToLogout) {
           console.error('❌ LOGOUT DEBUG - No user found for logout');
-          console.log('🔍 LOGOUT DEBUG - Redirecting to name entry flow...');
           // Redirect to name entry flow to re-establish user identity
           window.location.href = `/scan/${session.tables?.table_number || 'unknown'}?step=name&sessionId=${session.id}&isNew=false`;
           return;
@@ -130,7 +113,6 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
         }
         
         // Fetch current session data to ensure we have the latest diners array
-        console.log('🔍 LOGOUT DEBUG - Fetching current session data...');
         const { data: currentSession, error: fetchError } = await supabase
           .from('sessions')
           .select('diners')
@@ -149,15 +131,13 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
           return;
         }
         
-        console.log('🔍 LOGOUT DEBUG - Current session diners:', currentSession.diners);
-        console.log('🔍 LOGOUT DEBUG - User to logout:', userToLogout);
+        // Debug logs removed for production
         
         // CRITICAL FIX: Parse diners if it's a string (JSON)
         let dinersArray = currentSession.diners;
         if (typeof dinersArray === 'string') {
           try {
             dinersArray = JSON.parse(dinersArray);
-            console.log('🔍 LOGOUT DEBUG - Parsed diners from JSON string:', dinersArray);
           } catch (parseError) {
             console.error('❌ LOGOUT DEBUG - Failed to parse diners JSON:', parseError);
             alert('Error: Invalid session data format');
@@ -166,28 +146,22 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
         }
         
         // Find the user to logout with robust comparison
-        console.log('👥 All diners in session:', dinersArray.map((d: any) => d.name || d));
         const userToUpdate = dinersArray.find((diner: any) => {
           // Handle different data structures
           const dinerName = typeof diner === 'string' ? diner : (diner.name || diner);
           const normalizedDinerName = String(dinerName).trim().toLowerCase();
           const normalizedUserToLogout = String(userToLogout).trim().toLowerCase();
           
-          console.log(`  Checking: "${dinerName}" vs "${userToLogout}"`);
-          console.log(`  Normalized: "${normalizedDinerName}" vs "${normalizedUserToLogout}"`);
-          console.log(`  Match: ${normalizedDinerName === normalizedUserToLogout}`);
+          // Debug logs removed for production
           
           return normalizedDinerName === normalizedUserToLogout;
         });
         
         if (!userToUpdate) {
           console.error('❌ LOGOUT DEBUG - User not found in diners list:', userToLogout);
-          console.log('Available users:', dinersArray.map((d: any) => d.name || d));
           alert(`Error: User "${userToLogout}" not found in session`);
           return;
         }
-        
-        console.log('✅ Found match! Marking', userToUpdate.name || userToUpdate, 'as inactive');
         
         // Update the diners array
         const updatedDiners = dinersArray.map((diner: any) => {
@@ -196,7 +170,6 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
           const normalizedUserToLogout = String(userToLogout).trim().toLowerCase();
           
           if (normalizedDinerName === normalizedUserToLogout) {
-            console.log('🔍 LOGOUT DEBUG - Updating diner:', dinerName);
             // Preserve the original structure
             if (typeof diner === 'string') {
               // If it was a string, return an object with the name
@@ -219,8 +192,6 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
           return diner;
         });
         
-        console.log('🔍 LOGOUT DEBUG - Updated diners array:', updatedDiners);
-        
         // Update the database
         const { data: updateData, error: updateError } = await supabase
           .from('sessions')
@@ -234,9 +205,6 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
           return;
         }
         
-        console.log('✅ LOGOUT DEBUG - User marked as inactive:', userToLogout);
-        console.log('🔍 LOGOUT DEBUG - Database update result:', updateData);
-        
         // Verify the update
         const { data: verifyData, error: verifyError } = await supabase
           .from('sessions')
@@ -247,8 +215,6 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
         if (verifyError) {
           console.error('❌ LOGOUT DEBUG - Error verifying logout:', verifyError);
         } else {
-          console.log('🔍 LOGOUT DEBUG - Verification - diners after logout:', verifyData.diners);
-          
           // Check if the user was actually marked as inactive
           let verifiedDiners = verifyData.diners;
           if (typeof verifiedDiners === 'string') {
@@ -266,14 +232,9 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
           
           if (loggedOutUser) {
             const isActive = typeof loggedOutUser === 'string' ? false : loggedOutUser.isActive;
-            console.log('🔍 LOGOUT DEBUG - Logged out user status:', {
-              name: typeof loggedOutUser === 'string' ? loggedOutUser : loggedOutUser.name,
-              isActive: isActive,
-              type: typeof loggedOutUser
-            });
             
             if (isActive === false) {
-              console.log('✅ LOGOUT DEBUG - SUCCESS: User successfully marked as inactive');
+              // Success
             } else {
               console.error('❌ LOGOUT DEBUG - FAILURE: User is still marked as active after logout');
             }
@@ -292,7 +253,6 @@ function SessionContent({ session, categories, restaurantName }: SessionPageClie
                 router.push('/');
               }
               
-              console.log('✅ Logout successful, everything preserved exactly as left');
       } catch (error) {
         console.error('❌ Error during logout:', error);
         router.push('/');

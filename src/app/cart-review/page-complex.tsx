@@ -37,35 +37,26 @@ function CartReviewContent() {
   const sessionId = searchParams.get('sessionId');
   const { state, updateQuantity, removeItem, loadCartItems } = useCart();
   
-  console.log('🔍 Cart review - sessionId:', sessionId);
-  console.log('🔍 Cart review - cart state:', state);
-  console.log('🔍 Cart review - cart items count:', state.items.length);
+  // Debug logging removed for production security
 
   // Load cart items when page loads
   useEffect(() => {
-    console.log('🔄 Cart Review component mounted/updated');
-    console.log('Session ID:', sessionId);
-    console.log('Current cart items:', state.items?.map(item => ({
-      id: item.id,
-      name: item.name,
-      isSplit: (item as any).isSplit,
-      splitPrice: (item as any).splitPrice
-    })));
+    // Debug logging removed for production security
     
     if (sessionId) {
-      console.log('⚠️  About to load cart items - split data may be lost here');
+      // Debug logging removed for production security
       loadCartItems();
     }
   }, [sessionId, loadCartItems]);
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
-    console.log('🔄 Cart review - handleQuantityChange called:', { itemId, newQuantity });
+    // Debug logging removed for production security
     
     if (newQuantity <= 0) {
-      console.log('🔄 Cart review - Removing item:', itemId);
+      // Debug logging removed for production security
       await removeItem(itemId);
     } else {
-      console.log('🔄 Cart review - Updating quantity:', { itemId, newQuantity });
+      // Debug logging removed for production security
       await updateQuantity(itemId, newQuantity);
     }
   };
@@ -77,21 +68,12 @@ function CartReviewContent() {
 
   // 🔍 SESSION STORAGE DIAGNOSTICS
   const checkSessionStorage = () => {
-    console.log('💾 SESSION STORAGE CHECK:');
-    console.log('Cart items in sessionStorage:', 
-      JSON.parse(sessionStorage.getItem('cartItems') || 'null'));
-    console.log('Split data in sessionStorage:', 
-      JSON.parse(sessionStorage.getItem('allSplitData') || 'null'));
-    console.log('All session keys:', Object.keys(sessionStorage));
+    // Debug logging removed for production security
   };
 
   // 🔍 QUICK DIAGNOSTIC RUNNER
   const runDiagnostics = () => {
-    console.log('=== SPLIT STATE DIAGNOSTICS ===');
-    checkSessionStorage();
-    console.log('Current cart context items:', state.items);
-    console.log('Items with split data:', state.items?.filter(item => (item as any).isSplit));
-    console.log('============================');
+    // Debug logging removed for production security
   };
 
   // Run diagnostics on component mount
@@ -116,31 +98,11 @@ function CartReviewContent() {
     
     // 🔍 SPLIT BILL DEBUG: Track item processing
     if (item.isShared) {
-      console.log('🔄 Split Item Processing:', {
-        itemId: item.id,
-        menuItemId: item.menu_item_id,
-        itemName: item.name,
-        isShared: item.isShared,
-        hasSplitData: !!itemSplitData,
-        splitData: itemSplitData,
-        originalPrice: item.price
-      });
+      // Debug logging removed for production security
     }
     
     // 🔍 PRICE DEBUG: Log all item prices for debugging
-    console.log('💰 Item Price Debug:', {
-      name: item.name,
-      originalPrice: item.price,
-      isShared: item.isShared,
-      isSplit: (item as any).isSplit,  // ← Track split status
-      splitPrice: (item as any).splitPrice,  // ← Track split price
-      hasSplitData: !!itemSplitData,
-      splitData: itemSplitData,
-      // Additional debug info
-      menu_item_id: item.menu_item_id,
-      id: item.id,
-      allItemProperties: Object.keys(item)
-    });
+    // Debug logging removed for production security
     
     // Calculate split bill pricing
     let userPrice = item.price;
@@ -155,13 +117,7 @@ function CartReviewContent() {
       splitWith = (item as any).splitDetails?.sharedWith || [];
       totalPeople = (item as any).splitDetails?.splitCount || 1;
       
-      console.log('💰 Using Stored Split Price:', {
-        itemName: item.name,
-        originalPrice: (item as any).originalPrice,
-        splitPrice: (item as any).splitPrice,
-        userPrice: userPrice,
-        isSplit: (item as any).isSplit
-      });
+      // Debug logging removed for production security
     } else if (item.isShared && itemSplitData && itemSplitData.splitCount > 1) {
       // Fallback for legacy split data
       splitBill = true;
@@ -169,13 +125,7 @@ function CartReviewContent() {
       totalPeople = itemSplitData.splitCount;
       userPrice = item.price / totalPeople; // User pays only their portion
       
-      console.log('💰 Legacy Split Price Calculation:', {
-        itemName: item.name,
-        originalPrice: item.price,
-        splitCount: totalPeople,
-        userPrice: userPrice,
-        splitData: itemSplitData
-      });
+      // Debug logging removed for production security
     }
     
     return {
@@ -207,14 +157,7 @@ function CartReviewContent() {
     const quantity = parseInt(item.quantity);
     const splitCount = parseInt(item.splitCount);
     
-    console.log('🔍 Price Validation Input:', {
-      itemName: item.name,
-      originalPrice,
-      splitPrice,
-      quantity,
-      splitCount,
-      participants: item.participants
-    });
+    // Debug logging removed for production security
     
     // Validation checks
     const expectedSplitPrice = originalPrice / splitCount;
@@ -246,18 +189,7 @@ function CartReviewContent() {
       issues.push(`Original price seems wrong: expected ${expectedOriginalPrice} (${item.price} × ${quantity}), got ${originalPrice}`);
     }
     
-    console.log('✅ Split Bill Validation Result:', {
-      itemName: item.name,
-      originalPrice,
-      splitPrice,
-      expectedSplitPrice,
-      expectedOriginalPrice,
-      quantity,
-      splitCount,
-      priceDifference,
-      isValid: issues.length === 0,
-      issues
-    });
+    // Debug logging removed for production security
     
     return {
       isValid: issues.length === 0,
@@ -280,24 +212,7 @@ function CartReviewContent() {
     const expectedSplitPrice = originalPrice / participantCount;
     const expectedOriginalFromSplit = splitPrice * participantCount;
     
-    console.log('🔍 Enhanced Price Validation Debug:', {
-      itemName: item.name,
-      originalPrice: originalPrice,
-      splitPrice: splitPrice,
-      quantity: quantity,
-      participantCount: participantCount,
-      expectedSplitPrice: expectedSplitPrice.toFixed(2),
-      expectedOriginalFromSplit: expectedOriginalFromSplit.toFixed(2),
-      splitPriceMatch: Math.abs(splitPrice - expectedSplitPrice) < 0.01,
-      originalPriceReasonable: originalPrice >= splitPrice,
-      validation: {
-        originalPriceIsPositive: originalPrice > 0,
-        splitPriceIsPositive: splitPrice > 0,
-        participantCountIsPositive: participantCount > 0,
-        originalPriceGreaterThanSplit: originalPrice >= splitPrice,
-        splitPriceMatchesCalculation: Math.abs(splitPrice - expectedSplitPrice) < 0.01
-      }
-    });
+    // Debug logging removed for production security
     
     // Validation checks
     if (Math.abs(splitPrice - expectedSplitPrice) > 0.01) {
@@ -327,13 +242,13 @@ function CartReviewContent() {
 
   // ✅ COMPREHENSIVE DIAGNOSTIC FUNCTION
   const runSplitBillDiagnostics = () => {
-    console.log('🔍 === SPLIT BILL DIAGNOSTICS ===');
+    // Debug logging removed for production security
     
     const splitItems = state.items.filter((item: any) => item.isSplit);
-    console.log(`📊 Found ${splitItems.length} split items out of ${state.items.length} total items`);
+    // Debug logging removed for production security
     
     splitItems.forEach((item: any, index: number) => {
-      console.log(`\n🔍 Split Item #${index + 1}: "${item.name}"`);
+      // Debug logging removed for production security
       
       const originalPrice = parseFloat(item.originalPrice || 0);
       const splitPrice = parseFloat(item.splitPrice || 0);
@@ -344,16 +259,7 @@ function CartReviewContent() {
       const expectedSplitPrice = originalPrice / splitCount;
       const expectedTotalPrice = splitPrice * splitCount;
       
-      console.log('📊 Item Analysis:', {
-        originalPrice: originalPrice,
-        splitPrice: splitPrice,
-        quantity: quantity,
-        splitCount: splitCount,
-        participants: participants,
-        expectedSplitPrice: expectedSplitPrice,
-        expectedTotalPrice: expectedTotalPrice,
-        issues: []
-      });
+      // Debug logging removed for production security
       
       // Check for issues
       const issues = [];
@@ -370,40 +276,19 @@ function CartReviewContent() {
       if (issues.length > 0) {
         console.error('❌ Issues found:', issues);
       } else {
-        console.log('✅ No issues found');
+        // Debug logging removed for production security
       }
     });
     
     const totals = calculateTotal(state.items);
-    console.log('\n💰 Current Cart Totals:', totals);
+    // Debug logging removed for production security
     
-    console.log('🔍 === DIAGNOSTICS COMPLETE ===');
+    // Debug logging removed for production security
   };
 
   // ✅ DEBUG FUNCTION TO IDENTIFY PRICING ISSUES
   const debugPricingIssue = (item: any) => {
-    console.log('🚨 PRICING ISSUE DEBUG:', {
-      itemName: item.name,
-      isSplit: item.isSplit,
-      rawData: {
-        originalPrice: item.originalPrice,
-        splitPrice: item.splitPrice,
-        currentPrice: item.price,
-        quantity: item.quantity,
-        splitCount: item.splitCount,
-        participants: item.participants
-      },
-      calculations: {
-        expectedOriginalPrice: (item.price || 0) * item.quantity,
-        expectedSplitPrice: item.originalPrice ? item.originalPrice / (item.splitCount || 1) : 0,
-        actualSplitPrice: item.splitPrice
-      },
-      displayValues: {
-        fullPriceDisplay: item.originalPrice,
-        splitPriceDisplay: item.splitPrice,
-        userShareDisplay: item.splitPrice
-      }
-    });
+    // Debug logging removed for production security
   };
 
   // Simple reset function
@@ -415,19 +300,12 @@ function CartReviewContent() {
   // ✅ EXPOSE SIMPLE RESET FUNCTION
   useEffect(() => {
     (window as any).resetCartData = resetCartData;
-    console.log('🔧 Reset function available: resetCartData()');
+    // Debug logging removed for production security
   }, []);
 
   // ✅ CLEAN PRICE CALCULATION FUNCTION
   const calculateItemPrice = (item: any) => {
-    console.log('💰 Price Calculation Debug:', {
-      name: item.name,
-      isSplit: item.isSplit,
-      originalPrice: item.originalPrice,
-      splitPrice: item.splitPrice,
-      currentPrice: item.price,
-      quantity: item.quantity
-    });
+    // Debug logging removed for production security
     
     // Debug pricing issues
     if (item.isSplit) {
@@ -440,7 +318,7 @@ function CartReviewContent() {
       if (!validation.isValid) {
         console.warn('⚠️ Enhanced split pricing validation failed:', validation.message);
       } else {
-        console.log('✅ Enhanced split pricing validation passed:', validation.message);
+        // Debug logging removed for production security
       }
     }
     
@@ -463,17 +341,7 @@ function CartReviewContent() {
     const vat = subtotal * 0.14;
   const total = subtotal + vat;
     
-    console.log('💰 Total Calculation Debug:', {
-      items: items.map((item: any) => ({
-        name: item.name,
-        price: calculateItemPrice(item),
-        quantity: item.quantity,
-        isSplit: item.isSplit
-      })),
-      subtotal,
-      vat,
-      total
-    });
+    // Debug logging removed for production security
     
     return { subtotal, vat, total };
   };
@@ -657,7 +525,7 @@ function CartReviewContent() {
               <button
                 onClick={async () => {
                   try {
-                    console.log('🍽️ Confirming orders from cart review...');
+                    // Debug logging removed for production security
                     
                     // Call the orders confirmation API
                     const response = await fetch('/api/orders/confirm', {
@@ -674,8 +542,7 @@ function CartReviewContent() {
                     }
 
                     const result = await response.json();
-                    console.log('✅ Cart Review - Orders confirmed successfully:', result);
-                    console.log('✅ Cart Review - Confirmed orders count:', result.confirmedOrders?.length || 0);
+                    // Debug logging removed for production security
                     
                     // Small delay to ensure database consistency
                     await new Promise(resolve => setTimeout(resolve, 500));

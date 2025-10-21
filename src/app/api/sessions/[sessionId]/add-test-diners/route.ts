@@ -10,8 +10,6 @@ export async function POST(
     const { sessionId } = await params;
     const { diners } = await request.json();
 
-    console.log('🧪 Adding test diners to session:', { sessionId, diners });
-
     // Update the session with test diners (without updated_at field)
     const { data, error } = await supabaseServer
       .from('sessions')
@@ -29,8 +27,6 @@ export async function POST(
         { status: 500 }
       );
     }
-
-    console.log('✅ Test diners added successfully:', data);
 
     return NextResponse.json({
       success: true,

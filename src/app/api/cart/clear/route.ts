@@ -22,8 +22,6 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    console.log('🗑️ Clearing cart for session:', sessionId);
-
     // First, get all orders for this session to clean up split bills
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
@@ -40,8 +38,6 @@ export async function POST(request: NextRequest) {
     const splitBillIds = [...new Set(orders?.map(order => order.split_bill_id).filter(Boolean))];
     
     if (splitBillIds.length > 0) {
-      console.log('🗑️ Cleaning up split bills:', splitBillIds);
-      
       // Delete split bills that are no longer referenced
       const { error: splitBillError } = await supabase
         .from('split_bills')
@@ -51,8 +47,6 @@ export async function POST(request: NextRequest) {
       if (splitBillError) {
         console.error('Error deleting split bills:', splitBillError);
         // Don't fail the request, just log the error
-      } else {
-        console.log('✅ Split bills cleaned up successfully');
       }
     }
 
@@ -67,8 +61,6 @@ export async function POST(request: NextRequest) {
       console.error('Error deleting orders:', deleteError);
       return NextResponse.json({ error: 'Failed to clear cart' }, { status: 500 });
     }
-
-    console.log('✅ Cart cleared successfully for session:', sessionId);
 
     return NextResponse.json({ 
       success: true, 

@@ -31,7 +31,7 @@ export interface StorageAlert {
  */
 export async function calculateRestaurantStorageUsage(restaurantId: string): Promise<StorageUsage[]> {
   try {
-    console.log(`📊 Calculating storage usage for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     
     const { data, error } = await supabaseServer
       .rpc('calculate_restaurant_storage_usage', { restaurant_uuid: restaurantId });
@@ -41,7 +41,7 @@ export async function calculateRestaurantStorageUsage(restaurantId: string): Pro
       throw error;
     }
     
-    console.log(`✅ Storage usage calculated for restaurant: ${restaurantId}`, data);
+    // Debug logging removed for production security
     return data || [];
     
   } catch (error) {
@@ -55,7 +55,7 @@ export async function calculateRestaurantStorageUsage(restaurantId: string): Pro
  */
 export async function updateRestaurantStorageUsage(restaurantId: string): Promise<void> {
   try {
-    console.log(`🔄 Updating storage usage for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     
     const { error } = await supabaseServer
       .rpc('update_restaurant_storage_usage', { restaurant_uuid: restaurantId });
@@ -65,7 +65,7 @@ export async function updateRestaurantStorageUsage(restaurantId: string): Promis
       throw error;
     }
     
-    console.log(`✅ Storage usage updated for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     
   } catch (error) {
     console.error('❌ Failed to update storage usage:', error);
@@ -78,7 +78,7 @@ export async function updateRestaurantStorageUsage(restaurantId: string): Promis
  */
 export async function getRestaurantStorageSummary(restaurantId: string): Promise<RestaurantStorageSummary> {
   try {
-    console.log(`📈 Getting storage summary for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     
     const { data, error } = await supabaseServer
       .from('restaurant_storage_usage')
@@ -108,7 +108,7 @@ export async function getRestaurantStorageSummary(restaurantId: string): Promise
       lastUpdated: data?.[0]?.last_updated || new Date().toISOString()
     };
     
-    console.log(`✅ Storage summary retrieved for restaurant: ${restaurantId}`, summary);
+    // Debug logging removed for production security
     return summary;
     
   } catch (error) {
@@ -126,7 +126,7 @@ export async function archiveOldData(
   reason: string = 'Automated archiving'
 ): Promise<number> {
   try {
-    console.log(`🗄️ Archiving data older than ${daysOld} days for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     
     const { data, error } = await supabaseServer
       .rpc('archive_old_data', { 
@@ -141,7 +141,7 @@ export async function archiveOldData(
     }
     
     const archivedCount = data || 0;
-    console.log(`✅ Archived ${archivedCount} records for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     return archivedCount;
     
   } catch (error) {
@@ -158,7 +158,7 @@ export async function checkStorageLimits(
   limits: { warningMB: number; criticalMB: number; maxMB: number }
 ): Promise<StorageAlert[]> {
   try {
-    console.log(`🚨 Checking storage limits for restaurant: ${restaurantId}`);
+    // Debug logging removed for production security
     
     const summary = await getRestaurantStorageSummary(restaurantId);
     const alerts: StorageAlert[] = [];
@@ -192,7 +192,7 @@ export async function checkStorageLimits(
       });
     }
     
-    console.log(`✅ Storage limits checked for restaurant: ${restaurantId}`, alerts);
+    // Debug logging removed for production security
     return alerts;
     
   } catch (error) {
@@ -206,7 +206,7 @@ export async function checkStorageLimits(
  */
 export async function getAllRestaurantsStorageUsage(): Promise<RestaurantStorageSummary[]> {
   try {
-    console.log('📊 Getting storage usage for all restaurants');
+    // Debug logging removed for production security
     
     // Get all restaurants
     const { data: restaurants, error: restaurantsError } = await supabaseServer
@@ -219,7 +219,7 @@ export async function getAllRestaurantsStorageUsage(): Promise<RestaurantStorage
     }
     
     if (!restaurants || restaurants.length === 0) {
-      console.log('ℹ️ No restaurants found');
+      // Debug logging removed for production security
       return [];
     }
     
@@ -241,7 +241,7 @@ export async function getAllRestaurantsStorageUsage(): Promise<RestaurantStorage
       })
     );
     
-    console.log(`✅ Storage usage retrieved for ${summaries.length} restaurants`);
+    // Debug logging removed for production security
     return summaries;
     
   } catch (error) {
@@ -256,7 +256,7 @@ export async function getAllRestaurantsStorageUsage(): Promise<RestaurantStorage
  */
 export async function runStorageMonitoringJob(): Promise<void> {
   try {
-    console.log('🔄 Starting automated storage monitoring job');
+    // Debug logging removed for production security
     
     const summaries = await getAllRestaurantsStorageUsage();
     
@@ -276,7 +276,7 @@ export async function runStorageMonitoringJob(): Promise<void> {
         
         // Process alerts (send notifications, block operations, etc.)
         for (const alert of alerts) {
-          console.log(`🚨 Storage alert for restaurant ${alert.restaurantId}:`, alert.message);
+          // Debug logging removed for production security
           
           // TODO: Implement alert handling
           // - Send email notifications
@@ -287,7 +287,7 @@ export async function runStorageMonitoringJob(): Promise<void> {
         
         // Auto-archive old data if approaching limits
         if (summary.totalSizeMB > limits.criticalMB) {
-          console.log(`🗄️ Auto-archiving old data for restaurant ${summary.restaurantId}`);
+          // Debug logging removed for production security
           await archiveOldData(summary.restaurantId, 180, 'Auto-archiving due to high storage usage');
         }
         
@@ -296,7 +296,7 @@ export async function runStorageMonitoringJob(): Promise<void> {
       }
     }
     
-    console.log('✅ Automated storage monitoring job completed');
+    // Debug logging removed for production security
     
   } catch (error) {
     console.error('❌ Automated storage monitoring job failed:', error);
@@ -315,7 +315,7 @@ export async function getGlobalStorageStats(): Promise<{
   largestRestaurant: RestaurantStorageSummary | null;
 }> {
   try {
-    console.log('📊 Getting global storage statistics');
+    // Debug logging removed for production security
     
     const summaries = await getAllRestaurantsStorageUsage();
     
@@ -337,7 +337,7 @@ export async function getGlobalStorageStats(): Promise<{
       largestRestaurant
     };
     
-    console.log('✅ Global storage statistics calculated:', stats);
+    // Debug logging removed for production security
     return stats;
     
   } catch (error) {

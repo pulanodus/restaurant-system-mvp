@@ -18,8 +18,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('🤖 CRON - Starting automated stale user cleanup...');
-
     const supabaseUrl = getSupabaseUrl();
     const supabaseServiceKey = getSupabaseServiceKey();
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -39,7 +37,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!sessions || sessions.length === 0) {
-      console.log('🤖 CRON - No active sessions found');
       return NextResponse.json({ 
         message: 'No active sessions found',
         cleanedUsers: [],
@@ -52,8 +49,6 @@ export async function POST(request: NextRequest) {
     const cleanedUsers: any[] = [];
     let totalCleanedUsers = 0;
     const sessionsToUpdate: any[] = [];
-
-    console.log(`🤖 CRON - Processing ${sessions.length} active sessions...`);
 
     // Process each session
     sessions.forEach(session => {
@@ -90,7 +85,6 @@ export async function POST(request: NextRequest) {
             });
 
             sessionNeedsUpdate = true;
-            console.log(`🤖 CRON - Auto-cleaned stale user: ${diner.name} (inactive for ${cleanedUser.hoursInactive}h)`);
           } else {
             // Keep active user as-is
             updatedDiners.push(diner);
@@ -124,7 +118,6 @@ export async function POST(request: NextRequest) {
         updateErrorCount++;
       } else {
         updateSuccessCount++;
-        console.log(`✅ CRON - Updated session ${sessionUpdate.id}`);
       }
     }
 
@@ -147,8 +140,6 @@ export async function POST(request: NextRequest) {
     if (logError) {
       console.error('❌ CRON - Failed to log cleanup action:', logError);
     }
-
-    console.log(`🤖 CRON - Automated cleanup completed: ${totalCleanedUsers} users cleaned, ${updateSuccessCount} sessions updated`);
 
     return NextResponse.json({
       message: `Automated cleanup completed: ${totalCleanedUsers} stale users cleaned`,

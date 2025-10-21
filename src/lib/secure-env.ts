@@ -78,11 +78,7 @@ export class SecureEnv {
     const isServer = typeof window === 'undefined'
     
     // DEBUG: Log environment loading
-    console.log('🔍 DEBUG: Loading config...')
-    console.log('🔍 DEBUG: isServer:', isServer)
-    console.log('🔍 DEBUG: NEXT_PUBLIC_SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('🔍 DEBUG: NEXT_PUBLIC_SUPABASE_ANON_KEY exists:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-    console.log('🔍 DEBUG: SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    // Debug logging removed for production security
     
     const config = {
       public: {
@@ -102,7 +98,7 @@ export class SecureEnv {
       }
     }
     
-    console.log('🔍 DEBUG: Final config server.supabaseServiceKey:', !!config.server.supabaseServiceKey)
+    // Debug logging removed for production security
     return config
   }
 
@@ -146,30 +142,28 @@ export class SecureEnv {
   public validateRequired(): { valid: boolean; missing: string[] } {
     const missing: string[] = []
     
-    console.log('🔍 DEBUG: Validating environment...')
-    console.log('🔍 DEBUG: isServer():', isServer())
+    // Debug logging removed for production security
     
     // Check required public variables
     if (!this.config.public.supabaseUrl) {
       missing.push('NEXT_PUBLIC_SUPABASE_URL')
-      console.log('🔍 DEBUG: Missing NEXT_PUBLIC_SUPABASE_URL')
+      // Debug logging removed for production security
     }
     if (!this.config.public.supabaseAnonKey) {
       missing.push('NEXT_PUBLIC_SUPABASE_ANON_KEY')
-      console.log('🔍 DEBUG: Missing NEXT_PUBLIC_SUPABASE_ANON_KEY')
+      // Debug logging removed for production security
     }
     
     // Check required server variables (only on server)
     if (isServer()) {
-      console.log('🔍 DEBUG: Checking server variables...')
-      console.log('🔍 DEBUG: this.config.server.supabaseServiceKey:', !!this.config.server.supabaseServiceKey)
+      // Debug logging removed for production security
       if (!this.config.server.supabaseServiceKey) {
         missing.push('SUPABASE_SERVICE_ROLE_KEY')
-        console.log('🔍 DEBUG: Missing SUPABASE_SERVICE_ROLE_KEY')
+        // Debug logging removed for production security
       }
     }
     
-    console.log('🔍 DEBUG: Missing variables:', missing)
+    // Debug logging removed for production security
     return {
       valid: missing.length === 0,
       missing
@@ -269,13 +263,12 @@ export function logEnvironmentInfo(): void {
 
   const info = getEnvironmentInfo()
   console.group('🔧 Environment Info (Development Only)')
-  console.log('Environment:', info.environment)
-  console.log('Runtime:', info.runtime)
+  // Environment info logging removed for production security
   if (info.hostname) {
-    console.log('Hostname:', info.hostname)
+    // Hostname logging removed for production security
   }
   if (info.port) {
-    console.log('Port:', info.port)
+    // Port logging removed for production security
   }
   console.groupEnd()
 }

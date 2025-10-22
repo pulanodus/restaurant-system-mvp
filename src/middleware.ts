@@ -11,6 +11,7 @@ export async function middleware(request: NextRequest) {
   
   // TEMPORARILY DISABLED - Server issues
   return NextResponse.next();
+}
 
 export const config = {
   matcher: [

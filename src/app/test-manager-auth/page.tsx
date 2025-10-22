@@ -48,7 +48,8 @@ export default function TestManagerAuth() {
 
       const data = await response.json();
 
-      // Response received: {
+      // Response received
+      console.log('Response received:', {
         status: response.status,
         success: data.success,
         hasManager: !!data.manager

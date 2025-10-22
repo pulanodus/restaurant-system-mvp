@@ -37,9 +37,7 @@ export default function CleanupPage() {
       const data = await response.json();
 
       if (response.ok) {
-        if (!error) {
-          setResults(data);
-        }
+        setResults(data);
       } else {
         console.error('❌ Check failed:', data.error);
         setCleanupResult(`❌ Check failed: ${data.error}`);

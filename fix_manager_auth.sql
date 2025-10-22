@@ -27,7 +27,7 @@ CREATE OR REPLACE FUNCTION public.log_manager_login(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $
+AS $$
 DECLARE
   v_session_id UUID;
 BEGIN
@@ -44,7 +44,7 @@ EXCEPTION
     RAISE WARNING 'Failed to log manager login: %', SQLERRM;
     RETURN gen_random_uuid();
 END;
-$;
+$$;
 
 CREATE OR REPLACE FUNCTION public.log_manager_login(
   p_manager_id UUID,
@@ -53,7 +53,7 @@ CREATE OR REPLACE FUNCTION public.log_manager_login(
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $
+AS $$
 DECLARE
   v_session_id UUID;
 BEGIN
@@ -70,7 +70,7 @@ EXCEPTION
     RAISE WARNING 'Failed to log manager login: %', SQLERRM;
     RETURN gen_random_uuid();
 END;
-$;
+$$;
 
 -- Grant execute permission to service role
 GRANT EXECUTE ON FUNCTION public.log_manager_login(UUID) TO service_role;
@@ -84,7 +84,7 @@ CREATE OR REPLACE FUNCTION public.log_staff_login(
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $
+AS $$
 BEGIN
   -- For now, just return a mock session ID since we don't have a staff login logs table
   RETURN 'session-' || gen_random_uuid()::TEXT;
@@ -93,7 +93,7 @@ EXCEPTION
     -- Return a mock session ID on error
     RETURN 'session-' || gen_random_uuid()::TEXT;
 END;
-$;
+$$;
 
 CREATE OR REPLACE FUNCTION public.log_staff_login(
   p_staff_id TEXT,
@@ -102,7 +102,7 @@ CREATE OR REPLACE FUNCTION public.log_staff_login(
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
-AS $
+AS $$
 BEGIN
   -- For now, just return a mock session ID since we don't have a staff login logs table
   RETURN 'session-' || gen_random_uuid()::TEXT;
@@ -111,7 +111,7 @@ EXCEPTION
     -- Return a mock session ID on error
     RETURN 'session-' || gen_random_uuid()::TEXT;
 END;
-$;
+$$;
 
 -- Grant execute permission to service role
 GRANT EXECUTE ON FUNCTION public.log_staff_login(TEXT) TO service_role;

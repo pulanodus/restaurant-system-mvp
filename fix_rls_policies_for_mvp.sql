@@ -2,6 +2,13 @@
 -- This migration enables Row Level Security for tables that were missing it
 -- Addresses critical deployment blockers for the MVP launch
 
+-- Create helper function to cache auth.uid() result in the public schema
+-- This avoids repeated JWT parsing which can be expensive on high-traffic queries
+CREATE OR REPLACE FUNCTION public.uid_cached()
+RETURNS uuid AS $
+  SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid;
+$ LANGUAGE sql STABLE SECURITY DEFINER;
+
 -- 1. PROFILES TABLE - For user roles and admin access
 -- Create table if it doesn't exist (from setup-admin-user.js)
 CREATE TABLE IF NOT EXISTS profiles (
@@ -21,11 +28,11 @@ DROP POLICY IF EXISTS "Service role can manage all profiles" ON profiles;
 
 -- Users can SELECT their own profile
 CREATE POLICY "Users can view their own profile" ON profiles
-    FOR SELECT USING (auth.uid() = id);
+    FOR SELECT USING (public.uid_cached() = id);
 
 -- Users can UPDATE their own profile
 CREATE POLICY "Users can update their own profile" ON profiles
-    FOR UPDATE USING (auth.uid() = id);
+    FOR UPDATE USING (public.uid_cached() = id);
 
 -- Service role can do ALL operations (needed for admin functions)
 CREATE POLICY "Service role can manage all profiles" ON profiles
@@ -71,7 +78,7 @@ CREATE POLICY "Service role can manage all storage usage data" ON restaurant_sto
 
 
 -- Verification queries to confirm RLS policies are properly set up
-DO $$
+DO $
 BEGIN
     -- Verify profiles policies
     IF (SELECT COUNT(*) FROM pg_policies WHERE tablename = 'profiles') != 3 THEN
@@ -95,4 +102,4 @@ BEGIN
     END IF;
 
     RAISE NOTICE '🎉 All RLS policies have been successfully applied for MVP launch!';
-END $$;
+END $;

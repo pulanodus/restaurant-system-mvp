@@ -7,23 +7,23 @@ validateEnvironment()
 const supabaseUrl = getSupabaseUrl()
 const supabaseAnonKey = getSupabaseAnonKey()
 
-// Enhanced fetch function without excessive logging to prevent sensitive data exposure
-const createSecureFetch = () => {
-  return async (input: RequestInfo | URL, options: RequestInit = {}) => {
-    try {
-      const response = await fetch(input, options)
-      return response
-    } catch (_error) {
-      // Only log errors, and even then minimally
-      console.error('Supabase network error occurred')
-      throw _error
-    }
-  }
-}
-
-// Create Supabase client with secure fetch (no sensitive data logging)
+// Create Supabase client with proper auth configuration for browser usage
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-  global: {
-    fetch: createSecureFetch()
+  auth: {
+    // Enable automatic token refresh
+    autoRefreshToken: true,
+    // Persist session in localStorage/cookies
+    persistSession: true,
+    // Detect OAuth redirects
+    detectSessionInUrl: true,
+    // Cookie options for proper token storage
+    cookieOptions: {
+      name: 'sb-auth-token',
+      lifetime: 60 * 60 * 24 * 7, // 1 week
+      domain: '',
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production'
+    }
   }
 })

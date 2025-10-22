@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 // POST /api/auto-cleanup - Simplified version for testing
 export async function POST() {

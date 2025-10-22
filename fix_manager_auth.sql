@@ -17,6 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_manager_login_logs_created_at ON manager_login_lo
 ALTER TABLE manager_login_logs ENABLE ROW LEVEL SECURITY;
 
 -- Create policy for service role access
+DROP POLICY IF EXISTS "Service role can manage manager login logs" ON manager_login_logs;
 CREATE POLICY "Service role can manage manager login logs" ON manager_login_logs
   FOR ALL USING (auth.role() = 'service_role');
 
@@ -148,9 +149,11 @@ CREATE INDEX IF NOT EXISTS idx_managers_active ON managers(is_active);
 ALTER TABLE managers ENABLE ROW LEVEL SECURITY;
 
 -- Create policies
+DROP POLICY IF EXISTS "Authenticated users can view managers" ON managers;
 CREATE POLICY "Authenticated users can view managers" ON managers
   FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Service role can manage managers" ON managers;
 CREATE POLICY "Service role can manage managers" ON managers
   FOR ALL USING (auth.role() = 'service_role');
 
